@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Read(//Users/ouedraogocheckoumaraziz/Desktop/**)",
+      "Bash(npx create-next-app@latest prospectai --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git --yes)",
+      "Bash(npm install *)",
+      "Bash(node_modules/.bin/prisma generate *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/.claude/projects/-Users-ouedraogocheckoumaraziz-Desktop-ProspectAI/memory/)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "Bash(node --experimental-vm-modules scripts/migrate.mjs)",
+      "Bash(node scripts/migrate.mjs)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(DATABASE_URL=\"postgresql://authenticator:npg_Eba4qJ0NBmuO@ep-still-butterfly-aiwov0eb-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma db push --accept-data-loss)",
+      "Bash(curl -s http://localhost:3000/api/auth/register -X POST -H \"Content-Type: application/json\" -d '{\"name\":\"Test\",\"email\":\"test@test.com\",\"password\":\"test123\"}')",
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(curl -s -c /tmp/cookies.txt -X POST http://localhost:3000/api/auth/callback/credentials -H 'Content-Type: application/json' -d '{\"email\":\"azizssro72@gmail.com\",\"password\":\"demo1234\"}')",
+      "Bash(curl -s http://localhost:3000/api/dashboard/stats -H 'Cookie: __CMDSUB_OUTPUT__')",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s -o /dev/null -w \"Status: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"Serveur: %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(pkill -f \"next dev\" 2>/dev/null; sleep 1 *)",
+      "Bash(npx prisma *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}

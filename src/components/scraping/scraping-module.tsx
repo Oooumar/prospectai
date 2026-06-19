@@ -1,0 +1,188 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Search, X, Loader2, Target, Check, Mail, Phone } from "lucide-react";
+
+const schema = z.object({
+  niche: z.string().min(2, "Entrez une niche (ex: plombier, restaurant)"),
+  city: z.string().min(2, "Entrez une ville"),
+  limit: z.coerce.number().min(1).max(100),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const NICHE_GROUPS = {
+  "🏢 Professionnel B2B": [
+    "Plombier", "Électricien", "Restaurant", "Boulangerie",
+    "Coiffeur", "Dentiste", "Avocat", "Comptable", "Auto école", "Carreleur",
+  ],
+  "🎨 Créateur / Marque": [
+    "Marque beauté", "Marque mode", "Marque tech", "Agence influence",
+    "Marque alimentaire", "Startup",
+  ],
+  "🏛️ Agence": [
+    "Agence marketing", "Agence web", "Agence SEO", "Agence vidéo",
+  ],
+};
+
+interface ScrapingModuleProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
+  const [results, setResults] = useState<any[]>([]);
+  const [scraped, setScraped] = useState(false);
+
+  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema) as any,
+    defaultValues: { limit: 20 },
+  });
+
+  async function onSubmit(data: FormData) {
+    const res = await fetch("/api/scraping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (res.ok) {
+      setResults(json.prospects || []);
+      setScraped(true);
+    }
+  }
+
+  return (
+    <Card className="border-violet-500/30 bg-violet-500/5">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Target className="w-4 h-4 text-violet-400" />
+            Scraper des prospects
+          </CardTitle>
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {!scraped ? (
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5 md:col-span-1">
+                <Label>Niche / Secteur</Label>
+                <Input placeholder="ex: plombier, marque beauté…" {...register("niche")} />
+                {errors.niche && <p className="text-xs text-red-400">{errors.niche.message}</p>}
+                <div className="space-y-2 mt-2">
+                  {Object.entries(NICHE_GROUPS).map(([group, niches]) => (
+                    <div key={group}>
+                      <p className="text-xs text-gray-500 mb-1">{group}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {niches.map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            className="text-xs px-2 py-0.5 rounded-full border border-gray-700 bg-gray-800/60 text-gray-300 hover:border-violet-500/50 hover:text-violet-300 transition-colors"
+                            onClick={() => setValue("niche", n)}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Ville</Label>
+                <Input placeholder="ex: Paris, Lyon, Marseille…" {...register("city")} />
+                {errors.city && <p className="text-xs text-red-400">{errors.city.message}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Nombre de résultats</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  {...register("limit", { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+
+            <Button type="submit" variant="gradient" disabled={isSubmitting} className="w-full md:w-auto">
+              {isSubmitting ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Scraping en cours…</>
+              ) : (
+                <><Search className="w-4 h-4" />Rechercher des prospects</>
+              )}
+            </Button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {results.length} prospects trouvés et sauvegardés
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setScraped(false)}>
+                Nouvelle recherche
+              </Button>
+            </div>
+
+            <div className="max-h-80 overflow-y-auto space-y-2 rounded-xl border border-gray-800 bg-gray-900/50 p-2">
+              {results.slice(0, 10).map((p: any, i: number) => (
+                <div key={i} className="flex items-start justify-between p-3 rounded-lg bg-gray-800/40 hover:bg-gray-800/60 transition-colors">
+                  <div>
+                    <p className="text-sm font-medium text-gray-200">{p.name}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      {p.email && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Mail className="w-3 h-3" /> {p.email}
+                        </span>
+                      )}
+                      {p.phone && (
+                        <span className="flex items-center gap-1 text-xs text-gray-400">
+                          <Phone className="w-3 h-3" /> {p.phone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">{p.city}</Badge>
+                </div>
+              ))}
+              {results.length > 10 && (
+                <p className="text-center text-xs text-gray-500 py-2">
+                  + {results.length - 10} autres prospects dans la liste
+                </p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button variant="gradient" onClick={onSuccess} className="flex-1">
+                Voir tous les prospects
+              </Button>
+              <Button variant="outline" onClick={() => setScraped(false)}>
+                Scraper encore
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
