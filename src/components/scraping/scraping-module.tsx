@@ -14,7 +14,7 @@ import { Search, X, Loader2, Target, Check, Mail, Phone } from "lucide-react";
 const schema = z.object({
   niche: z.string().min(2, "Entrez une niche (ex: plombier, restaurant)"),
   city: z.string().min(2, "Entrez une ville"),
-  limit: z.coerce.number().min(1).max(100),
+  limit: z.coerce.number().min(1).max(60),
 });
 
 type FormData = z.infer<typeof schema>;
