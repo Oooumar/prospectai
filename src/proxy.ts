@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export default function proxy(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // NextAuth v5 JWT cookie — "authjs.session-token" (HTTP) or "__Secure-authjs.session-token" (HTTPS)
