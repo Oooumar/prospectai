@@ -14,6 +14,7 @@ model User {
   emailVerified  DateTime?
   image          String?
   password             String?
+  role                 String    @default("user")
   dailyLimit           Int       @default(50)
   profileType          String    @default("b2b")
   plan                 String    @default("starter")

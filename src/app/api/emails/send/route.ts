@@ -27,22 +27,23 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
-    // Check daily limit
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const isAdmin = (user as any).role === "admin";
 
-    const todaySent = await prisma.emailLog.count({
-      where: {
-        userId: session.user.id,
-        status: { in: ["SENT"] },
-        sentAt: { gte: todayStart },
-      },
-    });
-
-    if (todaySent >= user.dailyLimit) {
-      return NextResponse.json({
-        error: `Limite journalière atteinte (${user.dailyLimit} emails/jour)`,
-      }, { status: 429 });
+    if (!isAdmin) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todaySent = await prisma.emailLog.count({
+        where: {
+          userId: session.user.id,
+          status: { in: ["SENT"] },
+          sentAt: { gte: todayStart },
+        },
+      });
+      if (todaySent >= user.dailyLimit) {
+        return NextResponse.json({
+          error: `Limite journalière atteinte (${user.dailyLimit} emails/jour)`,
+        }, { status: 429 });
+      }
     }
 
     const prospect = await prisma.prospect.findFirst({

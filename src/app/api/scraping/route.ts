@@ -6,7 +6,7 @@ import { z } from "zod";
 const schema = z.object({
   niche: z.string().min(2),
   city: z.string().min(2),
-  limit: z.number().min(1).max(100).default(20),
+  limit: z.number().min(1).max(500).default(20),
 });
 
 // Simulates scraping — replace with real Google Places / SerpAPI integration
