@@ -41,6 +41,7 @@ interface ScrapingModuleProps {
 export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
   const [results, setResults] = useState<any[]>([]);
   const [scraped, setScraped] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
@@ -48,15 +49,22 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
   });
 
   async function onSubmit(data: FormData) {
-    const res = await fetch("/api/scraping", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const json = await res.json();
-    if (res.ok) {
-      setResults(json.prospects || []);
-      setScraped(true);
+    setApiError("");
+    try {
+      const res = await fetch("/api/scraping", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setResults(json.prospects || []);
+        setScraped(true);
+      } else {
+        setApiError(json.error || "Erreur lors du scraping");
+      }
+    } catch {
+      setApiError("Impossible de contacter le serveur. Réessayez.");
     }
   }
 
@@ -119,6 +127,12 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
                 />
               </div>
             </div>
+
+            {apiError && (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+                {apiError}
+              </div>
+            )}
 
             <Button type="submit" variant="gradient" disabled={isSubmitting} className="w-full md:w-auto">
               {isSubmitting ? (

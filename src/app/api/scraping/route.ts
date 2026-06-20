@@ -18,25 +18,32 @@ interface PlaceResult {
   userRatingCount?: number;
 }
 
+const FIELD_MASK = [
+  "places.displayName",
+  "places.formattedAddress",
+  "places.nationalPhoneNumber",
+  "places.websiteUri",
+  "places.rating",
+  "places.userRatingCount",
+  "nextPageToken",
+].join(",");
+
 async function searchGooglePlaces(query: string, limit: number): Promise<PlaceResult[]> {
   const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
-  if (!API_KEY) throw new Error("GOOGLE_MAPS_API_KEY non configuré");
 
-  const FIELD_MASK = [
-    "places.displayName",
-    "places.formattedAddress",
-    "places.nationalPhoneNumber",
-    "places.websiteUri",
-    "places.rating",
-    "places.userRatingCount",
-    "nextPageToken",
-  ].join(",");
+  console.log("[scraping] query:", query, "limit:", limit);
+  console.log("[scraping] API key present:", !!API_KEY);
+
+  if (!API_KEY) throw new Error("GOOGLE_MAPS_API_KEY manquant dans les variables d'environnement");
 
   const results: PlaceResult[] = [];
   let pageToken: string | undefined;
+  let page = 0;
 
   while (results.length < limit) {
+    page++;
     const pageSize = Math.min(limit - results.length, 20);
+    console.log(`[scraping] page ${page}, requesting ${pageSize} results, total so far: ${results.length}`);
 
     const body: Record<string, unknown> = {
       textQuery: query,
@@ -45,33 +52,45 @@ async function searchGooglePlaces(query: string, limit: number): Promise<PlaceRe
     };
     if (pageToken) body.pageToken = pageToken;
 
-    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": API_KEY,
-        "X-Goog-FieldMask": FIELD_MASK,
-      },
-      body: JSON.stringify(body),
-    });
+    // 8-second timeout per request
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+
+    let res: Response;
+    try {
+      res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": API_KEY,
+          "X-Goog-FieldMask": FIELD_MASK,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (fetchErr: any) {
+      clearTimeout(timer);
+      throw new Error(`Timeout ou réseau : ${fetchErr.message}`);
+    }
+    clearTimeout(timer);
 
     const data = await res.json();
+    console.log(`[scraping] page ${page} status:`, res.status, "places:", data.places?.length ?? 0);
 
     if (!res.ok) {
-      const msg = data?.error?.message ?? `Google Places error ${res.status}`;
+      const msg = data?.error?.message ?? `Google Places HTTP ${res.status}`;
+      console.error("[scraping] API error:", JSON.stringify(data.error ?? data));
       throw new Error(msg);
     }
 
     if (Array.isArray(data.places)) results.push(...data.places);
-
-    // Stop if no more pages or enough results
     if (!data.nextPageToken || results.length >= limit) break;
-    pageToken = data.nextPageToken;
 
-    // Small delay between paginated requests to respect rate limits
+    pageToken = data.nextPageToken;
     await new Promise((r) => setTimeout(r, 200));
   }
 
+  console.log("[scraping] total fetched:", results.length);
   return results.slice(0, limit);
 }
 
@@ -89,9 +108,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { niche, city, limit } = parsed.data;
-    const query = `${niche} ${city}`;
-
-    const places = await searchGooglePlaces(query, limit);
+    const places = await searchGooglePlaces(`${niche} ${city}`, limit);
 
     if (places.length === 0) {
       return NextResponse.json({ prospects: [], count: 0 });
@@ -103,28 +120,26 @@ export async function POST(req: NextRequest) {
       places.map((p) =>
         prisma.prospect.create({
           data: {
-            name:        p.displayName?.text ?? "Sans nom",
-            company:     p.displayName?.text ?? null,
+            name:        p.displayName?.text  ?? "Sans nom",
+            company:     p.displayName?.text  ?? null,
             niche,
             city,
-            address:     p.formattedAddress  ?? null,
+            address:     p.formattedAddress   ?? null,
             phone:       p.nationalPhoneNumber ?? null,
             website:     p.websiteUri         ?? null,
             rating:      p.rating             ?? null,
             reviewCount: p.userRatingCount    ?? null,
-            email:       null, // Google Places ne fournit pas les emails
+            email:       null,
             userId,
           },
         })
       )
     );
 
+    console.log("[scraping] saved to DB:", saved.length);
     return NextResponse.json({ prospects: saved, count: saved.length });
   } catch (err: any) {
-    console.error("Scraping error:", err.message);
-    return NextResponse.json(
-      { error: err.message ?? "Erreur lors du scraping" },
-      { status: 500 }
-    );
+    console.error("[scraping] error:", err.message);
+    return NextResponse.json({ error: err.message ?? "Erreur lors du scraping" }, { status: 500 });
   }
 }
