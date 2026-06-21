@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Zap, Target, Mail, BarChart3, ArrowRight, Check,
-  Star, TrendingUp, Users, Clock
+  Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Footer } from "@/components/footer";
@@ -27,13 +27,6 @@ const features = [
     title: "Suivi en temps réel",
     description: "Taux d'ouverture, réponses, conversions — suivez chaque interaction et optimisez vos campagnes avec des données précises.",
   },
-];
-
-const stats = [
-  { value: "10x", label: "Plus de prospects", icon: TrendingUp },
-  { value: "94%", label: "Taux de delivrabilité", icon: Mail },
-  { value: "3min", label: "Setup d'une campagne", icon: Clock },
-  { value: "2K+", label: "Utilisateurs actifs", icon: Users },
 ];
 
 const plans = [
@@ -75,27 +68,6 @@ const plans = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Thomas Durand",
-    role: "Consultant indépendant",
-    text: "En 2 semaines j'ai signé 3 nouveaux clients. ProspectAI a transformé ma façon de prospecter.",
-    rating: 5,
-  },
-  {
-    name: "Sarah Martin",
-    role: "Directrice commerciale",
-    text: "Nos équipes économisent 15h/semaine. Les emails IA sont bluffants, les prospects pensent qu'on les a écrits manuellement.",
-    rating: 5,
-  },
-  {
-    name: "Karim Benali",
-    role: "Fondateur d'agence",
-    text: "ROI de 800% dès le premier mois. Je recommande à tous les freelances et agences.",
-    rating: 5,
-  },
-];
-
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white overflow-hidden">
@@ -111,7 +83,6 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
             <a href="#features" className="hover:text-white transition-colors">Fonctionnalités</a>
             <a href="#pricing" className="hover:text-white transition-colors">Tarifs</a>
-            <a href="#testimonials" className="hover:text-white transition-colors">Témoignages</a>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/auth/signin">
@@ -133,7 +104,7 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-medium mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            Alimenté par GPT-4 · Nouveau : suivi des réponses en temps réel
+            Alimenté par IA · Suivi des réponses en temps réel
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight mb-6">
@@ -170,10 +141,10 @@ export default function LandingPage() {
             <div className="rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6 shadow-2xl shadow-black/50">
               <div className="grid grid-cols-4 gap-4 mb-6">
                 {[
-                  { label: "Prospects", value: "2,847", color: "text-violet-400" },
-                  { label: "Emails envoyés", value: "1,234", color: "text-indigo-400" },
-                  { label: "Taux d'ouverture", value: "34.2%", color: "text-emerald-400" },
-                  { label: "Réponses", value: "89", color: "text-amber-400" },
+                  { label: "Prospects", value: "—", color: "text-violet-400" },
+                  { label: "Emails envoyés", value: "—", color: "text-indigo-400" },
+                  { label: "Taux d'ouverture", value: "—", color: "text-emerald-400" },
+                  { label: "Réponses", value: "—", color: "text-amber-400" },
                 ].map((stat) => (
                   <div key={stat.label} className="rounded-xl bg-gray-800/50 p-4">
                     <p className="text-xs text-gray-400 mb-1">{stat.label}</p>
@@ -200,16 +171,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 px-6 border-y border-gray-800/50">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <stat.icon className="w-5 h-5 text-violet-400 mx-auto mb-2" />
-              <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-              <div className="text-sm text-gray-400">{stat.label}</div>
-            </div>
-          ))}
+      {/* Early adopter banner */}
+      <section className="py-14 px-6 border-y border-gray-800/50">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-sm font-medium mb-4">
+            <Rocket className="w-4 h-4 text-violet-400" />
+            Nouveau sur le marché
+          </div>
+          <p className="text-gray-300 text-lg leading-relaxed">
+            Soyez parmi les premiers à automatiser votre prospection.<br />
+            <span className="text-gray-500 text-base">Essai 14 jours gratuit — aucun engagement.</span>
+          </p>
         </div>
       </section>
 
@@ -310,31 +282,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">Ce que disent nos utilisateurs</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.name} className="rounded-2xl border border-gray-800 bg-gray-900/30 p-6">
-                <div className="flex gap-0.5 mb-4">
-                  {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
-                </div>
-                <p className="text-gray-300 mb-4 leading-relaxed">&ldquo;{t.text}&rdquo;</p>
-                <div>
-                  <p className="text-white font-medium text-sm">{t.name}</p>
-                  <p className="text-gray-500 text-xs">{t.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-24 px-6">
         <div className="max-w-3xl mx-auto text-center">
@@ -343,7 +290,7 @@ export default function LandingPage() {
               Prêt à automatiser votre prospection ?
             </h2>
             <p className="text-gray-400 text-lg mb-8">
-              Rejoignez 2000+ professionnels qui utilisent ProspectAI.
+              Automatisez votre prospection et concentrez-vous sur ce qui compte : vendre.
             </p>
             <Link href="/auth/signup">
               <Button variant="gradient" size="xl" className="group">
