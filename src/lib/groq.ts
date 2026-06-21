@@ -4,7 +4,7 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const MODEL = "llama-3.1-8b-instant";
+const MODEL = "llama-3.3-70b-versatile";
 
 type ProfileType = "b2b" | "creator" | "agency";
 type EmailLanguage = "fr" | "en" | "de" | "it" | "es";
@@ -261,12 +261,13 @@ export async function generateProspectEmail(
       return { ...parsed, body: parsed.body + signatureLine };
     }
 
-    // JSON extraction failed entirely — use typed fallback rather than dumping raw AI output
+    console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
     const fallback = generateFallbackEmail(prospect, profileType, lang);
     return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
     const code = err?.error?.code || err?.code || "";
+    console.error("[groq] API error:", { status, code, message: err?.message });
     if (status === 429 || code === "rate_limit_exceeded" || code === "model_decommissioned") {
       const fallback = generateFallbackEmail(prospect, profileType, lang);
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };

@@ -12,24 +12,37 @@ export async function POST(req: NextRequest) {
   try {
     const { prospectId } = await req.json();
 
-    const [prospect, user] = await Promise.all([
-      prisma.prospect.findFirst({
-        where: { id: prospectId, userId: session.user.id },
-      }),
-      prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { profileType: true, companyName: true, website: true, productDescription: true } as any,
-      }),
-    ]);
+    const prospect = await prisma.prospect.findFirst({
+      where: { id: prospectId, userId: session.user.id },
+    });
 
     if (!prospect) {
       return NextResponse.json({ error: "Prospect introuvable" }, { status: 404 });
     }
 
-    const profileType = ((user as any)?.profileType || "b2b") as "b2b" | "creator" | "agency";
-    const companyName = (user as any)?.companyName as string | null | undefined;
-    const website = (user as any)?.website as string | null | undefined;
-    const productDescription = (user as any)?.productDescription as string | null | undefined;
+    // Raw SQL query so field fetching is never silently dropped by a stale Prisma client
+    type UserRow = { profileType: string | null; companyName: string | null; website: string | null; productDescription: string | null };
+    let userRow: UserRow | null = null;
+    try {
+      const rows = await prisma.$queryRaw<UserRow[]>`
+        SELECT "profileType", "companyName", "website", "productDescription"
+        FROM "User" WHERE "id" = ${session.user.id}
+      `;
+      userRow = rows[0] ?? null;
+    } catch {
+      // productDescription column may not exist yet — fall back to known columns
+      const rows = await prisma.$queryRaw<Array<{ profileType: string | null; companyName: string | null; website: string | null }>>`
+        SELECT "profileType", "companyName", "website" FROM "User" WHERE "id" = ${session.user.id}
+      `;
+      if (rows[0]) userRow = { ...rows[0], productDescription: null };
+    }
+
+    const profileType = (userRow?.profileType || "b2b") as "b2b" | "creator" | "agency";
+    const companyName = userRow?.companyName ?? undefined;
+    const website = userRow?.website ?? undefined;
+    const productDescription = userRow?.productDescription ?? undefined;
+
+    console.error("[generate] sender:", { companyName, website, productDescription: productDescription?.substring(0, 60) });
 
     const targetLanguage = detectEmailLanguage(prospect.city);
 
@@ -51,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(email);
   } catch (err: any) {
-    console.error(err);
+    console.error("[generate] unhandled error:", err);
     return NextResponse.json({ error: "Erreur lors de la génération IA" }, { status: 500 });
   }
 }
