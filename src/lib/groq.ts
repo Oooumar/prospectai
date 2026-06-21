@@ -55,6 +55,8 @@ function getLangName(lang: EmailLanguage): string {
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
 
+  const noHallucinationRule = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").`;
+
   if (profileType === "creator") {
     return `You are an expert in brand partnerships and influencer marketing. You write prospecting emails for content creators looking for brand collaborations.
 The email must be:
@@ -63,6 +65,7 @@ The email must be:
 - Highlighting the creator's value (audience, engagement, niche)
 - Short (3 paragraphs max) and impactful
 - Dynamic and professional tone
+${noHallucinationRule}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
   }
@@ -75,6 +78,7 @@ The email must be:
 - Offer a free audit or consultation
 - Short and direct (3-4 paragraphs)
 - Professional and results-oriented tone
+${noHallucinationRule}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
   }
@@ -86,6 +90,7 @@ The email must be:
 - Focused on the value delivered
 - With a clear call to action
 - Professional but human tone
+${noHallucinationRule}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 }
