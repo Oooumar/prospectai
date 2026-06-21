@@ -41,6 +41,8 @@ export function detectLocale(): Locale {
 export function saveLocale(locale: Locale): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, locale);
+  // Also set a cookie so the server can read the preference on next request
+  document.cookie = `${STORAGE_KEY}=${locale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
   fetch("/api/settings", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

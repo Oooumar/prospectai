@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { type Locale, type T, translations, detectLocale, saveLocale, interpolate } from "@/lib/i18n";
+import { type Locale, type T, translations, LOCALES, STORAGE_KEY, saveLocale, interpolate } from "@/lib/i18n";
 
 interface I18nContext {
   locale: Locale;
@@ -11,16 +11,23 @@ interface I18nContext {
 
 const Ctx = createContext<I18nContext | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("fr");
+export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale: Locale }) {
+  // initialLocale comes from the server (middleware → x-locale header → layout.tsx)
+  // It already reflects: saved cookie preference OR browser Accept-Language header
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    setLocaleState(detectLocale());
-  }, []);
+    // On mount, check if the user has a manual localStorage preference
+    // (handles legacy users and cases where the cookie was cleared)
+    const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
+    if (stored && LOCALES.includes(stored) && stored !== locale) {
+      setLocaleState(stored);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
-    saveLocale(l);
+    saveLocale(l); // persists to localStorage + cookie + API
   }, []);
 
   const t = useCallback(

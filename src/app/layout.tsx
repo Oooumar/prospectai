@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import type { Locale } from "@/lib/i18n";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,11 +13,14 @@ export const metadata: Metadata = {
   icons: { icon: "/favicon.ico" },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headerStore = await headers();
+  const initialLocale = (headerStore.get("x-locale") ?? "fr") as Locale;
+
   return (
-    <html lang="fr" className="dark h-full">
+    <html lang={initialLocale} className="dark h-full">
       <body className={`${inter.className} h-full bg-gray-950 text-gray-100 antialiased`}>
-        <Providers>{children}</Providers>
+        <Providers initialLocale={initialLocale}>{children}</Providers>
       </body>
     </html>
   );
