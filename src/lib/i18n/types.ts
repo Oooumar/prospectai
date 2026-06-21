@@ -111,6 +111,7 @@ export interface T {
   set_company_title: string; set_company_desc: string;
   set_company_name: string; set_company_name_ph: string;
   set_company_website: string; set_company_website_ph: string;
+  set_company_product_desc: string; set_company_product_desc_ph: string;
   // Scraping module
   sc_title: string; sc_niche: string; sc_niche_ph: string;
   sc_city: string; sc_city_ph: string; sc_limit: string;

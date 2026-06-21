@@ -164,6 +164,8 @@ Mit freundlichen Grüßen,
   set_company_title: "Mein Produkt / Dienst", set_company_desc: "Wird automatisch am Ende Ihrer KI-generierten E-Mails eingefügt",
   set_company_name: "Unternehmensname", set_company_name_ph: "z.B. ProspectAI, Agentur Müller…",
   set_company_website: "Website", set_company_website_ph: "https://meinewebsite.de",
+  set_company_product_desc: "Kurze Beschreibung Ihres Produkts / Dienstleistung",
+  set_company_product_desc_ph: "z.B. ProspectAI automatisiert die B2B-Akquise — Interessenten-Scraping + personalisierte KI-E-Mails mit 1 Klick.",
 
   sc_title: "Interessenten scrapen", sc_niche: "Nische / Branche",
   sc_niche_ph: "z.B. Klempner, Beauty-Marke…", sc_city: "Stadt",

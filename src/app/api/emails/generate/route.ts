@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       }),
       prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { profileType: true, companyName: true, website: true } as any,
+        select: { profileType: true, companyName: true, website: true, productDescription: true } as any,
       }),
     ]);
 
@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     const profileType = ((user as any)?.profileType || "b2b") as "b2b" | "creator" | "agency";
     const companyName = (user as any)?.companyName as string | null | undefined;
     const website = (user as any)?.website as string | null | undefined;
+    const productDescription = (user as any)?.productDescription as string | null | undefined;
 
     const targetLanguage = detectEmailLanguage(prospect.city);
 
@@ -41,7 +42,11 @@ export async function POST(req: NextRequest) {
       },
       profileType,
       targetLanguage,
-      { companyName: companyName || undefined, website: website || undefined }
+      {
+        companyName: companyName || undefined,
+        website: website || undefined,
+        productDescription: productDescription || undefined,
+      }
     );
 
     return NextResponse.json(email);

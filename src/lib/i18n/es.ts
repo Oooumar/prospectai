@@ -164,6 +164,8 @@ Atentamente,
   set_company_title: "Mi producto / servicio", set_company_desc: "Se añade automáticamente al final de tus emails generados por IA",
   set_company_name: "Nombre de la empresa", set_company_name_ph: "ej. ProspectAI, Agencia García…",
   set_company_website: "Sitio web", set_company_website_ph: "https://misitio.es",
+  set_company_product_desc: "Descripción corta de tu producto / servicio",
+  set_company_product_desc_ph: "ej. ProspectAI automatiza la prospección B2B — scraping de prospectos + emails IA personalizados en 1 clic.",
 
   sc_title: "Rastrear prospectos", sc_niche: "Nicho / Sector",
   sc_niche_ph: "ej. fontanero, marca beauty…", sc_city: "Ciudad",

@@ -98,40 +98,57 @@ Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType,
-  sender?: { companyName?: string; website?: string }
+  sender?: { companyName?: string; website?: string; productDescription?: string }
 ): string {
   const senderName = sender?.companyName ?? "our solution";
-  const senderRef = sender?.companyName
-    ? sender.companyName
-    : "our service";
+  const prospectId = `${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}`;
 
   if (profileType === "creator") {
-    const identity = sender?.companyName
-      ? `I represent ${sender.companyName}.`
-      : "I am a content creator";
-    return `Write a prospecting email to propose a partnership/collaboration to this brand:
-- Brand/Company: ${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}
-- Sector: ${prospect.niche}
-- City: ${prospect.city}
+    const identity = sender?.productDescription
+      ? `I represent ${senderName}: ${sender.productDescription}`
+      : sender?.companyName
+        ? `I represent ${senderName}`
+        : `I am a content creator specialized in the ${prospect.niche} sector`;
+    return `Write a short partnership prospecting email.
 
-${identity} I am specialized in the ${prospect.niche} sector and looking to establish a partnership (sponsored content, ambassador, affiliate).`;
+SENDER: ${identity}
+RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
+
+EMAIL STRUCTURE (3 sentences max, no bullet points in the email):
+1. One-sentence intro connecting my work to the ${prospect.niche} space
+2. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
+3. One clear call-to-action for a brief chat`;
   }
 
   if (profileType === "agency") {
-    return `Write a prospecting email to propose our agency services to:
-- Company: ${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}
-- Sector: ${prospect.niche}
-- City: ${prospect.city}
+    const whatWeDo = sender?.productDescription
+      ? sender.productDescription
+      : `${senderName} helps ${prospect.niche} businesses generate more leads and grow revenue`;
+    return `Write a short B2B prospecting email from an agency.
 
-${senderRef} helps companies in the ${prospect.niche} sector generate more leads and grow their revenue. Offer a free audit or discovery call.`;
+SENDER AGENCY: ${senderName}
+WHAT WE DO: ${whatWeDo}
+RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
+
+EMAIL STRUCTURE (3-4 sentences max, no bullet points in the email):
+1. Open with a specific growth challenge facing ${prospect.niche} businesses
+2. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
+3. Offer a free audit or 20-min discovery call`;
   }
 
-  return `Write a prospecting email for:
-- Name/Company: ${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}
-- Sector: ${prospect.niche}
-- City: ${prospect.city}
+  const whatWeDo = sender?.productDescription
+    ? sender.productDescription
+    : `${senderName} helps businesses automate their prospecting and acquire more clients`;
+  return `Write a short, high-impact B2B prospecting email.
 
-The sender's product/service is: ${senderName}. Present ${senderName} as the solution and explain concisely how it can help this ${prospect.niche} business grow.`;
+SENDER PRODUCT: ${senderName}
+WHAT IT DOES: ${whatWeDo}
+RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
+
+EMAIL STRUCTURE (3-4 sentences max, no bullet points in the email):
+1. One-sentence hook identifying a specific pain point for ${prospect.niche} businesses in ${prospect.city}
+2. Introduce ${senderName} by name and explain ONE concrete benefit it brings to ${prospect.niche} businesses
+3. One clear call-to-action (e.g. a 15-min call this week)`;
 }
 
 function generateFallbackEmail(
@@ -218,7 +235,7 @@ export async function generateProspectEmail(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType = "b2b",
   targetLanguage?: EmailLanguage,
-  sender?: { companyName?: string; website?: string }
+  sender?: { companyName?: string; website?: string; productDescription?: string }
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
   const signatureLine = buildSignatureLine(lang, sender?.companyName, sender?.website);

@@ -164,6 +164,8 @@ Best regards,
   set_company_title: "My product / service", set_company_desc: "Automatically appended at the end of your AI-generated emails",
   set_company_name: "Company name", set_company_name_ph: "e.g. ProspectAI, Dupont Agency…",
   set_company_website: "Website", set_company_website_ph: "https://mysite.com",
+  set_company_product_desc: "Short description of your product / service",
+  set_company_product_desc_ph: "e.g. ProspectAI automates B2B prospecting — prospect scraping + personalised AI emails in 1 click.",
 
   sc_title: "Scrape prospects", sc_niche: "Niche / Sector",
   sc_niche_ph: "e.g. plumber, beauty brand…", sc_city: "City",

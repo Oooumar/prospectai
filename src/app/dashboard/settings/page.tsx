@@ -6,6 +6,7 @@ import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState({ name: "", dailyLimit: 50 });
   const [companySaving, setCompanySaving] = useState(false);
   const [companySaved, setCompanySaved] = useState(false);
-  const [companyForm, setCompanyForm] = useState({ companyName: "", website: "" });
+  const [companyForm, setCompanyForm] = useState({ companyName: "", website: "", productDescription: "" });
   const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
   const [pwError, setPwError] = useState("");
   const [pwSaved, setPwSaved] = useState(false);
@@ -34,7 +35,7 @@ export default function SettingsPage() {
       .then(data => {
         setUser(data.user);
         setForm({ name: data.user?.name || "", dailyLimit: data.user?.dailyLimit || 50 });
-        setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "" });
+        setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "", productDescription: data.user?.productDescription || "" });
       });
   }, []);
 
@@ -58,7 +59,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyName: companyForm.companyName, website: companyForm.website }),
+      body: JSON.stringify({ companyName: companyForm.companyName, website: companyForm.website, productDescription: companyForm.productDescription }),
     });
     if (res.ok) {
       setCompanySaved(true);
@@ -177,6 +178,16 @@ export default function SettingsPage() {
                 onChange={(e) => setCompanyForm(f => ({ ...f, website: e.target.value }))}
                 placeholder={t("set_company_website_ph")}
                 type="url"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("set_company_product_desc")}</Label>
+              <Textarea
+                value={companyForm.productDescription}
+                onChange={(e) => setCompanyForm(f => ({ ...f, productDescription: e.target.value }))}
+                placeholder={t("set_company_product_desc_ph")}
+                rows={3}
+                className="resize-none text-sm"
               />
             </div>
             <Button variant="gradient" onClick={saveCompany} disabled={companySaving}>
