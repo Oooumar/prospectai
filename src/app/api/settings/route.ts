@@ -9,6 +9,7 @@ const updateSchema = z.object({
   dailyLimit: z.number().min(1).max(1000).optional(),
   currentPassword: z.string().optional(),
   newPassword: z.string().min(6).optional(),
+  language: z.enum(["fr", "en", "de", "it", "es"]).optional(),
 });
 
 export async function GET() {
@@ -31,11 +32,12 @@ export async function PATCH(req: NextRequest) {
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
-  const { name, dailyLimit, currentPassword, newPassword } = parsed.data;
+  const { name, dailyLimit, currentPassword, newPassword, language } = parsed.data;
   const updateData: Record<string, any> = {};
 
   if (name) updateData.name = name;
   if (dailyLimit) updateData.dailyLimit = dailyLimit;
+  if (language) updateData.language = language;
 
   if (currentPassword && newPassword) {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });

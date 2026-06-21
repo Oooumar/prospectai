@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Zap, Loader2, Check } from "lucide-react";
+import { Settings, User, Shield, Zap, Loader2, Check, Globe } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
+import { useI18n } from "@/components/language-provider";
+import { LanguageSelector } from "@/components/language-selector";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
+  const { t } = useI18n();
   const [user, setUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,7 +52,7 @@ export default function SettingsPage() {
   async function savePassword() {
     setPwError("");
     if (pwForm.new !== pwForm.confirm) {
-      setPwError("Les mots de passe ne correspondent pas");
+      setPwError(t("set_pw_mismatch"));
       return;
     }
     setSaving(true);
@@ -64,14 +67,14 @@ export default function SettingsPage() {
       setPwForm({ current: "", new: "", confirm: "" });
       setTimeout(() => setPwSaved(false), 2000);
     } else {
-      setPwError(data.error || "Erreur");
+      setPwError(data.error === "Mot de passe actuel incorrect" ? t("set_pw_wrong") : data.error || "Erreur");
     }
     setSaving(false);
   }
 
   return (
     <>
-      <TopBar title="Paramètres" description="Gérez votre compte et vos préférences" />
+      <TopBar title={t("set_title")} description={t("set_desc")} />
 
       <div className="p-6 space-y-6 max-w-2xl">
         {/* Profile */}
@@ -79,12 +82,11 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <User className="w-4 h-4 text-violet-400" />
-              Profil
+              {t("set_profile_title")}
             </CardTitle>
-            <CardDescription>Informations de votre compte</CardDescription>
+            <CardDescription>{t("set_profile_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Avatar */}
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-xl font-bold text-white shadow-lg">
                 {form.name ? getInitials(form.name) : "U"}
@@ -93,7 +95,7 @@ export default function SettingsPage() {
                 <p className="font-semibold text-white">{form.name || "Utilisateur"}</p>
                 <p className="text-sm text-gray-400">{user?.email}</p>
                 {user?.createdAt && (
-                  <p className="text-xs text-gray-600">Membre depuis {formatDate(user.createdAt)}</p>
+                  <p className="text-xs text-gray-600">{t("set_member", { date: formatDate(user.createdAt) })}</p>
                 )}
               </div>
               <Badge variant="default" className="ml-auto">PRO</Badge>
@@ -103,21 +105,32 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <Label>Nom complet</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                />
+                <Label>{t("set_name")}</Label>
+                <Input value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="space-y-1.5">
-                <Label>Email</Label>
+                <Label>{t("set_email")}</Label>
                 <Input value={user?.email || ""} disabled className="opacity-60" />
               </div>
             </div>
 
             <Button variant="gradient" onClick={saveProfile} disabled={saving}>
-              {saved ? <><Check className="w-4 h-4" />Sauvegardé</> : saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sauvegarder"}
+              {saved ? <><Check className="w-4 h-4" />{t("set_saved")}</> : saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("set_save")}
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Language */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Globe className="w-4 h-4 text-blue-400" />
+              {t("set_lang_title")}
+            </CardTitle>
+            <CardDescription>{t("set_lang_desc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LanguageSelector />
           </CardContent>
         </Card>
 
@@ -126,13 +139,13 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Zap className="w-4 h-4 text-amber-400" />
-              Limites d&apos;envoi
+              {t("set_limits_title")}
             </CardTitle>
-            <CardDescription>Configurez votre quota journalier</CardDescription>
+            <CardDescription>{t("set_limits_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Emails par jour</Label>
+              <Label>{t("set_limit_label")}</Label>
               <div className="flex gap-3">
                 <Input
                   type="number"
@@ -143,12 +156,10 @@ export default function SettingsPage() {
                   className="max-w-[140px]"
                 />
                 <Button variant="outline" onClick={saveProfile} disabled={saving}>
-                  Mettre à jour
+                  {t("set_update")}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500">
-                Recommandé : 50-100/jour pour éviter le spam. Maximum selon votre plan.
-              </p>
+              <p className="text-xs text-gray-500">{t("set_limit_hint")}</p>
             </div>
           </CardContent>
         </Card>
@@ -158,57 +169,38 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Shield className="w-4 h-4 text-emerald-400" />
-              Sécurité
+              {t("set_security_title")}
             </CardTitle>
-            <CardDescription>Changez votre mot de passe</CardDescription>
+            <CardDescription>{t("set_security_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Mot de passe actuel</Label>
-              <Input
-                type="password"
-                value={pwForm.current}
-                onChange={(e) => setPwForm(f => ({ ...f, current: e.target.value }))}
-                placeholder="••••••••"
-              />
+              <Label>{t("set_current_pw")}</Label>
+              <Input type="password" value={pwForm.current} onChange={(e) => setPwForm(f => ({ ...f, current: e.target.value }))} placeholder="••••••••" />
             </div>
             <div className="space-y-1.5">
-              <Label>Nouveau mot de passe</Label>
-              <Input
-                type="password"
-                value={pwForm.new}
-                onChange={(e) => setPwForm(f => ({ ...f, new: e.target.value }))}
-                placeholder="Minimum 6 caractères"
-              />
+              <Label>{t("set_new_pw")}</Label>
+              <Input type="password" value={pwForm.new} onChange={(e) => setPwForm(f => ({ ...f, new: e.target.value }))} placeholder="••••••••" />
             </div>
             <div className="space-y-1.5">
-              <Label>Confirmer</Label>
-              <Input
-                type="password"
-                value={pwForm.confirm}
-                onChange={(e) => setPwForm(f => ({ ...f, confirm: e.target.value }))}
-                placeholder="••••••••"
-              />
+              <Label>{t("set_confirm_pw")}</Label>
+              <Input type="password" value={pwForm.confirm} onChange={(e) => setPwForm(f => ({ ...f, confirm: e.target.value }))} placeholder="••••••••" />
             </div>
             {pwError && <p className="text-xs text-red-400">{pwError}</p>}
-            <Button
-              variant="outline"
-              onClick={savePassword}
-              disabled={saving || !pwForm.current || !pwForm.new}
-            >
-              {pwSaved ? <><Check className="w-4 h-4" />Mot de passe changé</> : "Changer le mot de passe"}
+            <Button variant="outline" onClick={savePassword} disabled={saving || !pwForm.current || !pwForm.new}>
+              {pwSaved ? <><Check className="w-4 h-4" />{t("set_saved_pw")}</> : t("set_save_pw")}
             </Button>
           </CardContent>
         </Card>
 
-        {/* API Keys info */}
+        {/* Config */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Settings className="w-4 h-4 text-gray-400" />
-              Configuration
+              {t("set_config_title")}
             </CardTitle>
-            <CardDescription>Variables d&apos;environnement requises</CardDescription>
+            <CardDescription>{t("set_config_desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -223,13 +215,10 @@ export default function SettingsPage() {
                     <code className="text-xs text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded">{item.key}</code>
                     <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
                   </div>
-                  <Badge variant="secondary" className="text-xs">Requis</Badge>
+                  <Badge variant="secondary" className="text-xs">{t("set_config_required")}</Badge>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-500 mt-4">
-              Configurez ces variables dans votre fichier <code className="text-gray-400">.env.local</code> ou dans les paramètres Vercel.
-            </p>
           </CardContent>
         </Card>
       </div>

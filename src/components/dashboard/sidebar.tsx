@@ -9,17 +9,19 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-
-const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/prospects", label: "Prospects", icon: Target },
-  { href: "/dashboard/campaigns", label: "Campagnes", icon: Megaphone },
-  { href: "/dashboard/emails", label: "Emails", icon: Mail },
-  { href: "/dashboard/settings", label: "Paramètres", icon: Settings },
-];
+import { useI18n } from "@/components/language-provider";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { t } = useI18n();
+
+  const nav = [
+    { href: "/dashboard", label: t("sb_dashboard"), icon: LayoutDashboard },
+    { href: "/dashboard/prospects", label: t("sb_prospects"), icon: Target },
+    { href: "/dashboard/campaigns", label: t("sb_campaigns"), icon: Megaphone },
+    { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
+    { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
+  ];
 
   return (
     <aside className="w-64 h-screen bg-gray-950 border-r border-gray-800/60 flex flex-col fixed left-0 top-0 z-40">
@@ -63,7 +65,7 @@ export function Sidebar() {
           onClick={() => signOut({ callbackUrl: "/" })}
         >
           <LogOut className="w-4 h-4" />
-          Déconnexion
+          {t("sb_logout")}
         </Button>
       </div>
     </aside>

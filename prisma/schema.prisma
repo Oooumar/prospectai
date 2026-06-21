@@ -25,6 +25,7 @@ model User {
   stripeSubscriptionId String?
   paypalSubscriptionId String?
   trialReminderSent    Boolean   @default(false)
+  language             String    @default("fr")
   createdAt            DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

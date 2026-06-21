@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateProspectEmail } from "@/lib/groq";
+import { generateProspectEmail, detectEmailLanguage } from "@/lib/groq";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
 
     const profileType = ((user as any)?.profileType || "b2b") as "b2b" | "creator" | "agency";
 
+    const targetLanguage = detectEmailLanguage(prospect.city);
+
     const email = await generateProspectEmail(
       {
         name: prospect.name,
@@ -35,7 +37,8 @@ export async function POST(req: NextRequest) {
         niche: prospect.niche,
         city: prospect.city,
       },
-      profileType
+      profileType,
+      targetLanguage
     );
 
     return NextResponse.json(email);

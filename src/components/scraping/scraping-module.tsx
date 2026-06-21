@@ -10,28 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, Loader2, Target, Check, Mail, Phone } from "lucide-react";
+import { useI18n } from "@/components/language-provider";
 
-const schema = z.object({
-  niche: z.string().min(2, "Entrez une niche (ex: plombier, restaurant)"),
-  city: z.string().min(2, "Entrez une ville"),
-  limit: z.coerce.number().min(1).max(60),
-});
-
-type FormData = z.infer<typeof schema>;
-
-const NICHE_GROUPS = {
-  "🏢 Professionnel B2B": [
-    "Plombier", "Électricien", "Restaurant", "Boulangerie",
-    "Coiffeur", "Dentiste", "Avocat", "Comptable", "Auto école", "Carreleur",
-  ],
-  "🎨 Créateur / Marque": [
-    "Marque beauté", "Marque mode", "Marque tech", "Agence influence",
-    "Marque alimentaire", "Startup",
-  ],
-  "🏛️ Agence": [
-    "Agence marketing", "Agence web", "Agence SEO", "Agence vidéo",
-  ],
-};
+type FormData = { niche: string; city: string; limit: number };
 
 interface ScrapingModuleProps {
   onClose: () => void;
@@ -39,14 +20,27 @@ interface ScrapingModuleProps {
 }
 
 export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
+  const { t } = useI18n();
   const [results, setResults] = useState<any[]>([]);
   const [scraped, setScraped] = useState(false);
   const [apiError, setApiError] = useState("");
+
+  const schema = z.object({
+    niche: z.string().min(2),
+    city: z.string().min(2),
+    limit: z.coerce.number().min(1).max(60),
+  });
 
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: { limit: 20 },
   });
+
+  const NICHE_GROUPS = {
+    [t("sc_g_b2b")]: ["Plombier", "Électricien", "Restaurant", "Boulangerie", "Coiffeur", "Dentiste", "Avocat", "Comptable", "Auto école", "Carreleur"],
+    [t("sc_g_creator")]: ["Marque beauté", "Marque mode", "Marque tech", "Agence influence", "Marque alimentaire", "Startup"],
+    [t("sc_g_agency")]: ["Agence marketing", "Agence web", "Agence SEO", "Agence vidéo"],
+  };
 
   async function onSubmit(data: FormData) {
     setApiError("");
@@ -64,7 +58,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
         setApiError(json.error || "Erreur lors du scraping");
       }
     } catch {
-      setApiError("Impossible de contacter le serveur. Réessayez.");
+      setApiError(t("sc_error_server"));
     }
   }
 
@@ -74,7 +68,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Target className="w-4 h-4 text-violet-400" />
-            Scraper des prospects
+            {t("sc_title")}
           </CardTitle>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
             <X className="w-4 h-4" />
@@ -87,8 +81,8 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 md:col-span-1">
-                <Label>Niche / Secteur</Label>
-                <Input placeholder="ex: plombier, marque beauté…" {...register("niche")} />
+                <Label>{t("sc_niche")}</Label>
+                <Input placeholder={t("sc_niche_ph")} {...register("niche")} />
                 {errors.niche && <p className="text-xs text-red-400">{errors.niche.message}</p>}
                 <div className="space-y-2 mt-2">
                   {Object.entries(NICHE_GROUPS).map(([group, niches]) => (
@@ -112,19 +106,14 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
               </div>
 
               <div className="space-y-1.5">
-                <Label>Ville</Label>
-                <Input placeholder="ex: Paris, Lyon, Marseille…" {...register("city")} />
+                <Label>{t("sc_city")}</Label>
+                <Input placeholder={t("sc_city_ph")} {...register("city")} />
                 {errors.city && <p className="text-xs text-red-400">{errors.city.message}</p>}
               </div>
 
               <div className="space-y-1.5">
-                <Label>Nombre de résultats</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={100}
-                  {...register("limit", { valueAsNumber: true })}
-                />
+                <Label>{t("sc_limit")}</Label>
+                <Input type="number" min={1} max={100} {...register("limit", { valueAsNumber: true })} />
               </div>
             </div>
 
@@ -136,9 +125,9 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
 
             <Button type="submit" variant="gradient" disabled={isSubmitting} className="w-full md:w-auto">
               {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Scraping en cours…</>
+                <><Loader2 className="w-4 h-4 animate-spin" />{t("sc_searching")}</>
               ) : (
-                <><Search className="w-4 h-4" />Rechercher des prospects</>
+                <><Search className="w-4 h-4" />{t("sc_search_btn")}</>
               )}
             </Button>
           </form>
@@ -150,11 +139,11 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
                 <span className="text-sm font-medium text-white">
-                  {results.length} prospects trouvés et sauvegardés
+                  {t("sc_results", { n: results.length })}
                 </span>
               </div>
               <Button variant="outline" size="sm" onClick={() => setScraped(false)}>
-                Nouvelle recherche
+                {t("sc_new_search")}
               </Button>
             </div>
 
@@ -181,17 +170,17 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
               ))}
               {results.length > 10 && (
                 <p className="text-center text-xs text-gray-500 py-2">
-                  + {results.length - 10} autres prospects dans la liste
+                  {t("sc_more", { n: results.length - 10 })}
                 </p>
               )}
             </div>
 
             <div className="flex gap-3">
               <Button variant="gradient" onClick={onSuccess} className="flex-1">
-                Voir tous les prospects
+                {t("sc_view_all")}
               </Button>
               <Button variant="outline" onClick={() => setScraped(false)}>
-                Scraper encore
+                {t("sc_again")}
               </Button>
             </div>
           </div>

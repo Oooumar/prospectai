@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Wand2, Send, X, Loader2, Check, RefreshCw } from "lucide-react";
 import type { Prospect } from "@/types";
+import { useI18n } from "@/components/language-provider";
 
 interface EmailComposerProps {
   prospect: Prospect;
@@ -18,6 +19,7 @@ interface EmailComposerProps {
 }
 
 export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailComposerProps) {
+  const { t } = useI18n();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -54,12 +56,7 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
       const res = await fetch("/api/emails/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prospectId: prospect.id,
-          campaignId,
-          subject,
-          body,
-        }),
+        body: JSON.stringify({ prospectId: prospect.id, campaignId, subject, body }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -80,7 +77,7 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Wand2 className="w-4 h-4 text-indigo-400" />
-            Email IA pour{" "}
+            {t("ec_title_prefix")}{" "}
             <span className="text-indigo-300">{prospect.name}</span>
           </CardTitle>
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose}>
@@ -102,8 +99,8 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
             <div className="w-14 h-14 rounded-full bg-emerald-500/20 flex items-center justify-center">
               <Check className="w-7 h-7 text-emerald-400" />
             </div>
-            <p className="text-white font-semibold">Email envoyé avec succès !</p>
-            <p className="text-sm text-gray-400">Le prospect a été marqué comme &ldquo;Contacté&rdquo;</p>
+            <p className="text-white font-semibold">{t("ec_sent_title")}</p>
+            <p className="text-sm text-gray-400">{t("ec_sent_desc")}</p>
           </div>
         ) : (
           <>
@@ -115,9 +112,9 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
                 className="flex-1 border-indigo-500/30 hover:border-indigo-400/60"
               >
                 {generating ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Génération IA…</>
+                  <><Loader2 className="w-4 h-4 animate-spin" />{t("ec_generating")}</>
                 ) : (
-                  <><Wand2 className="w-4 h-4 text-indigo-400" />Générer avec l&apos;IA</>
+                  <><Wand2 className="w-4 h-4 text-indigo-400" />{t("ec_generate")}</>
                 )}
               </Button>
               {(subject || body) && (
@@ -128,28 +125,17 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
             </div>
 
             <div className="space-y-1.5">
-              <Label>Objet</Label>
-              <Input
-                placeholder="Objet de l'email…"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-              />
+              <Label>{t("ec_subject")}</Label>
+              <Input placeholder={t("ec_subject_ph")} value={subject} onChange={(e) => setSubject(e.target.value)} />
             </div>
 
             <div className="space-y-1.5">
-              <Label>Corps de l&apos;email</Label>
-              <Textarea
-                placeholder="Rédigez ou générez votre email ici…"
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={8}
-              />
+              <Label>{t("ec_body")}</Label>
+              <Textarea placeholder={t("ec_body_ph")} value={body} onChange={(e) => setBody(e.target.value)} rows={8} />
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                {error}
-              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
             )}
 
             <div className="flex gap-3">
@@ -160,18 +146,16 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
                 className="flex-1"
               >
                 {sending ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Envoi…</>
+                  <><Loader2 className="w-4 h-4 animate-spin" />{t("ec_sending")}</>
                 ) : (
-                  <><Send className="w-4 h-4" />Envoyer l&apos;email</>
+                  <><Send className="w-4 h-4" />{t("ec_send")}</>
                 )}
               </Button>
-              <Button variant="outline" onClick={onClose}>Annuler</Button>
+              <Button variant="outline" onClick={onClose}>{t("ec_cancel")}</Button>
             </div>
 
             {!prospect.email && (
-              <p className="text-xs text-amber-400 text-center">
-                Ce prospect n&apos;a pas d&apos;email — vous pouvez en ajouter un manuellement
-              </p>
+              <p className="text-xs text-amber-400 text-center">{t("ec_no_email")}</p>
             )}
           </>
         )}
