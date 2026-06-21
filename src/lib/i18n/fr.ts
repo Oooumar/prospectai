@@ -34,6 +34,7 @@ export const fr: T = {
 
   plan_starter_desc: "Pour débuter la prospection", plan_creator_desc: "Pour les créateurs de contenu",
   plan_pro_desc: "Pour les équipes ambitieuses", plan_agency_desc: "Pour les agences",
+  plan_popular_badge: "Populaire",
   pf_s1: "50 prospects/mois", pf_s2: "1 langue", pf_s3: "Scraping de base", pf_s4: "Génération IA", pf_s5: "Support email",
   pf_c1: "200 prospects/mois", pf_c2: "Toutes les langues", pf_c3: "Génération email illimitée", pf_c4: "Niches créateurs", pf_c5: "Templates personnalisés", pf_c6: "Support prioritaire",
   pf_p1: "Prospects illimités", pf_p2: "Toutes fonctionnalités", pf_p3: "Campagnes illimitées", pf_p4: "IA avancée", pf_p5: "Analytics complets", pf_p6: "Support prioritaire",

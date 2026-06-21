@@ -32,6 +32,7 @@ export const en: T = {
   price_trial_btn: "Start 14-day free trial",
   price_payment_note: "Payment by card (Stripe) or PayPal · Cancel in 1 click",
 
+  plan_popular_badge: "Popular",
   plan_starter_desc: "To start prospecting", plan_creator_desc: "For content creators",
   plan_pro_desc: "For ambitious teams", plan_agency_desc: "For agencies",
   pf_s1: "50 prospects/month", pf_s2: "1 language", pf_s3: "Basic scraping", pf_s4: "AI generation", pf_s5: "Email support",

@@ -18,6 +18,7 @@ export interface T {
   price_month: string; price_trial_then: string; price_trial_btn: string; price_payment_note: string;
   // Plan descriptions
   plan_starter_desc: string; plan_creator_desc: string; plan_pro_desc: string; plan_agency_desc: string;
+  plan_popular_badge: string;
   // Plan features - Starter
   pf_s1: string; pf_s2: string; pf_s3: string; pf_s4: string; pf_s5: string;
   // Plan features - Creator

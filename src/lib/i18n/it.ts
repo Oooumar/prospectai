@@ -32,6 +32,7 @@ export const it: T = {
   price_trial_btn: "Inizia la prova gratuita di 14 giorni",
   price_payment_note: "Pagamento con carta (Stripe) o PayPal · Disdetta in 1 clic",
 
+  plan_popular_badge: "Popolare",
   plan_starter_desc: "Per iniziare la prospezione", plan_creator_desc: "Per i creator di contenuti",
   plan_pro_desc: "Per i team ambiziosi", plan_agency_desc: "Per le agenzie",
   pf_s1: "50 prospect/mese", pf_s2: "1 lingua", pf_s3: "Scraping base", pf_s4: "Generazione IA", pf_s5: "Supporto email",

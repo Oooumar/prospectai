@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import {
   Zap, Target, Mail, BarChart3, ArrowRight, Check, Rocket
@@ -12,10 +14,10 @@ import { useI18n } from "@/components/language-provider";
 const FEATURE_ICONS = [Target, Zap, Mail, BarChart3];
 
 const PLANS = [
-  { name: "Starter", slug: "starter", price: "9", popular: false, badge: null as string | null },
-  { name: "Creator", slug: "creator", price: "19", popular: true, badge: "Populaire" },
-  { name: "Pro", slug: "pro", price: "49", popular: false, badge: null },
-  { name: "Agency", slug: "agency", price: "99", popular: false, badge: null },
+  { name: "Starter", slug: "starter", price: "9", popular: false },
+  { name: "Creator", slug: "creator", price: "19", popular: true },
+  { name: "Pro", slug: "pro", price: "49", popular: false },
+  { name: "Agency", slug: "agency", price: "99", popular: false },
 ];
 
 export default function LandingPage() {
@@ -196,9 +198,9 @@ export default function LandingPage() {
                     : "border-gray-800 bg-gray-900/30"
                 }`}
               >
-                {plan.badge && (
+                {plan.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-violet-600 rounded-full text-xs font-bold text-white whitespace-nowrap">
-                    ⭐ {plan.badge}
+                    ⭐ {t("plan_popular_badge")}
                   </div>
                 )}
                 <div className="mb-5">

@@ -34,6 +34,7 @@ export const de: T = {
 
   plan_starter_desc: "Zum Einstieg in die Akquise", plan_creator_desc: "Für Content Creator",
   plan_pro_desc: "Für ambitionierte Teams", plan_agency_desc: "Für Agenturen",
+  plan_popular_badge: "Beliebt",
   pf_s1: "50 Interessenten/Monat", pf_s2: "1 Sprache", pf_s3: "Basis-Scraping", pf_s4: "KI-Generierung", pf_s5: "E-Mail-Support",
   pf_c1: "200 Interessenten/Monat", pf_c2: "Alle Sprachen", pf_c3: "Unbegrenzte E-Mail-Generierung", pf_c4: "Creator-Nischen", pf_c5: "Angepasste Vorlagen", pf_c6: "Prioritätssupport",
   pf_p1: "Unbegrenzte Interessenten", pf_p2: "Alle Funktionen", pf_p3: "Unbegrenzte Kampagnen", pf_p4: "Erweitertes KI", pf_p5: "Vollständige Analytics", pf_p6: "Prioritätssupport",
