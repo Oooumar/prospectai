@@ -17,22 +17,10 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
-    // Priority 1: localStorage (explicit manual user preference)
+    // Only apply a stored manual preference — server (proxy.ts) handles auto-detection
     const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (stored && LOCALES.includes(stored)) {
-      if (stored !== locale) setLocaleState(stored);
-      return;
-    }
-    // Priority 2: navigator.languages (client-side fallback if middleware didn't set x-locale)
-    const langs = navigator.languages?.length
-      ? Array.from(navigator.languages)
-      : [navigator.language];
-    for (const lang of langs) {
-      const code = lang.slice(0, 2).toLowerCase() as Locale;
-      if (LOCALES.includes(code) && code !== locale) {
-        setLocaleState(code);
-        break;
-      }
+    if (stored && LOCALES.includes(stored) && stored !== locale) {
+      setLocaleState(stored);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

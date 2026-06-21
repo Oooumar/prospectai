@@ -49,6 +49,10 @@ export function proxy(req: NextRequest) {
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 
+  // Prevent CDN from caching locale-sensitive pages (responses vary by Accept-Language)
+  response.headers.set("Cache-Control", "private, no-store");
+  response.headers.append("Vary", "Accept-Language");
+
   // Persist detected locale in cookie if not already saved
   if (!storedLocale || !LOCALES.includes(storedLocale as Locale)) {
     response.cookies.set(LOCALE_COOKIE, locale, {

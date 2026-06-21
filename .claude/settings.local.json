@@ -27,7 +27,27 @@
       "Bash(pkill -f \"next dev\" 2>/dev/null; sleep 1 *)",
       "Bash(npx prisma *)",
       "Bash(git init *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git config *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(node scripts/make-admin.mjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/auth/signin)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/dashboard)",
+      "Bash(curl -s -X POST http://localhost:3000/api/scraping -H 'Content-Type: application/json' -H 'Cookie: authjs.session-token=fake' -d '{\"niche\":\"plombier\",\"city\":\"Paris\",\"limit\":3}')",
+      "Bash(node --input-type=module)",
+      "Bash(node -e ' *)",
+      "Bash(npx tsc *)",
+      "Bash(xargs ls -la)",
+      "Bash(kill 59672)",
+      "Bash(curl -s -o /dev/null -D - \"http://localhost:3000/\" -H \"Accept-Language: de-DE,de;q=0.9,en;q=0.8\")",
+      "Bash(curl -s \"http://localhost:3000/\" -H \"Accept-Language: de-DE,de;q=0.9\")",
+      "Bash(python3 -c \"import sys; html = sys.stdin.read\\(\\); print\\(html[:2000]\\)\")",
+      "Bash(kill 31871 59672)",
+      "Bash(lsof -ti:3000 -ti:3001)",
+      "Bash(xargs kill -9)",
+      "Bash(curl -s -D - \"http://localhost:3000/\" -H \"Accept-Language: de-DE,de;q=0.9\" -o /dev/null)"
     ]
   }
 }
