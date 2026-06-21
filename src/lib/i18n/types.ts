@@ -53,7 +53,7 @@ export interface T {
   val_email: string; val_pw_min: string; val_name_min: string; val_pw_match: string;
   // Sidebar
   sb_dashboard: string; sb_prospects: string; sb_campaigns: string;
-  sb_emails: string; sb_settings: string; sb_logout: string;
+  sb_emails: string; sb_replies: string; sb_settings: string; sb_logout: string;
   // Topbar
   tb_search: string;
   // Dashboard home
@@ -125,4 +125,12 @@ export interface T {
   ec_cancel: string; ec_no_email: string;
   // Email composer — company reminder
   ec_no_company: string; ec_no_company_link: string;
+  // Replies page
+  rep_title: string; rep_desc: string; rep_no: string; rep_no_desc: string;
+  rep_s_interested: string; rep_s_not_interested: string;
+  rep_s_simple_question: string; rep_s_needs_human: string;
+  rep_pending: string; rep_sent_status: string; rep_archived: string;
+  rep_ai_analysis: string; rep_draft: string; rep_message: string;
+  rep_approve: string; rep_approving: string; rep_archive: string;
+  rep_human_warning: string;
 }

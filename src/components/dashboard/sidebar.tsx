@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
-  Settings, LogOut, Zap, ChevronRight
+  Settings, LogOut, Zap, ChevronRight, MessageSquareReply
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,21 @@ import { useI18n } from "@/components/language-provider";
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const [pendingReplies, setPendingReplies] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/inbound?count=true")
+      .then(r => r.ok ? r.json() : { count: 0 })
+      .then(d => setPendingReplies(d.count ?? 0))
+      .catch(() => {});
+  }, []);
 
   const nav = [
     { href: "/dashboard", label: t("sb_dashboard"), icon: LayoutDashboard },
     { href: "/dashboard/prospects", label: t("sb_prospects"), icon: Target },
     { href: "/dashboard/campaigns", label: t("sb_campaigns"), icon: Megaphone },
     { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
+    { href: "/dashboard/replies", label: t("sb_replies"), icon: MessageSquareReply, badge: pendingReplies },
     { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
   ];
 
@@ -51,7 +61,12 @@ export function Sidebar() {
             >
               <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-violet-400" : "text-gray-500 group-hover:text-gray-300")} />
               {item.label}
-              {active && <ChevronRight className="w-3 h-3 ml-auto text-violet-400/60" />}
+              {(item as any).badge > 0 && (
+                <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                  {(item as any).badge > 9 ? "9+" : (item as any).badge}
+                </span>
+              )}
+              {active && !(item as any).badge && <ChevronRight className="w-3 h-3 ml-auto text-violet-400/60" />}
             </Link>
           );
         })}

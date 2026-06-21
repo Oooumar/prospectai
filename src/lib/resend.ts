@@ -7,15 +7,17 @@ export async function sendProspectEmail({
   subject,
   body,
   fromName = "ProspectAI",
+  replyTo: customReplyTo,
 }: {
   to: string;
   subject: string;
   body: string;
   fromName?: string;
+  replyTo?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     const from = process.env.RESEND_FROM_EMAIL || "contact@prospectai.company";
-    const replyTo = process.env.RESEND_REPLY_TO;
+    const replyTo = customReplyTo ?? process.env.RESEND_REPLY_TO;
 
     const { data, error } = await resend.emails.send({
       from: `${fromName} <${from}>`,

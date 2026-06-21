@@ -8,6 +8,7 @@ const MODEL = "llama-3.3-70b-versatile";
 
 type ProfileType = "b2b" | "creator" | "agency";
 type EmailLanguage = "fr" | "en" | "de" | "it" | "es";
+export type ReplySentiment = "interested" | "not_interested" | "simple_question" | "needs_human";
 
 const LANG_CITIES: Record<string, EmailLanguage> = {
   // Germany
@@ -52,10 +53,10 @@ function getLangName(lang: EmailLanguage): string {
   return { fr: "French", en: "English", de: "German", it: "Italian", es: "Spanish" }[lang];
 }
 
+const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").`;
+
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
-
-  const noHallucinationRule = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").`;
 
   if (profileType === "creator") {
     return `You are an expert in brand partnerships and influencer marketing. You write prospecting emails for content creators looking for brand collaborations.
@@ -65,7 +66,7 @@ The email must be:
 - Highlighting the creator's value (audience, engagement, niche)
 - Short (3 paragraphs max) and impactful
 - Dynamic and professional tone
-${noHallucinationRule}
+${NO_HALLUCINATION_RULE}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
   }
@@ -78,7 +79,7 @@ The email must be:
 - Offer a free audit or consultation
 - Short and direct (3-4 paragraphs)
 - Professional and results-oriented tone
-${noHallucinationRule}
+${NO_HALLUCINATION_RULE}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
   }
@@ -90,7 +91,7 @@ The email must be:
 - Focused on the value delivered
 - With a clear call to action
 - Professional but human tone
-${noHallucinationRule}
+${NO_HALLUCINATION_RULE}
 ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 }
@@ -212,25 +213,23 @@ function buildSignatureLine(
   return `\n\n— ${companyName}`;
 }
 
-function extractJsonFromContent(raw: string): { subject: string; body: string } | null {
-  // Strip markdown code fences
+function extractJson<T>(raw: string): T | null {
   const cleaned = raw.replace(/```json\s*|\s*```/g, "").trim();
-
-  // 1. Try direct parse
   try {
-    const parsed = JSON.parse(cleaned);
-    if (parsed?.subject && parsed?.body) return parsed as { subject: string; body: string };
+    return JSON.parse(cleaned) as T;
   } catch {}
-
-  // 2. Extract the first {...} block that contains both keys (handles text around the JSON)
-  const match = cleaned.match(/\{[\s\S]*?"subject"[\s\S]*?"body"[\s\S]*?\}|\{[\s\S]*?"body"[\s\S]*?"subject"[\s\S]*?\}/);
+  const match = cleaned.match(/\{[\s\S]*\}/);
   if (match) {
     try {
-      const parsed = JSON.parse(match[0]);
-      if (parsed?.subject && parsed?.body) return parsed as { subject: string; body: string };
+      return JSON.parse(match[0]) as T;
     } catch {}
   }
+  return null;
+}
 
+function extractJsonFromContent(raw: string): { subject: string; body: string } | null {
+  const result = extractJson<{ subject?: string; body?: string }>(raw);
+  if (result?.subject && result?.body) return result as { subject: string; body: string };
   return null;
 }
 
@@ -273,5 +272,88 @@ export async function generateProspectEmail(
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
     throw err;
+  }
+}
+
+export async function analyzeEmailReply({
+  replyText,
+  originalSubject,
+  originalBody,
+  prospect,
+  sender,
+  lang,
+}: {
+  replyText: string;
+  originalSubject: string;
+  originalBody: string;
+  prospect: { name: string; niche: string; city: string };
+  sender: { companyName?: string; productDescription?: string };
+  lang: EmailLanguage;
+}): Promise<{ sentiment: ReplySentiment; analysis: string; draftResponse: string }> {
+  const langName = getLangName(lang);
+  const senderName = sender.companyName ?? "notre solution";
+  const whatWeDo = sender.productDescription ?? `${senderName} automatise la prospection B2B`;
+
+  const systemPrompt = `You are a B2B sales assistant. Analyze a prospect's reply to a cold email.
+${NO_HALLUCINATION_RULE}
+Write the draft reply in ${langName}.
+Reply ONLY with valid JSON: {"sentiment": "...", "analysis": "...", "draftResponse": "..."}`;
+
+  const userPrompt = `PROSPECT: ${prospect.name} — ${prospect.niche} sector, ${prospect.city}
+SENDER PRODUCT: ${senderName}
+WHAT IT DOES: ${whatWeDo}
+
+ORIGINAL EMAIL WE SENT:
+Subject: ${originalSubject}
+${originalBody.substring(0, 400)}
+
+PROSPECT'S REPLY:
+${replyText.substring(0, 1200)}
+
+CLASSIFY the reply as exactly one of:
+- "interested": clear positive interest, wants to continue the conversation
+- "not_interested": clear rejection, unsubscribe request, or disinterest
+- "simple_question": asks a specific, directly answerable question (pricing, features, availability, how it works)
+- "needs_human": negotiation, complex objection, ambiguous intent, or emotional tone
+
+Write a DRAFT REPLY in ${langName} (3-5 sentences, professional, natural tone):
+- "interested" → confirm enthusiasm, propose a specific next step (call or short demo)
+- "not_interested" → thank gracefully, no hard sell, leave door open
+- "simple_question" → answer directly using only info provided (invent nothing)
+- "needs_human" → provide a thoughtful starting point; human will review before sending
+
+ANALYSIS: 1-2 sentences explaining the classification and what the draft does.`;
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 800,
+    });
+
+    const content = completion.choices[0].message.content || "";
+    const parsed = extractJson<{ sentiment?: string; analysis?: string; draftResponse?: string }>(content);
+
+    const validSentiments: ReplySentiment[] = ["interested", "not_interested", "simple_question", "needs_human"];
+    const sentiment = validSentiments.includes(parsed?.sentiment as ReplySentiment)
+      ? (parsed!.sentiment as ReplySentiment)
+      : "needs_human";
+
+    return {
+      sentiment,
+      analysis: parsed?.analysis || "Analyse non disponible.",
+      draftResponse: parsed?.draftResponse || "",
+    };
+  } catch (err) {
+    console.error("[groq] analyzeEmailReply error:", err);
+    return {
+      sentiment: "needs_human",
+      analysis: "Analyse IA indisponible — vérifiez manuellement.",
+      draftResponse: "",
+    };
   }
 }

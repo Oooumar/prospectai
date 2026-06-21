@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ce prospect n'a pas d'email" }, { status: 400 });
     }
 
-    // Create log first
+    // Create log first so we can embed its ID in the Reply-To header
     const log = await prisma.emailLog.create({
       data: {
         userId: session.user.id,
@@ -70,11 +70,18 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // If inbound domain is configured, use a traceable Reply-To per email
+    const inboundDomain = process.env.RESEND_INBOUND_DOMAIN;
+    const replyTo = inboundDomain
+      ? `reply+${log.id}@${inboundDomain}`
+      : process.env.RESEND_REPLY_TO;
+
     const result = await sendProspectEmail({
       to: prospect.email,
       subject: parsed.data.subject,
       body: parsed.data.body,
       fromName: user.name || "ProspectAI",
+      replyTo: replyTo || undefined,
     });
 
     // Update log and prospect status
