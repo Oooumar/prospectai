@@ -97,15 +97,24 @@ Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 
 function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
-  profileType: ProfileType
+  profileType: ProfileType,
+  sender?: { companyName?: string; website?: string }
 ): string {
+  const senderName = sender?.companyName ?? "our solution";
+  const senderRef = sender?.companyName
+    ? sender.companyName
+    : "our service";
+
   if (profileType === "creator") {
+    const identity = sender?.companyName
+      ? `I represent ${sender.companyName}.`
+      : "I am a content creator";
     return `Write a prospecting email to propose a partnership/collaboration to this brand:
 - Brand/Company: ${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}
 - Sector: ${prospect.niche}
 - City: ${prospect.city}
 
-I am a content creator specialized in the ${prospect.niche} sector. I am looking to establish a partnership (sponsored content, ambassador, affiliate).`;
+${identity} I am specialized in the ${prospect.niche} sector and looking to establish a partnership (sponsored content, ambassador, affiliate).`;
   }
 
   if (profileType === "agency") {
@@ -114,7 +123,7 @@ I am a content creator specialized in the ${prospect.niche} sector. I am looking
 - Sector: ${prospect.niche}
 - City: ${prospect.city}
 
-Our agency helps companies in the ${prospect.niche} sector generate more leads and increase revenue through proven digital strategies.`;
+${senderRef} helps companies in the ${prospect.niche} sector generate more leads and grow their revenue. Offer a free audit or discovery call.`;
   }
 
   return `Write a prospecting email for:
@@ -122,7 +131,7 @@ Our agency helps companies in the ${prospect.niche} sector generate more leads a
 - Sector: ${prospect.niche}
 - City: ${prospect.city}
 
-The goal is to offer our digital marketing/automation services to help grow their business.`;
+The sender's product/service is: ${senderName}. Present ${senderName} as the solution and explain concisely how it can help this ${prospect.niche} business grow.`;
 }
 
 function generateFallbackEmail(
@@ -183,6 +192,28 @@ function buildSignatureLine(
   return `\n\n— ${companyName}`;
 }
 
+function extractJsonFromContent(raw: string): { subject: string; body: string } | null {
+  // Strip markdown code fences
+  const cleaned = raw.replace(/```json\s*|\s*```/g, "").trim();
+
+  // 1. Try direct parse
+  try {
+    const parsed = JSON.parse(cleaned);
+    if (parsed?.subject && parsed?.body) return parsed as { subject: string; body: string };
+  } catch {}
+
+  // 2. Extract the first {...} block that contains both keys (handles text around the JSON)
+  const match = cleaned.match(/\{[\s\S]*?"subject"[\s\S]*?"body"[\s\S]*?\}|\{[\s\S]*?"body"[\s\S]*?"subject"[\s\S]*?\}/);
+  if (match) {
+    try {
+      const parsed = JSON.parse(match[0]);
+      if (parsed?.subject && parsed?.body) return parsed as { subject: string; body: string };
+    } catch {}
+  }
+
+  return null;
+}
+
 export async function generateProspectEmail(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType = "b2b",
@@ -197,24 +228,22 @@ export async function generateProspectEmail(
       model: MODEL,
       messages: [
         { role: "system", content: getSystemPrompt(profileType, lang) },
-        { role: "user", content: getUserPrompt(prospect, profileType) },
+        { role: "user", content: getUserPrompt(prospect, profileType, sender) },
       ],
       temperature: 0.7,
       max_tokens: 600,
     });
 
-    const content = completion.choices[0].message.content || "{}";
+    const content = completion.choices[0].message.content || "";
+    const parsed = extractJsonFromContent(content);
 
-    try {
-      const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
-      const parsed = JSON.parse(cleanContent) as { subject: string; body: string };
+    if (parsed) {
       return { ...parsed, body: parsed.body + signatureLine };
-    } catch {
-      return {
-        subject: `Développez votre activité de ${prospect.niche} à ${prospect.city}`,
-        body: content + signatureLine,
-      };
     }
+
+    // JSON extraction failed entirely — use typed fallback rather than dumping raw AI output
+    const fallback = generateFallbackEmail(prospect, profileType, lang);
+    return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
     const code = err?.error?.code || err?.code || "";
