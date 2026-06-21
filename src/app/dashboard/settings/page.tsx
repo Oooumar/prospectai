@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Zap, Loader2, Check, Globe } from "lucide-react";
+import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2 } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -21,6 +21,9 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({ name: "", dailyLimit: 50 });
+  const [companySaving, setCompanySaving] = useState(false);
+  const [companySaved, setCompanySaved] = useState(false);
+  const [companyForm, setCompanyForm] = useState({ companyName: "", website: "" });
   const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
   const [pwError, setPwError] = useState("");
   const [pwSaved, setPwSaved] = useState(false);
@@ -31,6 +34,7 @@ export default function SettingsPage() {
       .then(data => {
         setUser(data.user);
         setForm({ name: data.user?.name || "", dailyLimit: data.user?.dailyLimit || 50 });
+        setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "" });
       });
   }, []);
 
@@ -47,6 +51,20 @@ export default function SettingsPage() {
       setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
+  }
+
+  async function saveCompany() {
+    setCompanySaving(true);
+    const res = await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyName: companyForm.companyName, website: companyForm.website }),
+    });
+    if (res.ok) {
+      setCompanySaved(true);
+      setTimeout(() => setCompanySaved(false), 2000);
+    }
+    setCompanySaving(false);
   }
 
   async function savePassword() {
@@ -131,6 +149,39 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <LanguageSelector />
+          </CardContent>
+        </Card>
+
+        {/* Company / product */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Building2 className="w-4 h-4 text-violet-400" />
+              {t("set_company_title")}
+            </CardTitle>
+            <CardDescription>{t("set_company_desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>{t("set_company_name")}</Label>
+              <Input
+                value={companyForm.companyName}
+                onChange={(e) => setCompanyForm(f => ({ ...f, companyName: e.target.value }))}
+                placeholder={t("set_company_name_ph")}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("set_company_website")}</Label>
+              <Input
+                value={companyForm.website}
+                onChange={(e) => setCompanyForm(f => ({ ...f, website: e.target.value }))}
+                placeholder={t("set_company_website_ph")}
+                type="url"
+              />
+            </div>
+            <Button variant="gradient" onClick={saveCompany} disabled={companySaving}>
+              {companySaved ? <><Check className="w-4 h-4" />{t("set_saved")}</> : companySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("set_save")}
+            </Button>
           </CardContent>
         </Card>
 

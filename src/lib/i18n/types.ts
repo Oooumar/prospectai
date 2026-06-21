@@ -107,6 +107,10 @@ export interface T {
   set_save_pw: string; set_saved_pw: string; set_pw_mismatch: string; set_pw_wrong: string;
   set_config_title: string; set_config_desc: string; set_config_required: string;
   set_lang_title: string; set_lang_desc: string;
+  // Company / product card
+  set_company_title: string; set_company_desc: string;
+  set_company_name: string; set_company_name_ph: string;
+  set_company_website: string; set_company_website_ph: string;
   // Scraping module
   sc_title: string; sc_niche: string; sc_niche_ph: string;
   sc_city: string; sc_city_ph: string; sc_limit: string;
@@ -118,4 +122,6 @@ export interface T {
   ec_subject: string; ec_subject_ph: string; ec_body: string; ec_body_ph: string;
   ec_send: string; ec_sending: string; ec_sent_title: string; ec_sent_desc: string;
   ec_cancel: string; ec_no_email: string;
+  // Email composer — company reminder
+  ec_no_company: string; ec_no_company_link: string;
 }

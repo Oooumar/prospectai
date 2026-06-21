@@ -167,12 +167,25 @@ function generateFallbackEmail(
   };
 }
 
+function buildSignatureLine(
+  lang: EmailLanguage,
+  companyName?: string,
+  website?: string
+): string {
+  if (!companyName && !website) return "";
+  if (companyName && website) return `\n\n— ${companyName}: ${website}`;
+  if (website) return `\n\n— ${website}`;
+  return `\n\n— ${companyName}`;
+}
+
 export async function generateProspectEmail(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType = "b2b",
-  targetLanguage?: EmailLanguage
+  targetLanguage?: EmailLanguage,
+  sender?: { companyName?: string; website?: string }
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
+  const signatureLine = buildSignatureLine(lang, sender?.companyName, sender?.website);
 
   try {
     const completion = await groq.chat.completions.create({
@@ -189,18 +202,20 @@ export async function generateProspectEmail(
 
     try {
       const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
-      return JSON.parse(cleanContent);
+      const parsed = JSON.parse(cleanContent) as { subject: string; body: string };
+      return { ...parsed, body: parsed.body + signatureLine };
     } catch {
       return {
         subject: `Développez votre activité de ${prospect.niche} à ${prospect.city}`,
-        body: content,
+        body: content + signatureLine,
       };
     }
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
     const code = err?.error?.code || err?.code || "";
     if (status === 429 || code === "rate_limit_exceeded" || code === "model_decommissioned") {
-      return { ...generateFallbackEmail(prospect, profileType, lang), fallback: true };
+      const fallback = generateFallbackEmail(prospect, profileType, lang);
+      return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
     throw err;
   }

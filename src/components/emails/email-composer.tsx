@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Wand2, Send, X, Loader2, Check, RefreshCw } from "lucide-react";
+import { Wand2, Send, X, Loader2, Check, RefreshCw, AlertCircle } from "lucide-react";
+import Link from "next/link";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
 
@@ -26,6 +27,17 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [hasCompanyInfo, setHasCompanyInfo] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.json())
+      .then(data => {
+        const u = data.user;
+        setHasCompanyInfo(!!(u?.companyName || u?.website));
+      })
+      .catch(() => setHasCompanyInfo(true));
+  }, []);
 
   async function generateEmail() {
     setGenerating(true);
@@ -123,6 +135,18 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
                 </Button>
               )}
             </div>
+
+            {hasCompanyInfo === false && (
+              <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                <span>
+                  {t("ec_no_company")}{" "}
+                  <Link href="/dashboard/settings" className="underline underline-offset-2 hover:text-amber-200">
+                    {t("ec_no_company_link")}
+                  </Link>
+                </span>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>{t("ec_subject")}</Label>
