@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { extractEmailsBatch } from "@/lib/email-extractor";
 import { z } from "zod";
 
 const schema = z.object({
@@ -114,10 +115,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ prospects: [], count: 0 });
     }
 
+    // Extract emails from websites in parallel (5 concurrent, 1.5s between batches)
+    const websiteUrls = places.map((p) => p.websiteUri ?? null);
+    console.log(
+      "[scraping] extracting emails from",
+      websiteUrls.filter(Boolean).length,
+      "websites"
+    );
+    const emails = await extractEmailsBatch(websiteUrls, 5);
+    console.log("[scraping] emails found:", emails.filter(Boolean).length);
+
     const userId = session.user.id as string;
 
     const saved = await prisma.$transaction(
-      places.map((p) =>
+      places.map((p, i) =>
         prisma.prospect.create({
           data: {
             name:        p.displayName?.text  ?? "Sans nom",
@@ -129,7 +140,7 @@ export async function POST(req: NextRequest) {
             website:     p.websiteUri         ?? null,
             rating:      p.rating             ?? null,
             reviewCount: p.userRatingCount    ?? null,
-            email:       null,
+            email:       emails[i]            ?? null,
             userId,
           },
         })
