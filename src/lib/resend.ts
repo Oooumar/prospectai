@@ -14,7 +14,7 @@ export async function sendProspectEmail({
   fromName?: string;
 }): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
-    const from = process.env.RESEND_FROM_EMAIL || "noreply@prospectai.com";
+    const from = process.env.RESEND_FROM_EMAIL || "noreply@prospectai.company";
 
     const { data, error } = await resend.emails.send({
       from: `${fromName} <${from}>`,
