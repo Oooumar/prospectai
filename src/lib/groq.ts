@@ -114,10 +114,11 @@ function getUserPrompt(
 SENDER: ${identity}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 
-EMAIL STRUCTURE (3 sentences max, no bullet points in the email):
+EMAIL STRUCTURE (4 sentences max, no bullet points in the email):
 1. One-sentence intro connecting my work to the ${prospect.niche} space
 2. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
-3. One clear call-to-action for a brief chat`;
+3. One clear call-to-action for a brief chat
+4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")`;
   }
 
   if (profileType === "agency") {
@@ -130,10 +131,11 @@ SENDER AGENCY: ${senderName}
 WHAT WE DO: ${whatWeDo}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 
-EMAIL STRUCTURE (3-4 sentences max, no bullet points in the email):
+EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 1. Open with a specific growth challenge facing ${prospect.niche} businesses
 2. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
-3. Offer a free audit or 20-min discovery call`;
+3. Offer a free audit or 20-min discovery call
+4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")`;
   }
 
   const whatWeDo = sender?.productDescription
@@ -145,10 +147,11 @@ SENDER PRODUCT: ${senderName}
 WHAT IT DOES: ${whatWeDo}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 
-EMAIL STRUCTURE (3-4 sentences max, no bullet points in the email):
+EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 1. One-sentence hook identifying a specific pain point for ${prospect.niche} businesses in ${prospect.city}
 2. Introduce ${senderName} by name and explain ONE concrete benefit it brings to ${prospect.niche} businesses
-3. One clear call-to-action (e.g. a 15-min call this week)`;
+3. One clear call-to-action (e.g. a 15-min call this week)
+4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")`;
 }
 
 function generateFallbackEmail(
