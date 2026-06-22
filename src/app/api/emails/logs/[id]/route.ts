@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const log = await prisma.emailLog.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id, userId: session.user.id },
   });
 
   if (!log) return NextResponse.json({ error: "Email introuvable" }, { status: 404 });
@@ -18,7 +19,7 @@ export async function PATCH(
 
   await Promise.all([
     prisma.emailLog.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "REPLIED", repliedAt: new Date() },
     }),
     prisma.prospect.update({

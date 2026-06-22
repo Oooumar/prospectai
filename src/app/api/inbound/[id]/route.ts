@@ -5,15 +5,16 @@ import { sendProspectEmail } from "@/lib/resend";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { action, draftResponse } = await req.json();
 
   const inbound = await prisma.inboundEmail.findFirst({
-    where: { id: params.id, userId: session.user.id },
+    where: { id, userId: session.user.id },
   });
 
   if (!inbound) return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
@@ -21,7 +22,7 @@ export async function PATCH(
 
   if (action === "archive") {
     await prisma.inboundEmail.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "archived" },
     });
     return NextResponse.json({ ok: true });
@@ -46,7 +47,7 @@ export async function PATCH(
     }
 
     await prisma.inboundEmail.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: "sent", sentAt: new Date(), draftResponse: responseText },
     });
 
