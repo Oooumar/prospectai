@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Mail, Loader2, Eye, MessageSquare, Send, AlertCircle,
   CheckCircle2, Info,
@@ -170,18 +169,16 @@ export default function EmailsPage() {
                               </Badge>
                             </div>
                             {canMark && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
                                 onClick={() => markReplied(email.id)}
                                 disabled={isMarking}
-                                className="h-6 px-2 text-xs text-gray-400 hover:text-violet-300 hover:bg-violet-500/10 -ml-2"
+                                className="mt-1.5 flex items-center gap-1 text-xs text-violet-400 border border-violet-500/40 rounded px-2 py-0.5 hover:bg-violet-500/15 hover:border-violet-400 transition-colors disabled:opacity-50"
                               >
                                 {isMarking
                                   ? <Loader2 className="w-3 h-3 animate-spin" />
-                                  : <><CheckCircle2 className="w-3 h-3 mr-1" />{t("em_mark_replied")}</>
+                                  : <><CheckCircle2 className="w-3 h-3" />{t("em_mark_replied")}</>
                                 }
-                              </Button>
+                              </button>
                             )}
                           </td>
 
