@@ -95,6 +95,7 @@ export interface T {
   em_history_title: string; em_no: string; em_no_desc: string;
   em_col_prospect: string; em_col_subject: string; em_col_status: string;
   em_col_date: string; em_opened_at: string;
+  em_mark_replied: string; em_mark_help: string;
   // Settings
   set_title: string; set_desc: string;
   set_profile_title: string; set_profile_desc: string;

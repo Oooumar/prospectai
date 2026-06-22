@@ -145,6 +145,8 @@ Cordiali saluti,
   em_no: "Nessuna email", em_no_desc: "Invia email dalla pagina Prospect",
   em_col_prospect: "Prospect", em_col_subject: "Oggetto",
   em_col_status: "Stato", em_col_date: "Data", em_opened_at: "Aperta {date}",
+  em_mark_replied: "Segna come risposto",
+  em_mark_help: "Le risposte arrivano nella tua casella email. Segnalale qui per monitorare le tue statistiche.",
 
   set_title: "Impostazioni", set_desc: "Gestisci il tuo account e le tue preferenze",
   set_profile_title: "Profilo", set_profile_desc: "Informazioni del tuo account",

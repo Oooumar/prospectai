@@ -145,6 +145,8 @@ Best regards,
   em_no: "No emails", em_no_desc: "Send emails from the Prospects page",
   em_col_prospect: "Prospect", em_col_subject: "Subject",
   em_col_status: "Status", em_col_date: "Date", em_opened_at: "Opened {date}",
+  em_mark_replied: "Mark as replied",
+  em_mark_help: "Replies arrive in your mailbox. Mark them here to track your statistics.",
 
   set_title: "Settings", set_desc: "Manage your account and preferences",
   set_profile_title: "Profile", set_profile_desc: "Your account information",

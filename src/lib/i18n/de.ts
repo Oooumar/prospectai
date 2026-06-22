@@ -145,6 +145,8 @@ Mit freundlichen Grüßen,
   em_no: "Keine E-Mails", em_no_desc: "Senden Sie E-Mails von der Interessenten-Seite",
   em_col_prospect: "Interessent", em_col_subject: "Betreff",
   em_col_status: "Status", em_col_date: "Datum", em_opened_at: "Geöffnet {date}",
+  em_mark_replied: "Als beantwortet markieren",
+  em_mark_help: "Antworten kommen in Ihr Postfach. Markieren Sie sie hier, um Ihre Statistiken zu verfolgen.",
 
   set_title: "Einstellungen", set_desc: "Verwalten Sie Ihr Konto und Ihre Einstellungen",
   set_profile_title: "Profil", set_profile_desc: "Informationen zu Ihrem Konto",

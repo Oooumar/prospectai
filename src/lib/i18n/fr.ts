@@ -145,6 +145,8 @@ Cordialement,
   em_no: "Aucun email", em_no_desc: "Envoyez des emails depuis la page Prospects",
   em_col_prospect: "Prospect", em_col_subject: "Objet",
   em_col_status: "Statut", em_col_date: "Date", em_opened_at: "Ouvert {date}",
+  em_mark_replied: "Marquer comme répondu",
+  em_mark_help: "Les réponses arrivent dans votre boîte mail. Marquez-les ici pour suivre vos statistiques.",
 
   set_title: "Paramètres", set_desc: "Gérez votre compte et vos préférences",
   set_profile_title: "Profil", set_profile_desc: "Informations de votre compte",

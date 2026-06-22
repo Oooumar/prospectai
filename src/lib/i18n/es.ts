@@ -145,6 +145,8 @@ Atentamente,
   em_no: "Sin emails", em_no_desc: "Envía emails desde la página Prospectos",
   em_col_prospect: "Prospecto", em_col_subject: "Asunto",
   em_col_status: "Estado", em_col_date: "Fecha", em_opened_at: "Abierto {date}",
+  em_mark_replied: "Marcar como respondido",
+  em_mark_help: "Las respuestas llegan a tu buzón. Márcalas aquí para seguir tus estadísticas.",
 
   set_title: "Ajustes", set_desc: "Gestiona tu cuenta y preferencias",
   set_profile_title: "Perfil", set_profile_desc: "Información de tu cuenta",
