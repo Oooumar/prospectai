@@ -137,6 +137,7 @@ Would you be available for a 15-minute call this week?
 
 Best regards,
 {name}`,
+  cam_auto_banner: "Auto campaign — scraping + AI emails as drafts, configure in Drafts",
 
   em_title: "Emails", em_desc: "Track all your sent emails",
   em_stat_sent: "Total sent", em_stat_opened: "Opened",

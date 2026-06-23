@@ -89,6 +89,7 @@ export interface T {
   cam_form_limit: string; cam_form_cancel: string;
   cam_form_create: string; cam_form_creating: string;
   cam_default_template: string;
+  cam_auto_banner: string;
   // Emails page
   em_title: string; em_desc: string;
   em_stat_sent: string; em_stat_opened: string; em_stat_replied: string; em_stat_failed: string;

@@ -137,6 +137,7 @@ Seriez-vous disponible pour un appel de 15 minutes cette semaine ?
 
 Cordialement,
 {nom}`,
+  cam_auto_banner: "Campagne automatique — scraping + emails IA en brouillon, à configurer dans Brouillons",
 
   em_title: "Emails", em_desc: "Suivi de tous vos emails envoyés",
   em_stat_sent: "Total envoyés", em_stat_opened: "Ouverts",

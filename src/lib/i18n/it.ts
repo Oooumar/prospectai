@@ -137,6 +137,7 @@ Sarebbe disponibile per una chiamata di 15 minuti questa settimana?
 
 Cordiali saluti,
 {name}`,
+  cam_auto_banner: "Campagna automatica — scraping + email IA come bozze, configura in Bozze",
 
   em_title: "Email", em_desc: "Monitoraggio di tutte le email inviate",
   em_stat_sent: "Totale inviate", em_stat_opened: "Aperte",

@@ -137,6 +137,7 @@ Wären Sie diese Woche für einen 15-minütigen Anruf verfügbar?
 
 Mit freundlichen Grüßen,
 {name}`,
+  cam_auto_banner: "Auto-Kampagne — Scraping + KI-E-Mails als Entwürfe, unter Entwürfe konfigurieren",
 
   em_title: "E-Mails", em_desc: "Tracking aller gesendeten E-Mails",
   em_stat_sent: "Gesamt gesendet", em_stat_opened: "Geöffnet",

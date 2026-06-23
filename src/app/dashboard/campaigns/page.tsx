@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import Link from "next/link";
 import {
   Megaphone, Plus, Play, Pause, Trash2, Loader2,
-  Mail, Target, BarChart2
+  Mail, Target, BarChart2, Sparkles, ArrowRight,
 } from "lucide-react";
 import type { Campaign } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -79,7 +80,19 @@ export default function CampaignsPage() {
       <TopBar title={t("cam_title")} description={t("cam_desc")} />
 
       <div className="p-6 space-y-6">
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/dashboard/drafts"
+            className="flex-1 flex items-center gap-3 bg-violet-500/10 border border-violet-500/20 rounded-lg px-4 py-3 hover:bg-violet-500/15 transition-colors group"
+          >
+            <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-violet-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-violet-300">{t("cam_auto_banner")}</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-violet-400 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
           <Button variant="gradient" onClick={() => setShowCreate(true)}>
             <Plus className="w-4 h-4" />{t("cam_new_btn")}
           </Button>

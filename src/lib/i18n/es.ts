@@ -137,6 +137,7 @@ Nuestra solución ayuda a profesionales como usted a automatizar su marketing y 
 
 Atentamente,
 {name}`,
+  cam_auto_banner: "Campaña automática — scraping + emails IA como borradores, configura en Borradores",
 
   em_title: "Emails", em_desc: "Seguimiento de todos tus emails enviados",
   em_stat_sent: "Total enviados", em_stat_opened: "Abiertos",
