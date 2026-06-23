@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
-  Settings, LogOut, Zap, ChevronRight, MessageSquareReply
+  Settings, LogOut, Zap, ChevronRight, MessageSquareReply, FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,11 +16,16 @@ export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
   const [pendingReplies, setPendingReplies] = useState(0);
+  const [pendingDrafts, setPendingDrafts] = useState(0);
 
   useEffect(() => {
     fetch("/api/inbound?count=true")
       .then(r => r.ok ? r.json() : { count: 0 })
       .then(d => setPendingReplies(d.count ?? 0))
+      .catch(() => {});
+    fetch("/api/drafts?count=true")
+      .then(r => r.ok ? r.json() : { count: 0 })
+      .then(d => setPendingDrafts(d.count ?? 0))
       .catch(() => {});
   }, []);
 
@@ -29,6 +34,7 @@ export function Sidebar() {
     { href: "/dashboard/prospects", label: t("sb_prospects"), icon: Target },
     { href: "/dashboard/campaigns", label: t("sb_campaigns"), icon: Megaphone },
     { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
+    { href: "/dashboard/drafts", label: t("sb_drafts"), icon: FileText, badge: pendingDrafts },
     { href: "/dashboard/replies", label: t("sb_replies"), icon: MessageSquareReply, badge: pendingReplies },
     { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
   ];

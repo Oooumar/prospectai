@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const [logs, total] = await Promise.all([
     prisma.emailLog.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session.user.id, status: { not: "DRAFT" } },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
         campaign: { select: { name: true } },
       },
     }),
-    prisma.emailLog.count({ where: { userId: session.user.id } }),
+    prisma.emailLog.count({ where: { userId: session.user.id, status: { not: "DRAFT" } } }),
   ]);
 
   return NextResponse.json({ logs, total, page, limit });

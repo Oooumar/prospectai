@@ -126,6 +126,21 @@ export interface T {
   ec_cancel: string; ec_no_email: string;
   // Email composer — company reminder
   ec_no_company: string; ec_no_company_link: string;
+  // Drafts page
+  sb_drafts: string;
+  dr_title: string; dr_desc: string; dr_no: string; dr_no_desc: string; dr_help: string;
+  dr_edit: string; dr_send: string; dr_delete: string; dr_sending: string;
+  dr_delete_confirm: string; dr_subject: string; dr_body_label: string;
+  dr_save: string; dr_cancel: string;
+  est_DRAFT: string;
+  // Auto campaigns
+  ac_title: string; ac_desc: string; ac_new: string; ac_no: string;
+  ac_niche: string; ac_niche_ph: string; ac_cities: string; ac_cities_ph: string;
+  ac_freq: string; ac_daily: string; ac_weekly: string;
+  ac_limit: string; ac_per_cycle: string;
+  ac_create: string; ac_creating: string;
+  ac_active: string; ac_paused: string;
+  ac_delete_confirm: string;
   // Replies page
   rep_title: string; rep_desc: string; rep_no: string; rep_no_desc: string;
   rep_s_interested: string; rep_s_not_interested: string;

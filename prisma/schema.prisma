@@ -38,6 +38,7 @@ model User {
   campaigns      Campaign[]
   emailLogs      EmailLog[]
   inboundEmails  InboundEmail[]
+  autoCampaigns  AutoCampaign[]
 }
 
 model Account {
@@ -189,7 +190,24 @@ enum CampaignStatus {
   COMPLETED
 }
 
+model AutoCampaign {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  niche            String
+  cities           String
+  frequency        String   @default("daily")
+  prospectsPerCycle Int      @default(5)
+  active           Boolean  @default(true)
+  lastRunAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
 enum EmailStatus {
+  DRAFT
   PENDING
   SENT
   FAILED

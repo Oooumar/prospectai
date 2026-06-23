@@ -47,7 +47,13 @@
       "Bash(kill 31871 59672)",
       "Bash(lsof -ti:3000 -ti:3001)",
       "Bash(xargs kill -9)",
-      "Bash(curl -s -D - \"http://localhost:3000/\" -H \"Accept-Language: de-DE,de;q=0.9\" -o /dev/null)"
+      "Bash(curl -s -D - \"http://localhost:3000/\" -H \"Accept-Language: de-DE,de;q=0.9\" -o /dev/null)",
+      "Bash(git ls-remote *)",
+      "Bash(curl -s \"https://prospectai.company\")",
+      "Bash(export DATABASE_URL=\"postgresql://authenticator:npg_Eba4qJ0NBmuO@ep-still-butterfly-aiwov0eb-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\")",
+      "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/inbound/\\\\[id\\\\])",
+      "Bash(mkdir -p \"/Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/auto-campaigns/[id]\")",
+      "Bash(mkdir -p \"/Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/drafts/[id]/send\")"
     ]
   }
 }
