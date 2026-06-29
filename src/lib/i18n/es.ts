@@ -169,6 +169,7 @@ Atentamente,
   set_company_website: "Sitio web", set_company_website_ph: "https://misitio.es",
   set_company_product_desc: "Descripción corta de tu producto / servicio",
   set_company_product_desc_ph: "ej. ProspectAI automatiza la prospección B2B — scraping de prospectos + emails IA personalizados en 1 clic.",
+  set_whatsapp: "Número WhatsApp", set_whatsapp_ph: "+34 612 345 678", set_whatsapp_hint: "Si se indica, se añadirá un enlace WhatsApp en los emails generados por IA en lugar de una llamada telefónica.",
 
   sc_title: "Rastrear prospectos", sc_niche: "Nicho / Sector",
   sc_niche_ph: "ej. fontanero, marca beauty…", sc_city: "Ciudad",

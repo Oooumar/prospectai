@@ -21,28 +21,26 @@ export async function POST(req: NextRequest) {
     }
 
     // Raw SQL query so field fetching is never silently dropped by a stale Prisma client
-    type UserRow = { profileType: string | null; companyName: string | null; website: string | null; productDescription: string | null };
+    type UserRow = { profileType: string | null; companyName: string | null; website: string | null; productDescription: string | null; whatsappNumber: string | null };
     let userRow: UserRow | null = null;
     try {
       const rows = await prisma.$queryRaw<UserRow[]>`
-        SELECT "profileType", "companyName", "website", "productDescription"
+        SELECT "profileType", "companyName", "website", "productDescription", "whatsappNumber"
         FROM "User" WHERE "id" = ${session.user.id}
       `;
       userRow = rows[0] ?? null;
     } catch {
-      // productDescription column may not exist yet — fall back to known columns
       const rows = await prisma.$queryRaw<Array<{ profileType: string | null; companyName: string | null; website: string | null }>>`
         SELECT "profileType", "companyName", "website" FROM "User" WHERE "id" = ${session.user.id}
       `;
-      if (rows[0]) userRow = { ...rows[0], productDescription: null };
+      if (rows[0]) userRow = { ...rows[0], productDescription: null, whatsappNumber: null };
     }
 
     const profileType = (userRow?.profileType || "b2b") as "b2b" | "creator" | "agency";
     const companyName = userRow?.companyName ?? undefined;
     const website = userRow?.website ?? undefined;
     const productDescription = userRow?.productDescription ?? undefined;
-
-    console.error("[generate] sender:", { companyName, website, productDescription: productDescription?.substring(0, 60) });
+    const whatsappNumber = userRow?.whatsappNumber ?? undefined;
 
     const targetLanguage = detectEmailLanguage(prospect.city);
 
@@ -59,6 +57,7 @@ export async function POST(req: NextRequest) {
         companyName: companyName || undefined,
         website: website || undefined,
         productDescription: productDescription || undefined,
+        whatsappNumber: whatsappNumber || undefined,
       }
     );
 

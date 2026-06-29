@@ -53,7 +53,8 @@ function getLangName(lang: EmailLanguage): string {
   return { fr: "French", en: "English", de: "German", it: "Italian", es: "Spanish" }[lang];
 }
 
-const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").`;
+const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").
+STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.`;
 
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
@@ -76,7 +77,7 @@ Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 The email must be:
 - Focused on ROI and measurable results
 - Highlight expertise and client cases
-- Offer a free audit or consultation
+- Offer a free audit or consultation (via email or WhatsApp, never a phone call)
 - Short and direct (3-4 paragraphs)
 - Professional and results-oriented tone
 ${NO_HALLUCINATION_RULE}
@@ -96,16 +97,24 @@ ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 }
 
+function formatWhatsAppUrl(number: string): string {
+  return `https://wa.me/${number.replace(/[^0-9]/g, "")}`;
+}
+
 function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType,
-  sender?: { companyName?: string; website?: string; productDescription?: string },
+  sender?: { companyName?: string; website?: string; productDescription?: string; whatsappNumber?: string },
   lang?: EmailLanguage
 ): string {
   const senderName = sender?.companyName ?? "our solution";
   const prospectId = `${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}`;
   const langName = lang ? getLangName(lang) : null;
   const langSuffix = langName ? `\n\nOUTPUT LANGUAGE: ${langName}. Write the subject AND body ONLY in ${langName}, regardless of the language used above.` : "";
+  const waUrl = sender?.whatsappNumber ? formatWhatsAppUrl(sender.whatsappNumber) : null;
+  const ctaInstruction = waUrl
+    ? `Propose to WRITE a WhatsApp message (never a phone call) with this exact link: ${waUrl} — and also offer email reply as an alternative.`
+    : `Propose to reply by email only. NEVER suggest a phone call, video call, or meeting.`;
 
   if (profileType === "creator") {
     const identity = sender?.productDescription
@@ -121,8 +130,7 @@ RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 EMAIL STRUCTURE (4 sentences max, no bullet points in the email):
 1. One-sentence intro connecting my work to the ${prospect.niche} space
 2. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
-3. One clear call-to-action for a brief chat
-4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")${langSuffix}`;
+3. ${ctaInstruction}${langSuffix}`;
   }
 
   if (profileType === "agency") {
@@ -138,8 +146,8 @@ RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 1. Open with a specific growth challenge facing ${prospect.niche} businesses
 2. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
-3. Offer a free audit or 20-min discovery call
-4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")${langSuffix}`;
+3. Offer a free audit or consultation
+4. ${ctaInstruction}${langSuffix}`;
   }
 
   const whatWeDo = sender?.productDescription
@@ -154,8 +162,7 @@ RECIPIENT: ${prospectId} — ${prospect.niche} sector, ${prospect.city}
 EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 1. One-sentence hook identifying a specific pain point for ${prospect.niche} businesses in ${prospect.city}
 2. Introduce ${senderName} by name and explain ONE concrete benefit it brings to ${prospect.niche} businesses
-3. One clear call-to-action (e.g. a 15-min call this week)
-4. One short sentence offering email reply as an alternative (e.g. "Feel free to simply reply to this email if you'd prefer more information first.")${langSuffix}`;
+3. ${ctaInstruction}${langSuffix}`;
 }
 
 function generateFallbackEmail(
@@ -166,42 +173,42 @@ function generateFallbackEmail(
   if (lang === "de") {
     return {
       subject: `Zusammenarbeit mit ${prospect.name}`,
-      body: `Guten Tag,\n\nIch bin auf Ihr Unternehmen im Bereich ${prospect.niche} in ${prospect.city} aufmerksam geworden.\n\nUnsere Lösung hilft Fachleuten wie Ihnen, ihr Marketing zu automatisieren und schnell mehr Kunden zu gewinnen.\n\nWären Sie diese Woche für einen 15-minütigen Anruf verfügbar?\n\nMit freundlichen Grüßen`,
+      body: `Guten Tag,\n\nIch bin auf Ihr Unternehmen im Bereich ${prospect.niche} in ${prospect.city} aufmerksam geworden.\n\nUnsere Lösung hilft Fachleuten wie Ihnen, ihr Marketing zu automatisieren und schnell mehr Kunden zu gewinnen.\n\nAntworten Sie einfach auf diese E-Mail, wenn Sie mehr erfahren möchten.\n\nMit freundlichen Grüßen`,
     };
   }
   if (lang === "it") {
     return {
       subject: `Proposta per ${prospect.name}`,
-      body: `Buongiorno,\n\nHo scoperto la sua attività nel settore ${prospect.niche} a ${prospect.city}.\n\nLa nostra soluzione aiuta professionisti come lei ad automatizzare il marketing e ad attrarre più clienti rapidamente.\n\nSarebbe disponibile per una chiamata di 15 minuti questa settimana?\n\nCordiali saluti`,
+      body: `Buongiorno,\n\nHo scoperto la sua attività nel settore ${prospect.niche} a ${prospect.city}.\n\nLa nostra soluzione aiuta professionisti come lei ad automatizzare il marketing e ad attrarre più clienti rapidamente.\n\nRisponda pure a questa email se desidera saperne di più.\n\nCordiali saluti`,
     };
   }
   if (lang === "es") {
     return {
       subject: `Propuesta para ${prospect.name}`,
-      body: `Buenos días,\n\nHe encontrado su negocio de ${prospect.niche} en ${prospect.city}.\n\nNuestra solución ayuda a profesionales como usted a automatizar su marketing y atraer más clientes rápidamente.\n\n¿Estaría disponible para una llamada de 15 minutos esta semana?\n\nAtentamente`,
+      body: `Buenos días,\n\nHe encontrado su negocio de ${prospect.niche} en ${prospect.city}.\n\nNuestra solución ayuda a profesionales como usted a automatizar su marketing y atraer más clientes rápidamente.\n\nResponda a este email si desea más información.\n\nAtentamente`,
     };
   }
   if (lang === "en") {
     return {
       subject: `Grow your ${prospect.niche} business in ${prospect.city}`,
-      body: `Hello,\n\nI came across your ${prospect.niche} business in ${prospect.city} and wanted to reach out directly.\n\nOur solution helps professionals like you automate their marketing and attract more clients quickly.\n\nWould you be available for a 15-minute call this week?\n\nBest regards`,
+      body: `Hello,\n\nI came across your ${prospect.niche} business in ${prospect.city} and wanted to reach out directly.\n\nOur solution helps professionals like you automate their marketing and attract more clients quickly.\n\nFeel free to reply to this email if you'd like to learn more.\n\nBest regards`,
     };
   }
   if (profileType === "creator") {
     return {
       subject: `Proposition de partenariat — ${prospect.name}`,
-      body: `Bonjour,\n\nJe suis créateur de contenu spécialisé dans le secteur ${prospect.niche.toLowerCase()} et je suis particulièrement intéressé par vos produits/services.\n\nSeriez-vous ouvert(e) à discuter d'une possible collaboration ?\n\nCordialement`,
+      body: `Bonjour,\n\nJe suis créateur de contenu spécialisé dans le secteur ${prospect.niche.toLowerCase()} et je suis particulièrement intéressé par vos produits/services.\n\nSeriez-vous ouvert(e) à discuter d'une possible collaboration ? Répondez simplement à cet email.\n\nCordialement`,
     };
   }
   if (profileType === "agency") {
     return {
       subject: `Boostez votre acquisition client — ${prospect.name}`,
-      body: `Bonjour,\n\nNotre agence accompagne des entreprises du secteur ${prospect.niche.toLowerCase()} à ${prospect.city} pour multiplier leurs leads.\n\nSeriez-vous disponible pour un audit gratuit de 30 minutes cette semaine ?\n\nCordialement`,
+      body: `Bonjour,\n\nNotre agence accompagne des entreprises du secteur ${prospect.niche.toLowerCase()} à ${prospect.city} pour multiplier leurs leads.\n\nRépondez à cet email pour bénéficier d'un audit gratuit.\n\nCordialement`,
     };
   }
   return {
     subject: `Développez votre activité de ${prospect.niche.toLowerCase()} à ${prospect.city}`,
-    body: `Bonjour,\n\nJ'ai découvert votre activité de ${prospect.niche.toLowerCase()} à ${prospect.city} et je souhaitais vous contacter directement.\n\nSeriez-vous disponible pour un appel de 15 minutes cette semaine ?\n\nBien cordialement`,
+    body: `Bonjour,\n\nJ'ai découvert votre activité de ${prospect.niche.toLowerCase()} à ${prospect.city} et je souhaitais vous contacter directement.\n\nRépondez simplement à cet email si vous souhaitez en savoir plus.\n\nBien cordialement`,
   };
 }
 
@@ -240,7 +247,7 @@ export async function generateProspectEmail(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType = "b2b",
   targetLanguage?: EmailLanguage,
-  sender?: { companyName?: string; website?: string; productDescription?: string }
+  sender?: { companyName?: string; website?: string; productDescription?: string; whatsappNumber?: string }
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
   const signatureLine = buildSignatureLine(lang, sender?.companyName, sender?.website);

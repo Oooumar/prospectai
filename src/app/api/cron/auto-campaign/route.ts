@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
   const campaigns = await prisma.autoCampaign.findMany({
     where: { active: true },
-    include: { user: { select: { id: true, profileType: true, companyName: true, website: true, productDescription: true } } },
+    include: { user: { select: { id: true, profileType: true, companyName: true, website: true, productDescription: true, whatsappNumber: true } } },
   });
 
   const due = campaigns.filter(isDue);
@@ -103,6 +103,7 @@ export async function GET(req: NextRequest) {
         companyName: user.companyName || undefined,
         website: user.website || undefined,
         productDescription: user.productDescription || undefined,
+        whatsappNumber: user.whatsappNumber || undefined,
       };
 
       const emailResults = await Promise.allSettled(

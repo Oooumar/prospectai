@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2 } from "lucide-react";
+import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -24,7 +24,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState({ name: "", dailyLimit: 50 });
   const [companySaving, setCompanySaving] = useState(false);
   const [companySaved, setCompanySaved] = useState(false);
-  const [companyForm, setCompanyForm] = useState({ companyName: "", website: "", productDescription: "" });
+  const [companyForm, setCompanyForm] = useState({ companyName: "", website: "", productDescription: "", whatsappNumber: "" });
   const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
   const [pwError, setPwError] = useState("");
   const [pwSaved, setPwSaved] = useState(false);
@@ -35,7 +35,7 @@ export default function SettingsPage() {
       .then(data => {
         setUser(data.user);
         setForm({ name: data.user?.name || "", dailyLimit: data.user?.dailyLimit || 50 });
-        setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "", productDescription: data.user?.productDescription || "" });
+        setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "", productDescription: data.user?.productDescription || "", whatsappNumber: data.user?.whatsappNumber || "" });
       });
   }, []);
 
@@ -59,7 +59,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyName: companyForm.companyName, website: companyForm.website, productDescription: companyForm.productDescription }),
+      body: JSON.stringify({ companyName: companyForm.companyName, website: companyForm.website, productDescription: companyForm.productDescription, whatsappNumber: companyForm.whatsappNumber }),
     });
     if (res.ok) {
       setCompanySaved(true);
@@ -189,6 +189,19 @@ export default function SettingsPage() {
                 rows={3}
                 className="resize-none text-sm"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="flex items-center gap-1.5">
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                {t("set_whatsapp")}
+              </Label>
+              <Input
+                value={companyForm.whatsappNumber}
+                onChange={(e) => setCompanyForm(f => ({ ...f, whatsappNumber: e.target.value }))}
+                placeholder={t("set_whatsapp_ph")}
+                type="tel"
+              />
+              <p className="text-xs text-gray-500">{t("set_whatsapp_hint")}</p>
             </div>
             <Button variant="gradient" onClick={saveCompany} disabled={companySaving}>
               {companySaved ? <><Check className="w-4 h-4" />{t("set_saved")}</> : companySaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("set_save")}

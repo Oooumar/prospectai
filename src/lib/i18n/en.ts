@@ -169,6 +169,7 @@ Best regards,
   set_company_website: "Website", set_company_website_ph: "https://mysite.com",
   set_company_product_desc: "Short description of your product / service",
   set_company_product_desc_ph: "e.g. ProspectAI automates B2B prospecting — prospect scraping + personalised AI emails in 1 click.",
+  set_whatsapp: "WhatsApp number", set_whatsapp_ph: "+44 7911 123456", set_whatsapp_hint: "If provided, a WhatsApp link will be added to AI-generated emails instead of a phone call.",
 
   sc_title: "Scrape prospects", sc_niche: "Niche / Sector",
   sc_niche_ph: "e.g. plumber, beauty brand…", sc_city: "City",

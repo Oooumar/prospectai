@@ -169,6 +169,7 @@ Cordialement,
   set_company_website: "Site web", set_company_website_ph: "https://monsite.com",
   set_company_product_desc: "Description courte de votre produit / service",
   set_company_product_desc_ph: "ex: ProspectAI automatise la prospection B2B — scraping de prospects + emails IA personnalisés en 1 clic.",
+  set_whatsapp: "Numéro WhatsApp", set_whatsapp_ph: "+33 6 12 34 56 78", set_whatsapp_hint: "Si renseigné, un lien WhatsApp sera ajouté dans les emails générés par l'IA au lieu d'un appel téléphonique.",
 
   sc_title: "Scraper des prospects", sc_niche: "Niche / Secteur",
   sc_niche_ph: "ex: plombier, marque beauté…", sc_city: "Ville",

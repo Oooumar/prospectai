@@ -169,6 +169,7 @@ Mit freundlichen Grüßen,
   set_company_website: "Website", set_company_website_ph: "https://meinewebsite.de",
   set_company_product_desc: "Kurze Beschreibung Ihres Produkts / Dienstleistung",
   set_company_product_desc_ph: "z.B. ProspectAI automatisiert die B2B-Akquise — Interessenten-Scraping + personalisierte KI-E-Mails mit 1 Klick.",
+  set_whatsapp: "WhatsApp-Nummer", set_whatsapp_ph: "+49 155 66701184", set_whatsapp_hint: "Falls angegeben, wird ein WhatsApp-Link in den KI-generierten E-Mails eingefügt statt eines Telefonanrufs.",
 
   sc_title: "Interessenten scrapen", sc_niche: "Nische / Branche",
   sc_niche_ph: "z.B. Klempner, Beauty-Marke…", sc_city: "Stadt",

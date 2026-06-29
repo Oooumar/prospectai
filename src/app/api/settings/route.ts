@@ -13,6 +13,7 @@ const updateSchema = z.object({
   companyName: z.string().max(200).optional(),
   website: z.string().url().max(500).or(z.literal("")).optional(),
   productDescription: z.string().max(500).optional(),
+  whatsappNumber: z.string().max(30).optional(),
 });
 
 export async function GET() {
@@ -21,7 +22,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true },
+    select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
   });
 
   return NextResponse.json({ user });
@@ -35,7 +36,7 @@ export async function PATCH(req: NextRequest) {
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
-  const { name, dailyLimit, currentPassword, newPassword, language, companyName, website, productDescription } = parsed.data;
+  const { name, dailyLimit, currentPassword, newPassword, language, companyName, website, productDescription, whatsappNumber } = parsed.data;
   const updateData: Record<string, any> = {};
 
   if (name) updateData.name = name;
@@ -44,6 +45,7 @@ export async function PATCH(req: NextRequest) {
   if (companyName !== undefined) updateData.companyName = companyName || null;
   if (website !== undefined) updateData.website = website || null;
   if (productDescription !== undefined) updateData.productDescription = productDescription || null;
+  if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber || null;
 
   if (currentPassword && newPassword) {
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
@@ -58,7 +60,7 @@ export async function PATCH(req: NextRequest) {
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: updateData,
-    select: { id: true, name: true, email: true, dailyLimit: true, companyName: true, website: true, productDescription: true },
+    select: { id: true, name: true, email: true, dailyLimit: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
   });
 
   return NextResponse.json({ user });

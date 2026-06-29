@@ -53,7 +53,10 @@
       "Bash(export DATABASE_URL=\"postgresql://authenticator:npg_Eba4qJ0NBmuO@ep-still-butterfly-aiwov0eb-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\")",
       "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/inbound/\\\\[id\\\\])",
       "Bash(mkdir -p \"/Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/auto-campaigns/[id]\")",
-      "Bash(mkdir -p \"/Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/drafts/[id]/send\")"
+      "Bash(mkdir -p \"/Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/drafts/[id]/send\")",
+      "Bash(npx next *)",
+      "Bash(curl -s -X POST http://localhost:3099/api/auto-campaigns -H 'Content-Type: application/json' -d '{\"niche\":\"plombier\",\"cities\":\"Paris, Lyon\",\"frequency\":\"daily\",\"prospectsPerCycle\":\"5\"}')",
+      "Bash(curl -s http://localhost:3099/api/auto-campaigns)"
     ]
   }
 }

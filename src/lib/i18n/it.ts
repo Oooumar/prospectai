@@ -169,6 +169,7 @@ Cordiali saluti,
   set_company_website: "Sito web", set_company_website_ph: "https://miosito.it",
   set_company_product_desc: "Breve descrizione del tuo prodotto / servizio",
   set_company_product_desc_ph: "es. ProspectAI automatizza la prospezione B2B — scraping di prospect + email IA personalizzate in 1 clic.",
+  set_whatsapp: "Numero WhatsApp", set_whatsapp_ph: "+39 333 1234567", set_whatsapp_hint: "Se inserito, un link WhatsApp verrà aggiunto nelle email generate dall'IA al posto di una telefonata.",
 
   sc_title: "Scrapare prospect", sc_niche: "Nicchia / Settore",
   sc_niche_ph: "es. idraulico, marchio beauty…", sc_city: "Città",
