@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText, Loader2, Send, Trash2, Pencil, X, Save,
   Plus, Power, PowerOff, MapPin, Clock, Sparkles, Info,
+  AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
@@ -30,6 +31,8 @@ interface AutoCamp {
   createdAt: string;
 }
 
+type Toast = { type: "error" | "success"; text: string };
+
 export default function DraftsPage() {
   const { t } = useI18n();
   const [drafts, setDrafts] = useState<Draft[]>([]);
@@ -43,6 +46,21 @@ export default function DraftsPage() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ niche: "", cities: "", frequency: "daily", prospectsPerCycle: "5" });
   const [creating, setCreating] = useState(false);
+  const [toast, setToast] = useState<Toast | null>(null);
+
+  const showToast = useCallback((type: Toast["type"], text: string) => {
+    setToast({ type, text });
+    setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  async function apiError(res: Response): Promise<string> {
+    try {
+      const data = await res.json();
+      return data.error || `Erreur ${res.status}`;
+    } catch {
+      return `Erreur ${res.status}`;
+    }
+  }
 
   useEffect(() => {
     Promise.all([
@@ -71,6 +89,8 @@ export default function DraftsPage() {
     if (res.ok) {
       setDrafts(prev => prev.map(d => d.id === id ? { ...d, subject: editSubject, body: editBody } : d));
       setEditing(null);
+    } else {
+      showToast("error", await apiError(res));
     }
   }
 
@@ -80,13 +100,20 @@ export default function DraftsPage() {
     setSending(p => ({ ...p, [id]: false }));
     if (res.ok) {
       setDrafts(prev => prev.filter(d => d.id !== id));
+      showToast("success", t("dr_sent"));
+    } else {
+      showToast("error", await apiError(res));
     }
   }
 
   async function deleteDraft(id: string) {
     if (!confirm(t("dr_delete_confirm"))) return;
-    await fetch(`/api/drafts/${id}`, { method: "DELETE" });
-    setDrafts(prev => prev.filter(d => d.id !== id));
+    const res = await fetch(`/api/drafts/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setDrafts(prev => prev.filter(d => d.id !== id));
+    } else {
+      showToast("error", await apiError(res));
+    }
   }
 
   async function createAutoCampaign() {
@@ -103,6 +130,9 @@ export default function DraftsPage() {
       setCamps(prev => [campaign, ...prev]);
       setShowForm(false);
       setFormData({ niche: "", cities: "", frequency: "daily", prospectsPerCycle: "5" });
+      showToast("success", t("ac_created"));
+    } else {
+      showToast("error", await apiError(res));
     }
   }
 
@@ -112,13 +142,21 @@ export default function DraftsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !active }),
     });
-    if (res.ok) setCamps(prev => prev.map(c => c.id === id ? { ...c, active: !active } : c));
+    if (res.ok) {
+      setCamps(prev => prev.map(c => c.id === id ? { ...c, active: !active } : c));
+    } else {
+      showToast("error", await apiError(res));
+    }
   }
 
   async function deleteCamp(id: string) {
     if (!confirm(t("ac_delete_confirm"))) return;
-    await fetch(`/api/auto-campaigns/${id}`, { method: "DELETE" });
-    setCamps(prev => prev.filter(c => c.id !== id));
+    const res = await fetch(`/api/auto-campaigns/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setCamps(prev => prev.filter(c => c.id !== id));
+    } else {
+      showToast("error", await apiError(res));
+    }
   }
 
   if (loading) {
@@ -137,6 +175,23 @@ export default function DraftsPage() {
       <TopBar title={t("dr_title")} description={t("dr_desc")} />
 
       <div className="p-6 space-y-6">
+        {/* Toast notification */}
+        {toast && (
+          <div className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2 ${
+            toast.type === "error"
+              ? "bg-red-500/15 border border-red-500/30 text-red-300"
+              : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+          }`}>
+            {toast.type === "error"
+              ? <AlertCircle className="w-4 h-4 shrink-0" />
+              : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+            <span className="flex-1">{toast.text}</span>
+            <button onClick={() => setToast(null)} className="p-0.5 hover:opacity-70">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Auto-campaigns section */}
         <Card>
           <CardHeader className="pb-3">
