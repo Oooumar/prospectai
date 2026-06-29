@@ -12,7 +12,8 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ campaigns });
-  } catch {
+  } catch (err: any) {
+    console.error("[auto-campaigns] GET error:", err.message);
     return NextResponse.json({ campaigns: [] });
   }
 }
@@ -39,7 +40,16 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ campaign }, { status: 201 });
   } catch (err: any) {
-    console.error("[auto-campaigns] create error:", err.message);
-    return NextResponse.json({ error: "Table AutoCampaign introuvable — exécutez la migration SQL" }, { status: 500 });
+    console.error("[auto-campaigns] POST error:", err.message);
+    let msg = "Erreur interne";
+    const raw = err.message || "";
+    if (raw.includes("permission denied")) {
+      msg = "Permission refusée sur la table AutoCampaign — exécutez : GRANT ALL ON \"AutoCampaign\" TO authenticator;";
+    } else if (err.code === "P2021" || raw.includes("does not exist")) {
+      msg = "Table AutoCampaign introuvable — exécutez la migration SQL dans Neon";
+    } else if (raw.length > 0) {
+      msg = raw.length > 200 ? raw.substring(0, 200) : raw;
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
