@@ -12,55 +12,75 @@ const createSchema = z.object({
   dailyLimit: z.number().min(1).max(500).default(20),
 });
 
-export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const campaigns = await prisma.campaign.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
+    const campaigns = await prisma.campaign.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json({ campaigns });
+    return NextResponse.json({ campaigns });
+  } catch (err: any) {
+    console.error("[campaigns] GET:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = createSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    const body = await req.json();
+    const parsed = createSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
-  const campaign = await prisma.campaign.create({
-    data: { ...parsed.data, userId: session.user.id },
-  });
+    const campaign = await prisma.campaign.create({
+      data: { ...parsed.data, userId: session.user.id },
+    });
 
-  return NextResponse.json({ campaign }, { status: 201 });
+    return NextResponse.json({ campaign }, { status: 201 });
+  } catch (err: any) {
+    console.error("[campaigns] POST:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const { id, ...updates } = await req.json();
+    const { id, ...updates } = await req.json();
 
-  const campaign = await prisma.campaign.updateMany({
-    where: { id, userId: session.user.id },
-    data: updates,
-  });
+    const campaign = await prisma.campaign.updateMany({
+      where: { id, userId: session.user.id },
+      data: updates,
+    });
 
-  return NextResponse.json({ campaign });
+    return NextResponse.json({ campaign });
+  } catch (err: any) {
+    console.error("[campaigns] PATCH:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "ID manquant" }, { status: 400 });
 
-  await prisma.campaign.deleteMany({ where: { id, userId: session.user.id } });
-  return NextResponse.json({ success: true });
+    await prisma.campaign.deleteMany({ where: { id, userId: session.user.id } });
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("[campaigns] DELETE:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+  }
 }

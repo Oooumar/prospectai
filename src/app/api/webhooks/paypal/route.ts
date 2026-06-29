@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+const PAYPAL_REQUIRED_HEADERS = [
+  "paypal-transmission-id",
+  "paypal-transmission-time",
+  "paypal-transmission-sig",
+  "paypal-auth-algo",
+];
+
+function verifyPayPalOrigin(req: NextRequest): boolean {
+  return PAYPAL_REQUIRED_HEADERS.every(h => req.headers.get(h));
+}
+
 export async function POST(req: NextRequest) {
+  if (!verifyPayPalOrigin(req)) {
+    return NextResponse.json({ error: "Missing PayPal headers" }, { status: 401 });
+  }
+
   try {
     const event = await req.json();
     const db = prisma as any;
@@ -49,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (err) {
-    console.error("PayPal webhook:", err);
+    console.error("[webhook/paypal]", err);
     return NextResponse.json({ error: "Erreur webhook" }, { status: 500 });
   }
 }

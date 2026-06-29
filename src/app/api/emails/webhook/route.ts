@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Resend webhook for tracking opens and replies
+function verifyResendWebhook(req: NextRequest): boolean {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) return true;
+  const svixId = req.headers.get("svix-id");
+  const svixSig = req.headers.get("svix-signature");
+  const svixTs = req.headers.get("svix-timestamp");
+  return !!(svixId && svixSig && svixTs);
+}
+
 export async function POST(req: NextRequest) {
+  if (!verifyResendWebhook(req)) {
+    return NextResponse.json({ error: "Webhook non vérifié" }, { status: 401 });
+  }
+
   try {
     const event = await req.json();
-
     const { type, data } = event;
 
     if (!data?.message_id) {
@@ -61,7 +72,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("Webhook error:", err);
+    console.error("[webhook/resend]", err);
     return NextResponse.json({ error: "Webhook error" }, { status: 500 });
   }
 }

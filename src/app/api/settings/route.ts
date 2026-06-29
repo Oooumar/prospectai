@@ -17,51 +17,61 @@ const updateSchema = z.object({
 });
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
-  });
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
+    });
 
-  return NextResponse.json({ user });
+    return NextResponse.json({ user });
+  } catch (err: any) {
+    console.error("[settings] GET:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const body = await req.json();
-  const parsed = updateSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    const body = await req.json();
+    const parsed = updateSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
-  const { name, dailyLimit, currentPassword, newPassword, language, companyName, website, productDescription, whatsappNumber } = parsed.data;
-  const updateData: Record<string, any> = {};
+    const { name, dailyLimit, currentPassword, newPassword, language, companyName, website, productDescription, whatsappNumber } = parsed.data;
+    const updateData: Record<string, any> = {};
 
-  if (name) updateData.name = name;
-  if (dailyLimit) updateData.dailyLimit = dailyLimit;
-  if (language) updateData.language = language;
-  if (companyName !== undefined) updateData.companyName = companyName || null;
-  if (website !== undefined) updateData.website = website || null;
-  if (productDescription !== undefined) updateData.productDescription = productDescription || null;
-  if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber || null;
+    if (name) updateData.name = name;
+    if (dailyLimit) updateData.dailyLimit = dailyLimit;
+    if (language) updateData.language = language;
+    if (companyName !== undefined) updateData.companyName = companyName || null;
+    if (website !== undefined) updateData.website = website || null;
+    if (productDescription !== undefined) updateData.productDescription = productDescription || null;
+    if (whatsappNumber !== undefined) updateData.whatsappNumber = whatsappNumber || null;
 
-  if (currentPassword && newPassword) {
-    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user?.password) return NextResponse.json({ error: "Compte OAuth — pas de mot de passe" }, { status: 400 });
+    if (currentPassword && newPassword) {
+      const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+      if (!user?.password) return NextResponse.json({ error: "Compte OAuth — pas de mot de passe" }, { status: 400 });
 
-    const valid = await bcrypt.compare(currentPassword, user.password);
-    if (!valid) return NextResponse.json({ error: "Mot de passe actuel incorrect" }, { status: 400 });
+      const valid = await bcrypt.compare(currentPassword, user.password);
+      if (!valid) return NextResponse.json({ error: "Mot de passe actuel incorrect" }, { status: 400 });
 
-    updateData.password = await bcrypt.hash(newPassword, 12);
+      updateData.password = await bcrypt.hash(newPassword, 12);
+    }
+
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
+      data: updateData,
+      select: { id: true, name: true, email: true, dailyLimit: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
+    });
+
+    return NextResponse.json({ user });
+  } catch (err: any) {
+    console.error("[settings] PATCH:", err.message);
+    return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
   }
-
-  const user = await prisma.user.update({
-    where: { id: session.user.id },
-    data: updateData,
-    select: { id: true, name: true, email: true, dailyLimit: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
-  });
-
-  return NextResponse.json({ user });
 }
