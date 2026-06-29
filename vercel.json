@@ -4,12 +4,8 @@
   "installCommand": "npm install",
   "crons": [
     {
-      "path": "/api/cron/auto-campaign",
+      "path": "/api/cron/daily-tasks",
       "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/trial-reminder",
-      "schedule": "0 9 * * *"
     }
   ]
 }
