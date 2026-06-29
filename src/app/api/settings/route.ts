@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { getWarmupTier } from "@/lib/email-limits";
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -26,7 +27,8 @@ export async function GET() {
       select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
     });
 
-    return NextResponse.json({ user });
+    const warmup = user ? getWarmupTier(user.createdAt) : null;
+    return NextResponse.json({ user, warmup });
   } catch (err: any) {
     console.error("[settings] GET:", err.message);
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });

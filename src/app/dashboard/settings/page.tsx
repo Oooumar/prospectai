@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle } from "lucide-react";
+import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle, Info } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -19,9 +19,10 @@ export default function SettingsPage() {
   const { data: session, update } = useSession();
   const { t } = useI18n();
   const [user, setUser] = useState<any>(null);
+  const [warmup, setWarmup] = useState<{ limit: number; tier: string; daysLeft: number } | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [form, setForm] = useState({ name: "", dailyLimit: 50 });
+  const [form, setForm] = useState({ name: "" });
   const [companySaving, setCompanySaving] = useState(false);
   const [companySaved, setCompanySaved] = useState(false);
   const [companyForm, setCompanyForm] = useState({ companyName: "", website: "", productDescription: "", whatsappNumber: "" });
@@ -34,7 +35,8 @@ export default function SettingsPage() {
       .then(r => r.json())
       .then(data => {
         setUser(data.user);
-        setForm({ name: data.user?.name || "", dailyLimit: data.user?.dailyLimit || 50 });
+        setWarmup(data.warmup);
+        setForm({ name: data.user?.name || "" });
         setCompanyForm({ companyName: data.user?.companyName || "", website: data.user?.website || "", productDescription: data.user?.productDescription || "", whatsappNumber: data.user?.whatsappNumber || "" });
       });
   }, []);
@@ -44,7 +46,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, dailyLimit: form.dailyLimit }),
+      body: JSON.stringify({ name: form.name }),
     });
     if (res.ok) {
       setSaved(true);
@@ -209,32 +211,48 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Sending limits */}
+        {/* Sending limits — warmup */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Zap className="w-4 h-4 text-amber-400" />
               {t("set_limits_title")}
             </CardTitle>
-            <CardDescription>{t("set_limits_desc")}</CardDescription>
+            <CardDescription>{t("set_warmup_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>{t("set_limit_label")}</Label>
-              <div className="flex gap-3">
-                <Input
-                  type="number"
-                  min={1}
-                  max={1000}
-                  value={form.dailyLimit}
-                  onChange={(e) => setForm(f => ({ ...f, dailyLimit: parseInt(e.target.value) || 50 }))}
-                  className="max-w-[140px]"
-                />
-                <Button variant="outline" onClick={saveProfile} disabled={saving}>
-                  {t("set_update")}
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500">{t("set_limit_hint")}</p>
+            {warmup && (
+              <>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-white">{warmup.limit}</p>
+                    <p className="text-xs text-gray-400">{t("set_limit_label")}</p>
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    {[
+                      { tier: "1", label: "5/j", range: "J1–14" },
+                      { tier: "2", label: "15/j", range: "J15–28" },
+                      { tier: "3", label: "30/j", range: "J29+" },
+                    ].map(s => (
+                      <div key={s.tier} className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${s.tier === warmup.tier ? "bg-emerald-400" : s.tier < warmup.tier ? "bg-gray-600" : "bg-gray-800"}`} />
+                        <span className={`text-xs ${s.tier === warmup.tier ? "text-emerald-400 font-medium" : "text-gray-500"}`}>
+                          {s.range} — {s.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {warmup.daysLeft > 0 && (
+                  <p className="text-xs text-amber-400">
+                    {t("set_warmup_next", { days: warmup.daysLeft })}
+                  </p>
+                )}
+              </>
+            )}
+            <div className="flex items-start gap-2 bg-gray-800/50 rounded-lg px-3 py-2.5">
+              <Info className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-gray-400">{t("set_warmup_hint")}</p>
             </div>
           </CardContent>
         </Card>

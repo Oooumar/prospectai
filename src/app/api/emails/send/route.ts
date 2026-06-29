@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendProspectEmail } from "@/lib/resend";
+import { checkSendLimits } from "@/lib/email-limits";
 import { z } from "zod";
 
 const schema = z.object({
@@ -28,22 +29,9 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
     const isAdmin = (user as any).role === "admin";
-
-    if (!isAdmin) {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todaySent = await prisma.emailLog.count({
-        where: {
-          userId: session.user.id,
-          status: { in: ["SENT"] },
-          sentAt: { gte: todayStart },
-        },
-      });
-      if (todaySent >= user.dailyLimit) {
-        return NextResponse.json({
-          error: `Limite journalière atteinte (${user.dailyLimit} emails/jour)`,
-        }, { status: 429 });
-      }
+    const limitCheck = await checkSendLimits(session.user.id, user.createdAt, isAdmin);
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ error: limitCheck.error }, { status: 429 });
     }
 
     const prospect = await prisma.prospect.findFirst({
@@ -58,7 +46,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ce prospect n'a pas d'email" }, { status: 400 });
     }
 
-    // Create log first so we can embed its ID in the Reply-To header
     const log = await prisma.emailLog.create({
       data: {
         userId: session.user.id,
@@ -70,7 +57,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // If inbound domain is configured, use a traceable Reply-To per email
     const inboundDomain = process.env.RESEND_INBOUND_DOMAIN;
     const replyTo = inboundDomain
       ? `reply+${log.id}@${inboundDomain}`
@@ -84,7 +70,6 @@ export async function POST(req: NextRequest) {
       replyTo: replyTo || undefined,
     });
 
-    // Update log and prospect status
     await Promise.all([
       prisma.emailLog.update({
         where: { id: log.id },

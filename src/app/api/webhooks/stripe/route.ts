@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
+async function getCardFingerprint(customerId: string): Promise<string | null> {
+  try {
+    const methods = await stripe.paymentMethods.list({ customer: customerId, type: "card", limit: 1 });
+    return methods.data[0]?.card?.fingerprint ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -22,12 +31,41 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as any;
       const { userId } = session.metadata ?? {};
       if (!userId) break;
+
+      const fingerprint = session.customer
+        ? await getCardFingerprint(session.customer)
+        : null;
+
+      if (fingerprint) {
+        const existing = await db.user.findFirst({
+          where: {
+            stripeCardFingerprint: fingerprint,
+            id: { not: userId },
+            trialEndsAt: { not: null },
+          },
+        });
+
+        if (existing) {
+          console.warn(`[stripe] Trial abuse detected: card ${fingerprint} already used by user ${existing.id}`);
+          if (session.subscription) {
+            try {
+              await stripe.subscriptions.update(session.subscription, {
+                trial_end: "now",
+              });
+            } catch (err: any) {
+              console.error("[stripe] Failed to cancel trial:", err.message);
+            }
+          }
+        }
+      }
+
       await db.user.update({
         where: { id: userId },
         data: {
           stripeCustomerId: session.customer,
           stripeSubscriptionId: session.subscription,
           subscriptionStatus: "trialing",
+          ...(fingerprint && { stripeCardFingerprint: fingerprint }),
         },
       });
       break;

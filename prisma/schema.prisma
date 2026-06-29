@@ -23,6 +23,7 @@ model User {
   subscriptionStatus   String    @default("trialing")
   stripeCustomerId     String?
   stripeSubscriptionId String?
+  stripeCardFingerprint String?
   paypalSubscriptionId String?
   trialReminderSent    Boolean   @default(false)
   language             String    @default("fr")

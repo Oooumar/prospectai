@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendProspectEmail } from "@/lib/resend";
+import { checkSendLimits } from "@/lib/email-limits";
 
 export async function POST(
   _req: NextRequest,
@@ -24,6 +25,12 @@ export async function POST(
 
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+
+    const isAdmin = (user as any).role === "admin";
+    const limitCheck = await checkSendLimits(session.user.id, user.createdAt, isAdmin);
+    if (!limitCheck.allowed) {
+      return NextResponse.json({ error: limitCheck.error }, { status: 429 });
+    }
 
     const inboundDomain = process.env.RESEND_INBOUND_DOMAIN;
     const replyTo = inboundDomain
