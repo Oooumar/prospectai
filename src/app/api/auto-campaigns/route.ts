@@ -6,12 +6,15 @@ export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const campaigns = await prisma.autoCampaign.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
-
-  return NextResponse.json({ campaigns });
+  try {
+    const campaigns = await prisma.autoCampaign.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json({ campaigns });
+  } catch {
+    return NextResponse.json({ campaigns: [] });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -24,15 +27,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Niche et villes requises" }, { status: 400 });
   }
 
-  const campaign = await prisma.autoCampaign.create({
-    data: {
-      userId: session.user.id,
-      niche: niche.trim(),
-      cities: cities.trim(),
-      frequency: frequency === "weekly" ? "weekly" : "daily",
-      prospectsPerCycle: Math.min(Math.max(parseInt(prospectsPerCycle) || 5, 1), 20),
-    },
-  });
-
-  return NextResponse.json({ campaign }, { status: 201 });
+  try {
+    const campaign = await prisma.autoCampaign.create({
+      data: {
+        userId: session.user.id,
+        niche: niche.trim(),
+        cities: cities.trim(),
+        frequency: frequency === "weekly" ? "weekly" : "daily",
+        prospectsPerCycle: Math.min(Math.max(parseInt(prospectsPerCycle) || 5, 1), 20),
+      },
+    });
+    return NextResponse.json({ campaign }, { status: 201 });
+  } catch (err: any) {
+    console.error("[auto-campaigns] create error:", err.message);
+    return NextResponse.json({ error: "Table AutoCampaign introuvable — exécutez la migration SQL" }, { status: 500 });
+  }
 }

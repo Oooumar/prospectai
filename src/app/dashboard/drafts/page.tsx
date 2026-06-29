@@ -46,13 +46,12 @@ export default function DraftsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/drafts").then(r => r.json()),
-      fetch("/api/auto-campaigns").then(r => r.json()),
+      fetch("/api/drafts").then(r => r.ok ? r.json() : { drafts: [] }),
+      fetch("/api/auto-campaigns").then(r => r.ok ? r.json() : { campaigns: [] }),
     ]).then(([d, c]) => {
       setDrafts(d.drafts || []);
       setCamps(c.campaigns || []);
-      setLoading(false);
-    });
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   function startEdit(draft: Draft) {
