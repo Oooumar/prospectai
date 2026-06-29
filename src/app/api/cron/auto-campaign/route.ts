@@ -13,9 +13,16 @@ function isDue(campaign: { frequency: string; lastRunAt: Date | null }): boolean
   return campaign.frequency === "weekly" ? elapsed >= WEEKLY_MS : elapsed >= DAILY_MS;
 }
 
+function checkCronAuth(req: NextRequest): boolean {
+  const expected = process.env.CRON_SECRET;
+  if (!expected) return false;
+  const fromHeader = req.headers.get("x-cron-secret");
+  const fromBearer = req.headers.get("authorization")?.replace("Bearer ", "");
+  return fromHeader === expected || fromBearer === expected;
+}
+
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!checkCronAuth(req)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

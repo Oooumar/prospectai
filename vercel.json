@@ -6,6 +6,10 @@
     {
       "path": "/api/cron/auto-campaign",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/trial-reminder",
+      "schedule": "0 9 * * *"
     }
   ]
 }
