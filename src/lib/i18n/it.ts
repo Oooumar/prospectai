@@ -106,6 +106,7 @@ export const it: T = {
   pp_col_location: "Posizione", pp_col_status: "Stato",
   pp_website: "Sito web", pp_email_ai: "Email IA",
   pp_delete_confirm: "Eliminare questo prospect?",
+  pp_no_website: "Senza sito web", pp_no_website_badge: "No sito",
   pp_page: "Pagina {n}", pp_total_label: "{n} prospect in totale",
   pp_prev: "Precedente", pp_next: "Successivo",
 
@@ -180,6 +181,7 @@ Cordiali saluti,
   sc_again: "Scrapa ancora", sc_more: "+ {n} altri prospect nella lista",
   sc_g_b2b: "🏢 Professionale B2B", sc_g_creator: "🎨 Creator / Marchio",
   sc_g_agency: "🏛️ Agenzia", sc_error_server: "Impossibile contattare il server. Riprova.",
+  sc_no_website: "Mostra solo le aziende senza sito web",
 
   ec_title_prefix: "Email IA per", ec_generate: "Genera con IA", ec_generating: "IA in generazione…",
   ec_subject: "Oggetto", ec_subject_ph: "Oggetto dell'email…",

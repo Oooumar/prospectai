@@ -106,6 +106,7 @@ export const en: T = {
   pp_col_location: "Location", pp_col_status: "Status",
   pp_website: "Website", pp_email_ai: "AI Email",
   pp_delete_confirm: "Delete this prospect?",
+  pp_no_website: "No website", pp_no_website_badge: "No site",
   pp_page: "Page {n}", pp_total_label: "{n} prospects total",
   pp_prev: "Previous", pp_next: "Next",
 
@@ -180,6 +181,7 @@ Best regards,
   sc_again: "Scrape again", sc_more: "+ {n} more prospects in the list",
   sc_g_b2b: "🏢 Professional B2B", sc_g_creator: "🎨 Creator / Brand",
   sc_g_agency: "🏛️ Agency", sc_error_server: "Unable to contact server. Try again.",
+  sc_no_website: "Show only businesses without a website",
 
   ec_title_prefix: "AI Email for", ec_generate: "Generate with AI", ec_generating: "AI generating…",
   ec_subject: "Subject", ec_subject_ph: "Email subject…",

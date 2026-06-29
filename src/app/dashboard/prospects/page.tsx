@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Target, Trash2, Mail, Loader2,
-  Globe, Phone, Star, MapPin, Building2
+  Globe, Ban, Phone, Star, MapPin, Building2,
 } from "lucide-react";
 import { ScrapingModule } from "@/components/scraping/scraping-module";
 import { EmailComposer } from "@/components/emails/email-composer";
@@ -27,18 +27,20 @@ export default function ProspectsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [noWebsite, setNoWebsite] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [showScraping, setShowScraping] = useState(false);
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), search });
+    if (noWebsite) params.set("noWebsite", "true");
     const res = await fetch(`/api/prospects?${params}`);
     const data = await res.json();
     setProspects(data.prospects || []);
     setTotal(data.total || 0);
     setLoading(false);
-  }, [page, search]);
+  }, [page, search, noWebsite]);
 
   useEffect(() => { fetchProspects(); }, [fetchProspects]);
 
@@ -63,6 +65,17 @@ export default function ProspectsPage() {
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             />
           </div>
+          <button
+            onClick={() => { setNoWebsite(v => !v); setPage(1); }}
+            className={`flex items-center gap-1.5 text-xs border rounded-lg px-3 py-2 transition-colors shrink-0 ${
+              noWebsite
+                ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
+                : "border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+            }`}
+          >
+            <Ban className="w-3.5 h-3.5" />
+            {t("pp_no_website")}
+          </button>
           <Button variant="gradient" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
             {t("pp_scrape_btn")}
@@ -126,7 +139,14 @@ export default function ProspectsPage() {
                               <Building2 className="w-4 h-4 text-violet-400" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-200">{p.name}</p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-medium text-gray-200">{p.name}</p>
+                                {!p.website && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                                    <Ban className="w-2.5 h-2.5" />{t("pp_no_website_badge")}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-gray-500 capitalize">{p.niche}</p>
                               {p.rating && (
                                 <div className="flex items-center gap-1 mt-0.5">

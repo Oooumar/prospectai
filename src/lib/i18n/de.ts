@@ -106,6 +106,7 @@ export const de: T = {
   pp_col_location: "Standort", pp_col_status: "Status",
   pp_website: "Webseite", pp_email_ai: "KI-E-Mail",
   pp_delete_confirm: "Diesen Interessenten löschen?",
+  pp_no_website: "Ohne Website", pp_no_website_badge: "Keine Site",
   pp_page: "Seite {n}", pp_total_label: "{n} Interessenten insgesamt",
   pp_prev: "Zurück", pp_next: "Weiter",
 
@@ -180,6 +181,7 @@ Mit freundlichen Grüßen,
   sc_again: "Erneut scrapen", sc_more: "+ {n} weitere Interessenten in der Liste",
   sc_g_b2b: "🏢 Professionelles B2B", sc_g_creator: "🎨 Creator / Marke",
   sc_g_agency: "🏛️ Agentur", sc_error_server: "Server nicht erreichbar. Bitte erneut versuchen.",
+  sc_no_website: "Nur Unternehmen ohne Website anzeigen",
 
   ec_title_prefix: "KI-E-Mail für", ec_generate: "Mit KI generieren", ec_generating: "KI generiert…",
   ec_subject: "Betreff", ec_subject_ph: "E-Mail-Betreff…",

@@ -57,7 +57,8 @@
       "Bash(npx next *)",
       "Bash(curl -s -X POST http://localhost:3099/api/auto-campaigns -H 'Content-Type: application/json' -d '{\"niche\":\"plombier\",\"cities\":\"Paris, Lyon\",\"frequency\":\"daily\",\"prospectsPerCycle\":\"5\"}')",
       "Bash(curl -s http://localhost:3099/api/auto-campaigns)",
-      "Bash(grep -v 'node_modules\\\\|$transaction')"
+      "Bash(grep -v 'node_modules\\\\|$transaction')",
+      "Bash(node -e \"const l = require\\('lucide-react'\\); const icons = Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('globe'\\)\\); console.log\\(icons\\);\")"
     ]
   }
 }

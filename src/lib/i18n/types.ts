@@ -74,6 +74,7 @@ export interface T {
   pp_scrape_now: string; pp_col_prospect: string; pp_col_contact: string;
   pp_col_location: string; pp_col_status: string; pp_website: string;
   pp_email_ai: string; pp_delete_confirm: string;
+  pp_no_website: string; pp_no_website_badge: string;
   pp_page: string; pp_total_label: string; pp_prev: string; pp_next: string;
   // Campaigns
   cam_title: string; cam_desc: string; cam_new_btn: string;
@@ -121,6 +122,7 @@ export interface T {
   sc_search_btn: string; sc_searching: string; sc_results: string;
   sc_new_search: string; sc_view_all: string; sc_again: string; sc_more: string;
   sc_g_b2b: string; sc_g_creator: string; sc_g_agency: string; sc_error_server: string;
+  sc_no_website: string;
   // Email composer
   ec_title_prefix: string; ec_generate: string; ec_generating: string;
   ec_subject: string; ec_subject_ph: string; ec_body: string; ec_body_ph: string;

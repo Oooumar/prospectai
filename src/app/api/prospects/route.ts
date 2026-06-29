@@ -13,18 +13,27 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status");
     const niche = searchParams.get("niche");
+    const noWebsite = searchParams.get("noWebsite") === "true";
 
-    const where = {
-      userId: session.user.id,
-      ...(search && {
+    const and: any[] = [];
+    if (search) {
+      and.push({
         OR: [
           { name: { contains: search, mode: "insensitive" as const } },
           { email: { contains: search, mode: "insensitive" as const } },
           { city: { contains: search, mode: "insensitive" as const } },
         ],
-      }),
+      });
+    }
+    if (noWebsite) {
+      and.push({ OR: [{ website: null }, { website: "" }] });
+    }
+
+    const where = {
+      userId: session.user.id,
       ...(status && { status: status as any }),
       ...(niche && { niche: { contains: niche, mode: "insensitive" as const } }),
+      ...(and.length > 0 && { AND: and }),
     };
 
     const [prospects, total] = await Promise.all([

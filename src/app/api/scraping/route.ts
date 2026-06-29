@@ -9,6 +9,7 @@ const schema = z.object({
   niche: z.string().min(2),
   city: z.string().min(2),
   limit: z.number().min(1).max(60).default(20),
+  noWebsiteOnly: z.boolean().default(false),
 });
 
 export async function POST(req: NextRequest) {
@@ -24,15 +25,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
 
-    const { niche, city, limit } = parsed.data;
-    const places = await searchGooglePlaces(`${niche} ${city}`, limit);
+    const { niche, city, limit, noWebsiteOnly } = parsed.data;
+    let places = await searchGooglePlaces(`${niche} ${city}`, noWebsiteOnly ? Math.min(limit * 3, 60) : limit);
+
+    if (noWebsiteOnly) {
+      places = places.filter(p => !p.websiteUri);
+    }
 
     if (places.length === 0) {
       return NextResponse.json({ prospects: [], count: 0 });
     }
 
     const websiteUrls = places.map((p) => p.websiteUri ?? null);
-    const emails = await extractEmailsBatch(websiteUrls, 5);
+    const emails = noWebsiteOnly ? places.map(() => null) : await extractEmailsBatch(websiteUrls, 5);
 
     const userId = session.user.id as string;
 

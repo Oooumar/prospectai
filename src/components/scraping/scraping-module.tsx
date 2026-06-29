@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Loader2, Target, Check, Mail, Phone } from "lucide-react";
+import { Search, X, Loader2, Target, Check, Mail, Phone, Ban } from "lucide-react";
 import { useI18n } from "@/components/language-provider";
 
 type FormData = { niche: string; city: string; limit: number };
@@ -24,6 +24,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
   const [results, setResults] = useState<any[]>([]);
   const [scraped, setScraped] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [noWebsiteOnly, setNoWebsiteOnly] = useState(false);
 
   const schema = z.object({
     niche: z.string().min(2),
@@ -48,7 +49,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
       const res = await fetch("/api/scraping", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, noWebsiteOnly }),
       });
       const json = await res.json();
       if (res.ok) {
@@ -117,6 +118,17 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
               </div>
             </div>
 
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={noWebsiteOnly}
+                onChange={e => setNoWebsiteOnly(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-orange-500 focus:ring-orange-500/30"
+              />
+              <Ban className="w-3.5 h-3.5 text-orange-400" />
+              <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{t("sc_no_website")}</span>
+            </label>
+
             {apiError && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {apiError}
@@ -165,7 +177,14 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
                       )}
                     </div>
                   </div>
-                  <Badge variant="secondary" className="text-xs">{p.city}</Badge>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {!p.website && (
+                      <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                        <Ban className="w-2.5 h-2.5" />
+                      </span>
+                    )}
+                    <Badge variant="secondary" className="text-xs">{p.city}</Badge>
+                  </div>
                 </div>
               ))}
               {results.length > 10 && (
