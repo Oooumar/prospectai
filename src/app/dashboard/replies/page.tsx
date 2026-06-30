@@ -76,7 +76,7 @@ export default function RepliesPage() {
     <>
       <TopBar title={t("rep_title")} description={t("rep_desc")} />
 
-      <div className="p-6 space-y-4 max-w-3xl">
+      <div className="p-4 sm:p-6 space-y-4 max-w-3xl">
         {loading ? (
           <div className="flex justify-center py-24">
             <Loader2 className="w-6 h-6 animate-spin text-violet-400" />

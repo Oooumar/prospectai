@@ -184,7 +184,7 @@ export default function CampaignDetailPage({ params }: { params: Promise<{ id: s
         title={campaign?.title ?? t("wc_page_title")}
         description={`${t("wc_pending")} : ${pendingCount}/${messages.length}`}
       />
-      <div className="p-6 space-y-4 max-w-2xl">
+      <div className="p-4 sm:p-6 space-y-4 max-w-2xl">
         <Link href="/dashboard/whatsapp-campaigns">
           <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white -ml-2">
             <ArrowLeft className="w-4 h-4" />{t("wc_back")}

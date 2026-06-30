@@ -92,9 +92,9 @@ export default function ProspectsPage() {
     <>
       <TopBar title={t("pp_title")} description={t("pp_desc", { n: total })} />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <Input
               placeholder={t("pp_search_ph")}
@@ -105,7 +105,7 @@ export default function ProspectsPage() {
           </div>
           <button
             onClick={() => { setNoWebsite(v => !v); setPage(1); }}
-            className={`flex items-center gap-1.5 text-xs border rounded-lg px-3 py-2 transition-colors shrink-0 ${
+            className={`flex items-center justify-center gap-1.5 text-xs border rounded-lg px-3 py-2 transition-colors shrink-0 w-full sm:w-auto ${
               noWebsite
                 ? "bg-orange-500/15 border-orange-500/40 text-orange-300"
                 : "border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
@@ -114,7 +114,7 @@ export default function ProspectsPage() {
             <Ban className="w-3.5 h-3.5" />
             {t("pp_no_website")}
           </button>
-          <Button variant="warm" onClick={() => setShowScraping(true)}>
+          <Button variant="warm" className="w-full sm:w-auto" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
             {t("pp_scrape_btn")}
           </Button>

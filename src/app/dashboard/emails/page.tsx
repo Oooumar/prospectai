@@ -71,7 +71,7 @@ export default function EmailsPage() {
     <>
       <TopBar title={t("em_title")} description={t("em_desc")} />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map((s) => {

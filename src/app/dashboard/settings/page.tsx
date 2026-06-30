@@ -227,7 +227,7 @@ export default function SettingsPage() {
     <>
       <TopBar title={t("set_title")} description={t("set_desc")} />
 
-      <div className="p-6 space-y-6 max-w-2xl">
+      <div className="p-4 sm:p-6 space-y-6 max-w-2xl">
         {/* Profile */}
         <Card>
           <CardHeader>

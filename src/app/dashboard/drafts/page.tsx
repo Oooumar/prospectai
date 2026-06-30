@@ -174,7 +174,7 @@ export default function DraftsPage() {
     <>
       <TopBar title={t("dr_title")} description={t("dr_desc")} />
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Toast notification */}
         {toast && (
           <div className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm animate-in fade-in slide-in-from-top-2 ${

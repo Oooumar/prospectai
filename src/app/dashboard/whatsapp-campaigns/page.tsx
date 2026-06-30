@@ -36,7 +36,7 @@ export default function WhatsAppCampaignsPage() {
   return (
     <>
       <TopBar title={t("wc_page_title")} description={t("wc_page_desc")} />
-      <div className="p-6 space-y-4 max-w-2xl">
+      <div className="p-4 sm:p-6 space-y-4 max-w-2xl">
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
