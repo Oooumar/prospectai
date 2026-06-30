@@ -58,17 +58,17 @@ export async function POST(req: NextRequest) {
     if (prospects.length === 0) return NextResponse.json({ error: "Aucun prospect valide (avec téléphone) trouvé" }, { status: 400 });
 
     // Fetch sender profile
-    type ProfileRow = { companyName: string | null; website: string | null; productDescription: string | null };
-    let sender: ProfileRow = { companyName: null, website: null, productDescription: null };
+    type ProfileRow = { companyName: string | null; website: string | null; productDescription: string | null; whatsappNumber: string | null };
+    let sender: ProfileRow = { companyName: null, website: null, productDescription: null, whatsappNumber: null };
     if (profileId) {
       const rows = await prisma.$queryRaw<ProfileRow[]>`
-        SELECT "companyName","website","productDescription"
+        SELECT "companyName","website","productDescription","whatsappNumber"
         FROM "ProductProfile" WHERE "id" = ${profileId} AND "userId" = ${session.user.id}
       `;
       if (rows[0]) sender = rows[0];
     } else {
       const rows = await prisma.$queryRaw<ProfileRow[]>`
-        SELECT "companyName","website","productDescription" FROM "User" WHERE "id" = ${session.user.id}
+        SELECT "companyName","website","productDescription","whatsappNumber" FROM "User" WHERE "id" = ${session.user.id}
       `;
       if (rows[0]) sender = rows[0];
     }
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       prospects.map(async (p) => {
         const { message } = await generateWhatsAppMessage(
           { name: p.name, niche: p.niche, city: p.city },
-          { companyName: sender.companyName ?? undefined, website: sender.website ?? undefined, productDescription: sender.productDescription ?? undefined },
+          { companyName: sender.companyName ?? undefined, website: sender.website ?? undefined, productDescription: sender.productDescription ?? undefined, whatsappNumber: sender.whatsappNumber ?? undefined },
           promoTitle.trim()
         );
         return { prospect: p, message };

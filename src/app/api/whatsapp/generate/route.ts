@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
       `;
       const p = pRows[0];
       if (p) {
-        sender = { companyName: p.companyName ?? undefined, website: p.website ?? undefined, productDescription: p.productDescription ?? undefined };
+        sender = { companyName: p.companyName ?? undefined, website: p.website ?? undefined, productDescription: p.productDescription ?? undefined, whatsappNumber: p.whatsappNumber ?? undefined };
       }
     } else {
       const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { companyName: true, productDescription: true, website: true },
+        select: { companyName: true, productDescription: true, website: true, whatsappNumber: true },
       });
-      sender = { companyName: user?.companyName ?? undefined, productDescription: user?.productDescription ?? undefined, website: user?.website ?? undefined };
+      sender = { companyName: user?.companyName ?? undefined, productDescription: user?.productDescription ?? undefined, website: user?.website ?? undefined, whatsappNumber: user?.whatsappNumber ?? undefined };
     }
 
     const result = await generateWhatsAppMessage(

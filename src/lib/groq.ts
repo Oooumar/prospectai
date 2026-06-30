@@ -287,7 +287,7 @@ export async function generateProspectEmail(
 
 export async function generateWhatsAppMessage(
   prospect: { name: string; niche: string; city: string },
-  sender: { companyName?: string; productDescription?: string; website?: string },
+  sender: { companyName?: string; productDescription?: string; website?: string; whatsappNumber?: string },
   promo?: string
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
@@ -295,37 +295,45 @@ export async function generateWhatsAppMessage(
   const senderName = sender.companyName ?? "notre solution";
   const whatWeDo = sender.productDescription
     ? sender.productDescription
-    : `${senderName} aide les entreprises à automatiser leur prospection`;
+    : `${senderName} aide les entreprises à automatiser leur prospection commerciale`;
   const websiteLine = sender.website
-    ? `SENDER WEBSITE (include this exact URL once in the message, naturally): ${sender.website}`
+    ? `SENDER WEBSITE (include this exact URL once in the message): ${sender.website}`
     : `NO WEBSITE — do not invent or include any URL.`;
-
-  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use the URL explicitly provided above. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End naturally with an open question. This message will be MANUALLY copy-pasted by the user — ProspectAI never sends WhatsApp messages automatically.`;
-
-  const promoLine = promo
-    ? `PROMOTIONAL OFFER (this is the MAIN focus of the message, mention it clearly): ${promo}`
+  const waLine = sender.whatsappNumber
+    ? `SENDER WHATSAPP (offer as contact option alongside direct reply): ${formatWhatsAppUrl(sender.whatsappNumber)}`
     : "";
 
+  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use URLs/numbers explicitly given above. Do NOT include any formal closing. End with an open question or direct CTA. This message is MANUALLY copy-pasted — ProspectAI never sends messages automatically.`;
+
+  const TWO_CHANNELS_RULE = `MANDATORY — the message MUST explicitly mention BOTH of the product's channels:
+1. AI-personalized emails (automated cold outreach by email)
+2. Unlimited manual WhatsApp messages directly connected to the prospect's own personal WhatsApp
+Both features must appear clearly. Use natural phrasing such as "emails personnalisés par IA ET messages WhatsApp en manuel, connecté à votre WhatsApp" or equivalent in the output language.`;
+
   const systemPrompt = promo
-    ? `You are writing a SHORT WhatsApp promotional message, NOT an email. It must be:
-- Maximum 3-4 sentences total
-- Conversational and direct tone, as if texting
-- No formal greetings or email-style closing
-- Address the prospect by name and reference their business type briefly
-- Focus on the promotional offer — make it concrete and compelling
-- If a website URL is provided, include it naturally once
-- End with one simple call-to-action question
+    ? `You are writing a SHORT WhatsApp promotional message for a B2B SaaS tool. It must be:
+- Maximum 5 sentences total
+- Conversational and direct tone, as if texting — NOT an email
+- Greet the prospect by name, briefly reference their business type
+${TWO_CHANNELS_RULE}
+- Make the promotional offer concrete and compelling
+- Include the website URL once if provided
+- If a sender WhatsApp number is provided, offer it as a contact option alongside direct reply
+- End with a clear call-to-action question
+- No formal closing ("Cordialement", "Best regards", etc.)
 - Written entirely in ${langName}
 ${NO_WA_HALLUCINATION}
 Reply with ONLY the message text, no JSON, no quotes, no explanation.`
-    : `You are writing a SHORT WhatsApp prospecting message, NOT an email. It must be:
-- Maximum 3-4 sentences total
-- Conversational and direct tone, as if texting
-- No formal greetings or email-style closing
-- Mention the prospect's name and their business type
-- Present the sender's product/service in one brief sentence
-- If a website URL is provided, include it naturally once
-- End with one simple open-ended question
+    : `You are writing a SHORT WhatsApp prospecting message for a B2B SaaS tool. It must be:
+- Maximum 5 sentences total
+- Conversational and direct tone, as if texting — NOT an email
+- Greet the prospect by their business/company name
+- Mention their niche and city to show personalization
+${TWO_CHANNELS_RULE}
+- Include the website URL once if provided
+- If a sender WhatsApp number is provided, offer it as a contact option alongside direct reply
+- End with one open-ended question ("Seriez-vous disponible pour en discuter ?" or equivalent)
+- No formal closing
 - Written entirely in ${langName}
 ${NO_WA_HALLUCINATION}
 Reply with ONLY the message text, no JSON, no quotes, no explanation.`;
@@ -334,8 +342,11 @@ Reply with ONLY the message text, no JSON, no quotes, no explanation.`;
     ? `Write a WhatsApp promotional message.
 
 SENDER: ${senderName}
-${promoLine}
+WHAT WE DO: ${whatWeDo}
+PROMOTIONAL OFFER (main focus): ${promo}
+BOTH CHANNELS TO MENTION: (1) AI-personalized emails, (2) unlimited manual WhatsApp connected to prospect's own WhatsApp
 ${websiteLine}
+${waLine}
 PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
 
 OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`
@@ -343,17 +354,25 @@ OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`
 
 SENDER: ${senderName}
 WHAT WE DO: ${whatWeDo}
+BOTH CHANNELS TO MENTION: (1) AI-personalized emails, (2) unlimited manual WhatsApp connected to prospect's own WhatsApp
 ${websiteLine}
+${waLine}
 PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
 
 OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`;
 
+  const websiteSnippet = sender.website ? ` Découvrez-le sur ${sender.website}.` : "";
+  const websiteSnippetEn = sender.website ? ` Learn more at ${sender.website}.` : "";
+  const websiteSnippetDe = sender.website ? ` Mehr unter ${sender.website}.` : "";
+  const websiteSnippetIt = sender.website ? ` Scopra di più su ${sender.website}.` : "";
+  const websiteSnippetEs = sender.website ? ` Más info en ${sender.website}.` : "";
+
   const fallbackMessages: Record<EmailLanguage, string> = {
-    fr: `Bonjour ${prospect.name}, j'ai vu votre activité de ${prospect.niche} à ${prospect.city}. ${whatWeDo}. Est-ce que ça vous intéresserait d'en savoir plus ?`,
-    en: `Hi ${prospect.name}, I noticed your ${prospect.niche} business in ${prospect.city}. ${whatWeDo}. Would you be open to a quick chat about it?`,
-    de: `Hallo ${prospect.name}, ich habe Ihr ${prospect.niche}-Unternehmen in ${prospect.city} entdeckt. ${whatWeDo}. Wären Sie daran interessiert?`,
-    it: `Ciao ${prospect.name}, ho visto la sua attività di ${prospect.niche} a ${prospect.city}. ${whatWeDo}. Le interesserebbe saperne di più?`,
-    es: `Hola ${prospect.name}, he visto su negocio de ${prospect.niche} en ${prospect.city}. ${whatWeDo}. ¿Le interesaría saber más?`,
+    fr: `Bonjour ${prospect.name}, j'ai découvert votre activité de ${prospect.niche} à ${prospect.city} et je souhaitais vous contacter. ${senderName} automatise votre prospection commerciale : emails personnalisés par IA ET messages WhatsApp illimités en manuel, directement connecté à votre WhatsApp.${websiteSnippet} Seriez-vous disponible pour en discuter ?`,
+    en: `Hi ${prospect.name}, I came across your ${prospect.niche} business in ${prospect.city} and wanted to reach out. ${senderName} automates your prospecting: AI-personalized emails AND unlimited manual WhatsApp messages, directly connected to your personal WhatsApp.${websiteSnippetEn} Would you be open to a quick chat?`,
+    de: `Hallo ${prospect.name}, ich habe Ihr ${prospect.niche}-Unternehmen in ${prospect.city} entdeckt und wollte mich melden. ${senderName} automatisiert Ihre Kundenakquise: KI-personalisierte E-Mails UND unbegrenzte manuelle WhatsApp-Nachrichten, direkt mit Ihrem persönlichen WhatsApp verbunden.${websiteSnippetDe} Wären Sie an einem kurzen Austausch interessiert?`,
+    it: `Ciao ${prospect.name}, ho scoperto la sua attività di ${prospect.niche} a ${prospect.city} e volevo contattarla. ${senderName} automatizza la sua prospezione: email personalizzate dall'IA E messaggi WhatsApp illimitati in manuale, collegati al suo WhatsApp personale.${websiteSnippetIt} Sarebbe disponibile per parlarne?`,
+    es: `Hola ${prospect.name}, he visto su negocio de ${prospect.niche} en ${prospect.city} y quería contactarle. ${senderName} automatiza su prospección: emails personalizados por IA Y mensajes WhatsApp ilimitados en manual, conectados a su WhatsApp personal.${websiteSnippetEs} ¿Estaría disponible para hablarlo?`,
   };
 
   try {
@@ -364,7 +383,7 @@ OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`;
         { role: "user", content: userPrompt },
       ],
       temperature: 0.7,
-      max_tokens: 200,
+      max_tokens: 300,
     });
 
     const message = (completion.choices[0].message.content || "").trim();
