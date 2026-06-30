@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { ScrapingModule } from "@/components/scraping/scraping-module";
 import { EmailComposer } from "@/components/emails/email-composer";
+import { WhatsAppComposer } from "@/components/whatsapp/whatsapp-composer";
+import { MessageCircle } from "lucide-react";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
 
@@ -38,6 +40,7 @@ export default function ProspectsPage() {
   const [page, setPage] = useState(1);
   const [noWebsite, setNoWebsite] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
+  const [whatsappProspect, setWhatsappProspect] = useState<Prospect | null>(null);
   const [showScraping, setShowScraping] = useState(false);
 
   const fetchProspects = useCallback(async () => {
@@ -102,6 +105,13 @@ export default function ProspectsPage() {
           <EmailComposer
             prospect={selectedProspect}
             onClose={() => setSelectedProspect(null)}
+          />
+        )}
+
+        {whatsappProspect && (
+          <WhatsAppComposer
+            prospect={whatsappProspect}
+            onClose={() => setWhatsappProspect(null)}
           />
         )}
 
@@ -216,8 +226,18 @@ export default function ProspectsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 justify-end">
+                            {p.phone && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs border-emerald-500/30 text-emerald-400 hover:border-emerald-400/60 hover:bg-emerald-500/10"
+                                onClick={() => { setWhatsappProspect(p); setSelectedProspect(null); }}
+                              >
+                                <MessageCircle className="w-3 h-3" />{t("wa_btn")}
+                              </Button>
+                            )}
                             {p.email && (
-                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setSelectedProspect(p)}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => { setSelectedProspect(p); setWhatsappProspect(null); }}>
                                 <Mail className="w-3 h-3" />{t("pp_email_ai")}
                               </Button>
                             )}

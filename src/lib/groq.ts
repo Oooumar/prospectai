@@ -285,6 +285,66 @@ export async function generateProspectEmail(
   }
 }
 
+export async function generateWhatsAppMessage(
+  prospect: { name: string; niche: string; city: string },
+  sender: { companyName?: string; productDescription?: string }
+): Promise<{ message: string; fallback?: boolean }> {
+  const lang = detectEmailLanguage(prospect.city);
+  const langName = getLangName(lang);
+  const senderName = sender.companyName ?? "notre solution";
+  const whatWeDo = sender.productDescription
+    ? sender.productDescription
+    : `${senderName} aide les entreprises à automatiser leur prospection`;
+
+  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, URLs or names. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End naturally with an open question. This message will be MANUALLY copy-pasted by the user — ProspectAI never sends WhatsApp messages automatically.`;
+
+  const systemPrompt = `You are writing a SHORT WhatsApp prospecting message, NOT an email. It must be:
+- Maximum 3-4 sentences total
+- Conversational and direct tone, as if texting
+- No formal greetings or email-style closing
+- Mention the prospect's name and their business type
+- Present the sender's product/service in one brief sentence
+- End with one simple open-ended question
+- Written entirely in ${langName}
+${NO_WA_HALLUCINATION}
+Reply with ONLY the message text, no JSON, no quotes, no explanation.`;
+
+  const userPrompt = `Write a WhatsApp prospecting message.
+
+SENDER: ${senderName}
+WHAT WE DO: ${whatWeDo}
+PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
+
+OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`;
+
+  const fallbackMessages: Record<EmailLanguage, string> = {
+    fr: `Bonjour ${prospect.name}, j'ai vu votre activité de ${prospect.niche} à ${prospect.city}. ${whatWeDo}. Est-ce que ça vous intéresserait d'en savoir plus ?`,
+    en: `Hi ${prospect.name}, I noticed your ${prospect.niche} business in ${prospect.city}. ${whatWeDo}. Would you be open to a quick chat about it?`,
+    de: `Hallo ${prospect.name}, ich habe Ihr ${prospect.niche}-Unternehmen in ${prospect.city} entdeckt. ${whatWeDo}. Wären Sie daran interessiert?`,
+    it: `Ciao ${prospect.name}, ho visto la sua attività di ${prospect.niche} a ${prospect.city}. ${whatWeDo}. Le interesserebbe saperne di più?`,
+    es: `Hola ${prospect.name}, he visto su negocio de ${prospect.niche} en ${prospect.city}. ${whatWeDo}. ¿Le interesaría saber más?`,
+  };
+
+  try {
+    const completion = await groq.chat.completions.create({
+      model: MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 200,
+    });
+
+    const message = (completion.choices[0].message.content || "").trim();
+    if (message.length > 20) return { message };
+    return { message: fallbackMessages[lang], fallback: true };
+  } catch (err: any) {
+    console.error("[groq] generateWhatsAppMessage error:", err);
+    return { message: fallbackMessages[lang], fallback: true };
+  }
+}
+
 export async function analyzeEmailReply({
   replyText,
   originalSubject,

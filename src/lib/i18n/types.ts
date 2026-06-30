@@ -127,6 +127,10 @@ export interface T {
   sc_step1: string; sc_step2: string; sc_step3: string; sc_step4: string; sc_step5: string;
   // Prospect score
   pp_col_score: string; ps_score_excellent: string; ps_score_good: string; ps_score_low: string;
+  // WhatsApp composer
+  wa_btn: string; wa_title: string; wa_generate: string; wa_generating: string;
+  wa_copy: string; wa_copied: string; wa_open: string;
+  wa_edit_hint: string; wa_manual_note: string;
   // Email composer
   ec_title_prefix: string; ec_generate: string; ec_generating: string;
   ec_subject: string; ec_subject_ph: string; ec_body: string; ec_body_ph: string;
