@@ -131,6 +131,13 @@ export interface T {
   wa_btn: string; wa_title: string; wa_generate: string; wa_generating: string;
   wa_copy: string; wa_copied: string; wa_open: string;
   wa_edit_hint: string; wa_manual_note: string;
+  // Product profiles
+  pr_section_title: string; pr_section_desc: string;
+  pr_add: string; pr_name_label: string; pr_name_ph: string;
+  pr_default_badge: string; pr_set_default: string;
+  pr_delete_confirm: string; pr_saved: string; pr_created: string;
+  pr_select_label: string; pr_no_profiles: string;
+  pr_edit: string; pr_cancel: string; pr_saving: string;
   // Email composer
   ec_title_prefix: string; ec_generate: string; ec_generating: string;
   ec_subject: string; ec_subject_ph: string; ec_body: string; ec_body_ph: string;

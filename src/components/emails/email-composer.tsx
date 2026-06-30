@@ -7,10 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Wand2, Send, X, Loader2, Check, RefreshCw, AlertCircle } from "lucide-react";
-import Link from "next/link";
+import { Wand2, Send, X, Loader2, Check, RefreshCw, ChevronDown } from "lucide-react";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
+
+const PROFILE_LS_KEY = "pa_last_profile_id";
+
+interface Profile {
+  id: string;
+  name: string;
+  companyName: string | null;
+  isDefault: boolean;
+}
 
 interface EmailComposerProps {
   prospect: Prospect;
@@ -27,17 +35,27 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const [hasCompanyInfo, setHasCompanyInfo] = useState<boolean | null>(null);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
 
   useEffect(() => {
-    fetch("/api/settings")
+    fetch("/api/profiles")
       .then(r => r.json())
       .then(data => {
-        const u = data.user;
-        setHasCompanyInfo(!!(u?.companyName || u?.website));
+        const list: Profile[] = data.profiles ?? [];
+        setProfiles(list);
+        const saved = typeof window !== "undefined" ? localStorage.getItem(PROFILE_LS_KEY) : null;
+        const match = list.find(p => p.id === saved);
+        const fallback = list.find(p => p.isDefault) ?? list[0];
+        setSelectedProfileId(match?.id ?? fallback?.id ?? "");
       })
-      .catch(() => setHasCompanyInfo(true));
+      .catch(() => {});
   }, []);
+
+  function handleProfileChange(id: string) {
+    setSelectedProfileId(id);
+    if (typeof window !== "undefined") localStorage.setItem(PROFILE_LS_KEY, id);
+  }
 
   async function generateEmail() {
     setGenerating(true);
@@ -46,7 +64,7 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
       const res = await fetch("/api/emails/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prospectId: prospect.id }),
+        body: JSON.stringify({ prospectId: prospect.id, profileId: selectedProfileId || undefined }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -116,6 +134,26 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
           </div>
         ) : (
           <>
+            {profiles.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">{t("pr_select_label")}</Label>
+                <div className="relative">
+                  <select
+                    value={selectedProfileId}
+                    onChange={(e) => handleProfileChange(e.target.value)}
+                    className="w-full appearance-none rounded-md border border-gray-700 bg-gray-900 px-3 py-2 pr-8 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {profiles.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.companyName ? ` — ${p.companyName}` : ""}{p.isDefault ? " ★" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -135,18 +173,6 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
                 </Button>
               )}
             </div>
-
-            {hasCompanyInfo === false && (
-              <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-                <span>
-                  {t("ec_no_company")}{" "}
-                  <Link href="/dashboard/settings" className="underline underline-offset-2 hover:text-amber-200">
-                    {t("ec_no_company_link")}
-                  </Link>
-                </span>
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <Label>{t("ec_subject")}</Label>

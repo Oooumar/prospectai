@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const { prospectId } = await req.json();
+    const { prospectId, profileId } = await req.json();
     if (!prospectId) {
       return NextResponse.json({ error: "prospectId requis" }, { status: 400 });
     }
@@ -25,18 +25,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ce prospect n'a pas de numéro de téléphone" }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { companyName: true, productDescription: true, website: true },
-    });
+    type ProfileRow = { companyName: string | null; website: string | null; productDescription: string | null; whatsappNumber: string | null };
+
+    let sender: { companyName?: string; productDescription?: string; website?: string } = {};
+
+    if (profileId) {
+      const pRows = await prisma.$queryRaw<ProfileRow[]>`
+        SELECT "companyName","website","productDescription","whatsappNumber"
+        FROM "ProductProfile" WHERE "id" = ${profileId} AND "userId" = ${session.user.id}
+      `;
+      const p = pRows[0];
+      if (p) {
+        sender = { companyName: p.companyName ?? undefined, website: p.website ?? undefined, productDescription: p.productDescription ?? undefined };
+      }
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { companyName: true, productDescription: true, website: true },
+      });
+      sender = { companyName: user?.companyName ?? undefined, productDescription: user?.productDescription ?? undefined, website: user?.website ?? undefined };
+    }
 
     const result = await generateWhatsAppMessage(
       { name: prospect.name, niche: prospect.niche, city: prospect.city },
-      {
-        companyName: user?.companyName ?? undefined,
-        productDescription: user?.productDescription ?? undefined,
-        website: user?.website ?? undefined,
-      }
+      sender
     );
 
     return NextResponse.json(result);
