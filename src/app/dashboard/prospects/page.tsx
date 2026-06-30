@@ -15,6 +15,15 @@ import { EmailComposer } from "@/components/emails/email-composer";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
 
+function prospectScore(p: Prospect): number {
+  let s = 0;
+  if (p.email) s += 40;
+  if (p.website) s += 20;
+  if ((p.rating ?? 0) >= 4.0) s += 20;
+  if ((p.reviewCount ?? 0) > 50) s += 20;
+  return s;
+}
+
 const statusBadge: Record<string, string> = {
   NEW: "secondary", CONTACTED: "default", OPENED: "default",
   REPLIED: "success", CONVERTED: "success", UNSUBSCRIBED: "destructive",
@@ -76,7 +85,7 @@ export default function ProspectsPage() {
             <Ban className="w-3.5 h-3.5" />
             {t("pp_no_website")}
           </button>
-          <Button variant="gradient" onClick={() => setShowScraping(true)}>
+          <Button variant="warm" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
             {t("pp_scrape_btn")}
           </Button>
@@ -114,7 +123,7 @@ export default function ProspectsPage() {
                 <Target className="w-10 h-10 mx-auto mb-3 opacity-20" />
                 <p className="font-medium">{t("pp_no")}</p>
                 <p className="text-sm mt-1">{t("pp_no_desc")}</p>
-                <Button variant="gradient" className="mt-4" onClick={() => setShowScraping(true)}>
+                <Button variant="warm" className="mt-4" onClick={() => setShowScraping(true)}>
                   {t("pp_scrape_now")}
                 </Button>
               </div>
@@ -127,6 +136,7 @@ export default function ProspectsPage() {
                       <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider hidden md:table-cell">{t("pp_col_contact")}</th>
                       <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider hidden lg:table-cell">{t("pp_col_location")}</th>
                       <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider">{t("pp_col_status")}</th>
+                      <th className="text-left px-6 py-3 text-xs text-gray-400 font-medium uppercase tracking-wider hidden sm:table-cell">{t("pp_col_score")}</th>
                       <th className="px-6 py-3" />
                     </tr>
                   </thead>
@@ -186,6 +196,23 @@ export default function ProspectsPage() {
                           <Badge variant={statusBadge[p.status] as any || "secondary"}>
                             {t(`pst_${p.status}` as any) || p.status}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4 hidden sm:table-cell">
+                          {(() => {
+                            const score = prospectScore(p);
+                            const [bg, text, border, label] =
+                              score >= 80
+                                ? ["bg-emerald-500/15", "text-emerald-400", "border-emerald-500/30", t("ps_score_excellent")]
+                                : score >= 50
+                                ? ["bg-orange-500/15", "text-orange-400", "border-orange-500/30", t("ps_score_good")]
+                                : ["bg-red-500/15", "text-red-400", "border-red-500/30", t("ps_score_low")];
+                            return (
+                              <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border font-medium ${bg} ${text} ${border}`}>
+                                <span className="font-bold tabular-nums">{score}</span>
+                                <span className="opacity-80">{label}</span>
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 justify-end">

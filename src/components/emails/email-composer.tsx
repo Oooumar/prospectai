@@ -164,7 +164,7 @@ export function EmailComposer({ prospect, campaignId, onClose, onSent }: EmailCo
 
             <div className="flex gap-3">
               <Button
-                variant="gradient"
+                variant="warm"
                 onClick={sendEmail}
                 disabled={!subject || !body || sending || !prospect.email}
                 className="flex-1"

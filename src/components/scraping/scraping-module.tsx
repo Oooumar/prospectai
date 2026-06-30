@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,23 +19,93 @@ interface ScrapingModuleProps {
   onSuccess: () => void;
 }
 
+function ScrapingSteps({ city, t }: { city: string; t: (key: any, p?: any) => string }) {
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const steps = [
+    t("sc_step1"),
+    t("sc_step2", { city: city || "…" }),
+    t("sc_step3"),
+    t("sc_step4"),
+    t("sc_step5"),
+  ];
+
+  useEffect(() => {
+    setCurrentStep(0);
+    const timers = [1400, 2800, 4400, 6200].map((delay, i) =>
+      setTimeout(() => setCurrentStep(i + 1), delay)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div className="py-4 space-y-3">
+      {steps.map((label, i) => {
+        const done = i < currentStep;
+        const active = i === currentStep;
+        return (
+          <div
+            key={i}
+            className={`flex items-center gap-3 transition-all duration-400 ${
+              active ? "opacity-100" : done ? "opacity-70" : "opacity-30"
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${
+                done
+                  ? "bg-emerald-500/25 border border-emerald-500/50"
+                  : active
+                  ? "bg-orange-500/20 border border-orange-400/50"
+                  : "bg-gray-800 border border-gray-700"
+              }`}
+            >
+              {done ? (
+                <Check className="w-3.5 h-3.5 text-emerald-400" />
+              ) : active ? (
+                <Loader2 className="w-3.5 h-3.5 text-orange-400 animate-spin" />
+              ) : (
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-600" />
+              )}
+            </div>
+            <span
+              className={`text-sm transition-colors duration-300 ${
+                done
+                  ? "text-emerald-400 line-through decoration-emerald-600"
+                  : active
+                  ? "text-white font-medium"
+                  : "text-gray-600"
+              }`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
   const { t } = useI18n();
   const [results, setResults] = useState<any[]>([]);
   const [scraped, setScraped] = useState(false);
   const [apiError, setApiError] = useState("");
   const [noWebsiteOnly, setNoWebsiteOnly] = useState(false);
+  const [limitVal, setLimitVal] = useState(20);
+  const [submittingCity, setSubmittingCity] = useState("");
 
   const schema = z.object({
     niche: z.string().min(2),
     city: z.string().min(2),
-    limit: z.coerce.number().min(1).max(60),
+    limit: z.coerce.number().min(5).max(30),
   });
 
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema) as any,
     defaultValues: { limit: 20 },
   });
+
+  const watchedCity = watch("city");
 
   const NICHE_GROUPS = {
     [t("sc_g_b2b")]: ["Plombier", "Électricien", "Restaurant", "Boulangerie", "Coiffeur", "Dentiste", "Avocat", "Comptable", "Auto école", "Carreleur"],
@@ -45,6 +115,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
 
   async function onSubmit(data: FormData) {
     setApiError("");
+    setSubmittingCity(data.city);
     try {
       const res = await fetch("/api/scraping", {
         method: "POST",
@@ -112,9 +183,27 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
                 {errors.city && <p className="text-xs text-red-400">{errors.city.message}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <Label>{t("sc_limit")}</Label>
-                <Input type="number" min={1} max={100} {...register("limit", { valueAsNumber: true })} />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>{t("sc_limit")}</Label>
+                  <span className="text-sm font-semibold text-orange-400 tabular-nums">{limitVal}</span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={30}
+                  step={5}
+                  value={limitVal}
+                  onChange={(e) => {
+                    const v = Number(e.target.value);
+                    setLimitVal(v);
+                    setValue("limit", v);
+                  }}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer accent-orange-500 bg-gray-700"
+                />
+                <div className="flex justify-between text-[10px] text-gray-600">
+                  <span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>30</span>
+                </div>
               </div>
             </div>
 
@@ -129,13 +218,17 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
               <span className="text-sm text-gray-300 group-hover:text-white transition-colors">{t("sc_no_website")}</span>
             </label>
 
+            {isSubmitting && (
+              <ScrapingSteps city={submittingCity || watchedCity} t={t} />
+            )}
+
             {apiError && (
               <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
                 {apiError}
               </div>
             )}
 
-            <Button type="submit" variant="gradient" disabled={isSubmitting} className="w-full md:w-auto">
+            <Button type="submit" variant="warm" disabled={isSubmitting} className="w-full md:w-auto">
               {isSubmitting ? (
                 <><Loader2 className="w-4 h-4 animate-spin" />{t("sc_searching")}</>
               ) : (
@@ -195,7 +288,7 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
             </div>
 
             <div className="flex gap-3">
-              <Button variant="gradient" onClick={onSuccess} className="flex-1">
+              <Button variant="warm" onClick={onSuccess} className="flex-1">
                 {t("sc_view_all")}
               </Button>
               <Button variant="outline" onClick={() => setScraped(false)}>

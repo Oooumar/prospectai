@@ -124,6 +124,9 @@ export interface T {
   sc_new_search: string; sc_view_all: string; sc_again: string; sc_more: string;
   sc_g_b2b: string; sc_g_creator: string; sc_g_agency: string; sc_error_server: string;
   sc_no_website: string;
+  sc_step1: string; sc_step2: string; sc_step3: string; sc_step4: string; sc_step5: string;
+  // Prospect score
+  pp_col_score: string; ps_score_excellent: string; ps_score_good: string; ps_score_low: string;
   // Email composer
   ec_title_prefix: string; ec_generate: string; ec_generating: string;
   ec_subject: string; ec_subject_ph: string; ec_body: string; ec_body_ph: string;
