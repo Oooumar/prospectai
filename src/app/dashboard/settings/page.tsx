@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Settings, User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle, Info, Plus, Pencil, Trash2, Star, X } from "lucide-react";
+import { User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle, Info, Plus, Pencil, Trash2, Star, X } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -481,34 +481,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Config */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Settings className="w-4 h-4 text-gray-400" />
-              {t("set_config_title")}
-            </CardTitle>
-            <CardDescription>{t("set_config_desc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[
-                { key: "GROQ_API_KEY", desc: "Génération d'emails IA (Llama 3 via Groq)" },
-                { key: "RESEND_API_KEY", desc: "Envoi des emails" },
-                { key: "DATABASE_URL", desc: "Base de données PostgreSQL" },
-                { key: "NEXTAUTH_SECRET", desc: "Sécurité des sessions" },
-              ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between py-2 border-b border-gray-800/60 last:border-0">
-                  <div>
-                    <code className="text-xs text-violet-300 bg-violet-500/10 px-1.5 py-0.5 rounded">{item.key}</code>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.desc}</p>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">{t("set_config_required")}</Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </>
   );

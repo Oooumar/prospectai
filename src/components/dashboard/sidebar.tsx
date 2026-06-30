@@ -11,10 +11,12 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/components/language-provider";
+import { useSidebar } from "./sidebar-context";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const { open, close } = useSidebar();
   const [pendingReplies, setPendingReplies] = useState(0);
   const [pendingDrafts, setPendingDrafts] = useState(0);
 
@@ -29,6 +31,9 @@ export function Sidebar() {
       .catch(() => {});
   }, []);
 
+  // Close sidebar on navigation (mobile)
+  useEffect(() => { close(); }, [pathname]);
+
   const nav = [
     { href: "/dashboard", label: t("sb_dashboard"), icon: LayoutDashboard },
     { href: "/dashboard/prospects", label: t("sb_prospects"), icon: Target },
@@ -41,9 +46,17 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-gray-950 border-r border-gray-800/60 flex flex-col fixed left-0 top-0 z-40">
+    <aside
+      className={cn(
+        "w-64 h-screen bg-gray-950 border-r border-gray-800/60 flex flex-col fixed left-0 top-0 z-40 transition-transform duration-200 ease-in-out",
+        // Mobile: hidden by default, slides in when open
+        open ? "translate-x-0" : "-translate-x-full",
+        // Desktop: always visible
+        "md:translate-x-0"
+      )}
+    >
       {/* Logo */}
-      <div className="h-16 px-6 flex items-center gap-2.5 border-b border-gray-800/60">
+      <div className="h-16 px-6 flex items-center gap-2.5 border-b border-gray-800/60 shrink-0">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
           <Zap className="w-4 h-4 text-white" />
         </div>
@@ -52,7 +65,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {nav.map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
           return (
@@ -67,20 +80,20 @@ export function Sidebar() {
               )}
             >
               <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-violet-400" : "text-gray-500 group-hover:text-gray-300")} />
-              {item.label}
+              <span className="truncate">{item.label}</span>
               {(item as any).badge > 0 && (
-                <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">
+                <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold shrink-0">
                   {(item as any).badge > 9 ? "9+" : (item as any).badge}
                 </span>
               )}
-              {active && !(item as any).badge && <ChevronRight className="w-3 h-3 ml-auto text-violet-400/60" />}
+              {active && !(item as any).badge && <ChevronRight className="w-3 h-3 ml-auto text-violet-400/60 shrink-0" />}
             </Link>
           );
         })}
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-gray-800/60">
+      <div className="p-3 border-t border-gray-800/60 shrink-0">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
