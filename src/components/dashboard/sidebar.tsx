@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
-  Settings, LogOut, Zap, ChevronRight, MessageSquareReply, FileText,
+  Settings, LogOut, Zap, ChevronRight, MessageSquareReply, FileText, MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ export function Sidebar() {
     { href: "/dashboard", label: t("sb_dashboard"), icon: LayoutDashboard },
     { href: "/dashboard/prospects", label: t("sb_prospects"), icon: Target },
     { href: "/dashboard/campaigns", label: t("sb_campaigns"), icon: Megaphone },
+    { href: "/dashboard/whatsapp-campaigns", label: t("wc_nav"), icon: MessageCircle },
     { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
     { href: "/dashboard/drafts", label: t("sb_drafts"), icon: FileText, badge: pendingDrafts },
     { href: "/dashboard/replies", label: t("sb_replies"), icon: MessageSquareReply, badge: pendingReplies },

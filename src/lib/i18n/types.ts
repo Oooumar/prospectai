@@ -131,6 +131,18 @@ export interface T {
   wa_btn: string; wa_title: string; wa_generate: string; wa_generating: string;
   wa_copy: string; wa_copied: string; wa_open: string;
   wa_edit_hint: string; wa_manual_note: string;
+  // WhatsApp bulk campaigns
+  wc_nav: string; wc_page_title: string; wc_page_desc: string;
+  wc_new_btn: string; wc_empty: string; wc_empty_desc: string;
+  wc_modal_title: string; wc_promo_label: string; wc_promo_ph: string;
+  wc_image_label: string; wc_image_pick: string; wc_image_change: string;
+  wc_generate_btn: string; wc_generating: string;
+  wc_back: string; wc_pending: string;
+  wc_copy_text: string; wc_copied: string; wc_open_wa: string;
+  wc_mark_sent: string; wc_sent_badge: string; wc_download_img: string;
+  wc_selected: string; wc_campaign_wa: string;
+  wc_progress: string; wc_messages_count: string;
+  wc_manual_note: string; wc_date_label: string;
   // Product profiles
   pr_section_title: string; pr_section_desc: string;
   pr_add: string; pr_name_label: string; pr_name_ph: string;

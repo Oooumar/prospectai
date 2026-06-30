@@ -287,7 +287,8 @@ export async function generateProspectEmail(
 
 export async function generateWhatsAppMessage(
   prospect: { name: string; niche: string; city: string },
-  sender: { companyName?: string; productDescription?: string; website?: string }
+  sender: { companyName?: string; productDescription?: string; website?: string },
+  promo?: string
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
   const langName = getLangName(lang);
@@ -301,7 +302,23 @@ export async function generateWhatsAppMessage(
 
   const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use the URL explicitly provided above. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End naturally with an open question. This message will be MANUALLY copy-pasted by the user — ProspectAI never sends WhatsApp messages automatically.`;
 
-  const systemPrompt = `You are writing a SHORT WhatsApp prospecting message, NOT an email. It must be:
+  const promoLine = promo
+    ? `PROMOTIONAL OFFER (this is the MAIN focus of the message, mention it clearly): ${promo}`
+    : "";
+
+  const systemPrompt = promo
+    ? `You are writing a SHORT WhatsApp promotional message, NOT an email. It must be:
+- Maximum 3-4 sentences total
+- Conversational and direct tone, as if texting
+- No formal greetings or email-style closing
+- Address the prospect by name and reference their business type briefly
+- Focus on the promotional offer — make it concrete and compelling
+- If a website URL is provided, include it naturally once
+- End with one simple call-to-action question
+- Written entirely in ${langName}
+${NO_WA_HALLUCINATION}
+Reply with ONLY the message text, no JSON, no quotes, no explanation.`
+    : `You are writing a SHORT WhatsApp prospecting message, NOT an email. It must be:
 - Maximum 3-4 sentences total
 - Conversational and direct tone, as if texting
 - No formal greetings or email-style closing
@@ -313,7 +330,16 @@ export async function generateWhatsAppMessage(
 ${NO_WA_HALLUCINATION}
 Reply with ONLY the message text, no JSON, no quotes, no explanation.`;
 
-  const userPrompt = `Write a WhatsApp prospecting message.
+  const userPrompt = promo
+    ? `Write a WhatsApp promotional message.
+
+SENDER: ${senderName}
+${promoLine}
+${websiteLine}
+PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
+
+OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`
+    : `Write a WhatsApp prospecting message.
 
 SENDER: ${senderName}
 WHAT WE DO: ${whatWeDo}

@@ -34,14 +34,44 @@ model User {
   createdAt            DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  prospects       Prospect[]
-  campaigns       Campaign[]
-  emailLogs       EmailLog[]
-  inboundEmails   InboundEmail[]
-  autoCampaigns   AutoCampaign[]
-  productProfiles ProductProfile[]
+  accounts           Account[]
+  sessions           Session[]
+  prospects          Prospect[]
+  campaigns          Campaign[]
+  emailLogs          EmailLog[]
+  inboundEmails      InboundEmail[]
+  autoCampaigns      AutoCampaign[]
+  productProfiles    ProductProfile[]
+  whatsappCampaigns  WhatsAppCampaign[]
+}
+
+model WhatsAppCampaign {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  imageUrl  String?
+  imageName String?
+  createdAt DateTime @default(now())
+
+  messages  WhatsAppCampaignMessage[]
+
+  @@index([userId])
+}
+
+model WhatsAppCampaignMessage {
+  id            String           @id @default(cuid())
+  campaignId    String
+  campaign      WhatsAppCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospectId    String?
+  prospectName  String
+  prospectPhone String
+  message       String           @db.Text
+  sent          Boolean          @default(false)
+  sentAt        DateTime?
+  createdAt     DateTime         @default(now())
+
+  @@index([campaignId])
 }
 
 model ProductProfile {
