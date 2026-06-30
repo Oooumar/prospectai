@@ -287,7 +287,7 @@ export async function generateProspectEmail(
 
 export async function generateWhatsAppMessage(
   prospect: { name: string; niche: string; city: string },
-  sender: { companyName?: string; productDescription?: string }
+  sender: { companyName?: string; productDescription?: string; website?: string }
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
   const langName = getLangName(lang);
@@ -295,8 +295,11 @@ export async function generateWhatsAppMessage(
   const whatWeDo = sender.productDescription
     ? sender.productDescription
     : `${senderName} aide les entreprises à automatiser leur prospection`;
+  const websiteLine = sender.website
+    ? `SENDER WEBSITE (include this exact URL once in the message, naturally): ${sender.website}`
+    : `NO WEBSITE — do not invent or include any URL.`;
 
-  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, URLs or names. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End naturally with an open question. This message will be MANUALLY copy-pasted by the user — ProspectAI never sends WhatsApp messages automatically.`;
+  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use the URL explicitly provided above. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End naturally with an open question. This message will be MANUALLY copy-pasted by the user — ProspectAI never sends WhatsApp messages automatically.`;
 
   const systemPrompt = `You are writing a SHORT WhatsApp prospecting message, NOT an email. It must be:
 - Maximum 3-4 sentences total
@@ -304,6 +307,7 @@ export async function generateWhatsAppMessage(
 - No formal greetings or email-style closing
 - Mention the prospect's name and their business type
 - Present the sender's product/service in one brief sentence
+- If a website URL is provided, include it naturally once
 - End with one simple open-ended question
 - Written entirely in ${langName}
 ${NO_WA_HALLUCINATION}
@@ -313,6 +317,7 @@ Reply with ONLY the message text, no JSON, no quotes, no explanation.`;
 
 SENDER: ${senderName}
 WHAT WE DO: ${whatWeDo}
+${websiteLine}
 PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
 
 OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`;

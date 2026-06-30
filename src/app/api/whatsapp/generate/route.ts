@@ -27,12 +27,16 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { companyName: true, productDescription: true },
+      select: { companyName: true, productDescription: true, website: true },
     });
 
     const result = await generateWhatsAppMessage(
       { name: prospect.name, niche: prospect.niche, city: prospect.city },
-      { companyName: user?.companyName ?? undefined, productDescription: user?.productDescription ?? undefined }
+      {
+        companyName: user?.companyName ?? undefined,
+        productDescription: user?.productDescription ?? undefined,
+        website: user?.website ?? undefined,
+      }
     );
 
     return NextResponse.json(result);
