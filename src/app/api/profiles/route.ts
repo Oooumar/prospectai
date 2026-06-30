@@ -22,7 +22,7 @@ export async function GET() {
     return NextResponse.json({ profiles });
   } catch (err: any) {
     console.error("[profiles] GET:", err.message);
-    return NextResponse.json({ profiles: [] });
+    return NextResponse.json({ profiles: [], error: err.message }, { status: 500 });
   }
 }
 
@@ -34,10 +34,10 @@ export async function POST(req: NextRequest) {
     const { name, companyName, website, productDescription, whatsappNumber } = await req.json();
     if (!name?.trim()) return NextResponse.json({ error: "Le nom du profil est requis" }, { status: 400 });
 
-    const existing = await prisma.$queryRaw<{ count: bigint }[]>`
-      SELECT COUNT(*) as count FROM "ProductProfile" WHERE "userId" = ${session.user.id}
+    const existing = await prisma.$queryRaw<{ n: number }[]>`
+      SELECT COUNT(*)::int AS n FROM "ProductProfile" WHERE "userId" = ${session.user.id}
     `;
-    const isFirst = Number(existing[0]?.count ?? 0) === 0;
+    const isFirst = (existing[0]?.n ?? 0) === 0;
 
     const id = `pp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     await prisma.$executeRaw`
@@ -53,6 +53,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ profile: rows[0] }, { status: 201 });
   } catch (err: any) {
     console.error("[profiles] POST:", err.message);
-    return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -46,7 +46,7 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("[profiles] PATCH:", err.message);
-    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
@@ -78,6 +78,6 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("[profiles] DELETE:", err.message);
-    return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

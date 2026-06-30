@@ -75,6 +75,9 @@ export default function SettingsPage() {
       const res = await fetch("/api/profiles");
       const data = await res.json();
       setProfiles(data.profiles ?? []);
+      if (!res.ok && data.error) flash(data.error, false);
+    } catch (e: any) {
+      flash(e.message, false);
     } finally {
       setProfilesLoading(false);
     }
