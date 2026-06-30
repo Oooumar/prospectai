@@ -303,37 +303,48 @@ export async function generateWhatsAppMessage(
     ? `SENDER WHATSAPP (offer as contact option alongside direct reply): ${formatWhatsAppUrl(sender.whatsappNumber)}`
     : "";
 
-  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use URLs/numbers explicitly given above. Do NOT include any formal closing. End with an open question or direct CTA. This message is MANUALLY copy-pasted — ProspectAI never sends messages automatically.`;
+  console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| prospect.city:", prospect.city, "| lang:", lang);
+
+  const NO_WA_HALLUCINATION = `STRICT RULE — never invent contact details, phone numbers, addresses, or URLs. Only use URLs/numbers explicitly given above. Do NOT include any formal closing ("Cordialement", "Best regards", etc.). End with an open question or direct CTA. This message is MANUALLY copy-pasted — ProspectAI never sends messages automatically.`;
 
   const TWO_CHANNELS_RULE = `MANDATORY — the message MUST explicitly mention BOTH of the product's channels:
 1. AI-personalized emails (automated cold outreach by email)
 2. Unlimited manual WhatsApp messages directly connected to the prospect's own personal WhatsApp
-Both features must appear clearly. Use natural phrasing such as "emails personnalisés par IA ET messages WhatsApp en manuel, connecté à votre WhatsApp" or equivalent in the output language.`;
+Both features must appear clearly. Use natural phrasing such as "emails personnalisés par IA ET messages WhatsApp illimités en manuel, directement connecté à votre WhatsApp" or equivalent in the output language.`;
+
+  const REGISTER_RULE = `REGISTER — always professional and formal:
+- French: start with "Bonjour" (NEVER "Salut", "Hello", "Hey"), use VOUS/votre throughout (NEVER tu/ton/toi)
+- German: use "Hallo" or "Guten Tag", use SIE/Ihr throughout (never du)
+- Italian: use "Buongiorno", use LEI/Suo throughout (never tu)
+- Spanish: use "Buenos días" or "Hola", use USTED/su throughout (never tú)
+- English: use "Hello" or "Hi", keep professional and impersonal`;
 
   const systemPrompt = promo
     ? `You are writing a SHORT WhatsApp promotional message for a B2B SaaS tool. It must be:
 - Maximum 5 sentences total
-- Conversational and direct tone, as if texting — NOT an email
-- Greet the prospect by name, briefly reference their business type
+- Professional but conversational tone — WhatsApp style, NOT an email
+${REGISTER_RULE}
+- Greet the prospect by their company/business name, briefly reference their business type
 ${TWO_CHANNELS_RULE}
 - Make the promotional offer concrete and compelling
 - Include the website URL once if provided
 - If a sender WhatsApp number is provided, offer it as a contact option alongside direct reply
 - End with a clear call-to-action question
-- No formal closing ("Cordialement", "Best regards", etc.)
+- No formal closing signature
 - Written entirely in ${langName}
 ${NO_WA_HALLUCINATION}
 Reply with ONLY the message text, no JSON, no quotes, no explanation.`
     : `You are writing a SHORT WhatsApp prospecting message for a B2B SaaS tool. It must be:
 - Maximum 5 sentences total
-- Conversational and direct tone, as if texting — NOT an email
+- Professional but conversational tone — WhatsApp style, NOT an email
+${REGISTER_RULE}
 - Greet the prospect by their business/company name
 - Mention their niche and city to show personalization
 ${TWO_CHANNELS_RULE}
 - Include the website URL once if provided
 - If a sender WhatsApp number is provided, offer it as a contact option alongside direct reply
 - End with one open-ended question ("Seriez-vous disponible pour en discuter ?" or equivalent)
-- No formal closing
+- No formal closing signature
 - Written entirely in ${langName}
 ${NO_WA_HALLUCINATION}
 Reply with ONLY the message text, no JSON, no quotes, no explanation.`;

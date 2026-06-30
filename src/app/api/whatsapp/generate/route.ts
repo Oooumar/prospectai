@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     type ProfileRow = { companyName: string | null; website: string | null; productDescription: string | null; whatsappNumber: string | null };
 
-    let sender: { companyName?: string; productDescription?: string; website?: string } = {};
+    let sender: { companyName?: string; productDescription?: string; website?: string; whatsappNumber?: string } = {};
 
     if (profileId) {
       const pRows = await prisma.$queryRaw<ProfileRow[]>`
