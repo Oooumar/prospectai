@@ -83,7 +83,7 @@ async function runAutoCampaigns() {
                 niche:       campaign.niche,
                 city,
                 address:     p.formattedAddress ?? null,
-                phone:       p.nationalPhoneNumber ?? null,
+                phone:       p.internationalPhoneNumber ?? p.nationalPhoneNumber ?? null,
                 website:     p.websiteUri ?? null,
                 rating:      p.rating ?? null,
                 reviewCount: p.userRatingCount ?? null,

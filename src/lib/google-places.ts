@@ -2,6 +2,7 @@ export interface PlaceResult {
   displayName?: { text: string };
   formattedAddress?: string;
   nationalPhoneNumber?: string;
+  internationalPhoneNumber?: string;
   websiteUri?: string;
   rating?: number;
   userRatingCount?: number;
@@ -11,6 +12,7 @@ const FIELD_MASK = [
   "places.displayName",
   "places.formattedAddress",
   "places.nationalPhoneNumber",
+  "places.internationalPhoneNumber",
   "places.websiteUri",
   "places.rating",
   "places.userRatingCount",
