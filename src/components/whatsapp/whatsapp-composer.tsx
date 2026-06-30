@@ -85,7 +85,7 @@ export function WhatsAppComposer({ prospect, onClose }: WhatsAppComposerProps) {
   }
 
   const whatsappUrl = prospect.phone
-    ? `https://wa.me/${cleanPhone(prospect.phone)}`
+    ? `https://wa.me/${cleanPhone(prospect.phone)}${message ? `?text=${encodeURIComponent(message)}` : ""}`
     : null;
 
   return (

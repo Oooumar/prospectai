@@ -139,7 +139,7 @@ export interface T {
   wc_generate_btn: string; wc_generating: string;
   wc_back: string; wc_pending: string;
   wc_copy_text: string; wc_copied: string; wc_open_wa: string;
-  wc_mark_sent: string; wc_sent_badge: string; wc_download_img: string;
+  wc_mark_sent: string; wc_sent_badge: string; wc_download_img: string; wc_img_attach_hint: string;
   wc_selected: string; wc_campaign_wa: string;
   wc_progress: string; wc_messages_count: string;
   wc_manual_note: string; wc_date_label: string;

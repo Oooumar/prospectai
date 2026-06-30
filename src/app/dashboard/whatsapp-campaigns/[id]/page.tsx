@@ -72,7 +72,7 @@ function MessageCard({ msg, imageUrl, onUpdate }: {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const waUrl = `https://wa.me/${cleanPhone(msg.prospectPhone)}`;
+  const waUrl = `https://wa.me/${cleanPhone(msg.prospectPhone)}?text=${encodeURIComponent(text)}`;
 
   return (
     <Card className={`border-gray-800 ${msg.sent ? "opacity-60" : ""}`}>
@@ -148,6 +148,13 @@ function MessageCard({ msg, imageUrl, onUpdate }: {
             </Button>
           )}
         </div>
+
+        {imageUrl && (
+          <div className="flex items-start gap-1.5">
+            <Info className="w-3 h-3 text-violet-400/70 shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-500">{t("wc_img_attach_hint")}</p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
