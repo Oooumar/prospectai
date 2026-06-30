@@ -210,16 +210,19 @@ export default function ProspectsPage() {
                         <td className="px-6 py-4 hidden sm:table-cell">
                           {(() => {
                             const score = prospectScore(p);
-                            const [bg, text, border, label] =
-                              score >= 80
-                                ? ["bg-emerald-500/15", "text-emerald-400", "border-emerald-500/30", t("ps_score_excellent")]
-                                : score >= 50
-                                ? ["bg-orange-500/15", "text-orange-400", "border-orange-500/30", t("ps_score_good")]
-                                : ["bg-red-500/15", "text-red-400", "border-red-500/30", t("ps_score_low")];
+                            let badgeCls = "bg-red-500/15 text-red-400 border-red-500/30";
+                            let badgeLabel = t("ps_score_low");
+                            if (score >= 80) {
+                              badgeCls = "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+                              badgeLabel = t("ps_score_excellent");
+                            } else if (score >= 50) {
+                              badgeCls = "bg-orange-500/15 text-orange-400 border-orange-500/30";
+                              badgeLabel = t("ps_score_good");
+                            }
                             return (
-                              <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border font-medium ${bg} ${text} ${border}`}>
+                              <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full border font-medium ${badgeCls}`}>
                                 <span className="font-bold tabular-nums">{score}</span>
-                                <span className="opacity-80">{label}</span>
+                                <span className="opacity-80">{badgeLabel}</span>
                               </span>
                             );
                           })()}
