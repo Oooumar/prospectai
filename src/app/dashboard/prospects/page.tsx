@@ -194,16 +194,14 @@ export default function ProspectsPage() {
                           className={`hover:bg-gray-900/40 transition-colors ${isSelected ? "bg-emerald-500/5" : ""}`}
                         >
                           <td className="px-4 py-4">
-                            {p.phone ? (
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleSelect(p.id, !!p.phone)}
-                                className="w-4 h-4 rounded border-gray-600 bg-gray-800 accent-emerald-500 cursor-pointer"
-                              />
-                            ) : (
-                              <div className="w-4 h-4" />
-                            )}
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleSelect(p.id, !!p.phone)}
+                              disabled={!p.phone}
+                              title={p.phone ? undefined : t("wc_no_phone_hint")}
+                              className={`w-4 h-4 rounded border-gray-600 bg-gray-800 accent-emerald-500 ${p.phone ? "cursor-pointer" : "cursor-not-allowed opacity-25"}`}
+                            />
                           </td>
                           <td className="px-4 py-4">
                             <div className="flex items-start gap-3">

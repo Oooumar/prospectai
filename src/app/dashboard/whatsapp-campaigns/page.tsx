@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { MessageCircle, Loader2, ImageIcon, ChevronRight, Target } from "lucide-react";
+import { MessageCircle, Loader2, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/language-provider";
 
 interface Campaign {
@@ -42,18 +41,19 @@ export default function WhatsAppCampaignsPage() {
             <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{error}</div>
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error.includes("does not exist") || error.includes("n'existe pas") ? t("wc_db_setup") : error}
+          </div>
         ) : campaigns.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <MessageCircle className="w-10 h-10 mx-auto mb-3 opacity-20" />
             <p className="font-medium">{t("wc_empty")}</p>
             <p className="text-sm mt-1">{t("wc_empty_desc")}</p>
-            <Link href="/dashboard/prospects">
-              <Button variant="warm" className="mt-4">
-                <Target className="w-4 h-4" />
+            <p className="text-xs mt-4 text-gray-600">
+              <Link href="/dashboard/prospects" className="text-emerald-500/70 hover:text-emerald-400 underline underline-offset-2">
                 {t("sb_prospects")}
-              </Button>
-            </Link>
+              </Link>
+            </p>
           </div>
         ) : (
           campaigns.map(c => (

@@ -143,6 +143,7 @@ export interface T {
   wc_selected: string; wc_campaign_wa: string;
   wc_progress: string; wc_messages_count: string;
   wc_manual_note: string; wc_date_label: string;
+  wc_no_phone_hint: string; wc_db_setup: string;
   // Product profiles
   pr_section_title: string; pr_section_desc: string;
   pr_add: string; pr_name_label: string; pr_name_ph: string;
