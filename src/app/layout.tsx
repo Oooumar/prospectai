@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ProspectAI — Prospection automatisée par IA",
   description: "Trouvez des prospects, générez des emails personnalisés et automatisez votre prospection commerciale grâce à l'IA.",
-  icons: { icon: "/favicon.ico" },
+  icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

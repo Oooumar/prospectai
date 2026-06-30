@@ -6,7 +6,7 @@ import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
-  Settings, LogOut, Zap, ChevronRight, MessageSquareReply, FileText, MessageCircle,
+  Settings, LogOut, ChevronRight, MessageSquareReply, FileText, MessageCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function Sidebar() {
   const { open, close } = useSidebar();
   const [pendingReplies, setPendingReplies] = useState(0);
   const [pendingDrafts, setPendingDrafts] = useState(0);
+  const [plan, setPlan] = useState("starter");
 
   useEffect(() => {
     fetch("/api/inbound?count=true")
@@ -29,7 +30,13 @@ export function Sidebar() {
       .then(r => r.ok ? r.json() : { count: 0 })
       .then(d => setPendingDrafts(d.count ?? 0))
       .catch(() => {});
+    fetch("/api/user/me")
+      .then(r => r.ok ? r.json() : { plan: "starter" })
+      .then(d => setPlan(d.plan ?? "starter"))
+      .catch(() => {});
   }, []);
+
+  const isPro = plan !== "starter";
 
   // Close sidebar on navigation (mobile)
   useEffect(() => { close(); }, [pathname]);
@@ -56,12 +63,31 @@ export function Sidebar() {
       )}
     >
       {/* Logo */}
-      <div className="h-16 px-6 flex items-center gap-2.5 border-b border-gray-800/60 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-          <Zap className="w-4 h-4 text-white" />
+      <div className="h-16 px-5 flex items-center gap-3 border-b border-gray-800/60 shrink-0">
+        <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg" width="32" height="32" className="shrink-0">
+          <defs>
+            <linearGradient id="sidebar-logo-g" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#7B61FF"/>
+              <stop offset="100%" stopColor="#C77DFF"/>
+            </linearGradient>
+          </defs>
+          <rect width="52" height="52" rx="14" fill="url(#sidebar-logo-g)"/>
+          <path d="M15 43 L15 13 L30 13 Q44 13 44 23 Q44 33 30 33 L15 33"
+                fill="none" stroke="white" strokeWidth="4"
+                strokeLinecap="round" strokeLinejoin="round"/>
+          <circle cx="42" cy="43" r="4" fill="white"/>
+        </svg>
+        <div className="flex flex-col leading-none">
+          <span className="font-bold text-sm tracking-tight">
+            <span className="text-white">Prospect</span>
+            <span className="bg-gradient-to-r from-violet-400 to-purple-300 bg-clip-text text-transparent">AI</span>
+          </span>
+          {isPro && (
+            <span className="mt-1 self-start text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400 font-semibold uppercase tracking-wide leading-none">
+              PRO
+            </span>
+          )}
         </div>
-        <span className="font-bold text-white">ProspectAI</span>
-        <span className="ml-auto text-xs px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400 font-medium">PRO</span>
       </div>
 
       {/* Nav */}
