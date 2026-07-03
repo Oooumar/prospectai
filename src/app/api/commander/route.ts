@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prismaAdmin } from "@/lib/prisma-admin";
 import { resend } from "@/lib/resend";
 
 const VALID_TYPES      = ["vitrine", "pro_seo", "boutique", "webapp", "native"] as const;
@@ -69,8 +69,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Devise incohérente avec le marché" }, { status: 400 });
     if (typeof prixEstime !== "number" || prixEstime < 0)
       return NextResponse.json({ error: "Prix estimé invalide" }, { status: 400 });
+    if (!process.env.DATABASE_URL_ADMIN)
+      return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
 
-    const order = await prisma.serviceOrder.create({
+    const order = await prismaAdmin.serviceOrder.create({
       data: {
         nom:        nom.trim(),
         entreprise: entreprise?.trim() || null,
