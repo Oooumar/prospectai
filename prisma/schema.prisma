@@ -264,3 +264,19 @@ enum EmailStatus {
   REPLIED
   BOUNCED
 }
+
+model ServiceOrder {
+  id           String   @id @default(cuid())
+  nom          String
+  entreprise   String?
+  email        String
+  telephone    String
+  besoin       String   @db.Text
+  categorie    String   // "site" | "app"
+  typePrecis   String   // ex: "vitrine" | "pro_seo" | "boutique" | "webapp" | "native"
+  options      String[] // ex: ["reservation", "mobile_money", "espace_client"]
+  prixEstime   Int      // en FCFA
+  statut       String   @default("nouvelle")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

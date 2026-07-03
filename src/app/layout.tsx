@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   title: "ProspectAI — Prospection automatisée par IA",
   description: "Trouvez des prospects, générez des emails personnalisés et automatisez votre prospection commerciale grâce à l'IA.",
   icons: [{ rel: "icon", url: "/favicon.svg", type: "image/svg+xml" }],
+  openGraph: {
+    title: "ProspectAI — Prospection automatisée par IA",
+    description: "Trouvez des prospects, générez des emails personnalisés et automatisez votre prospection commerciale grâce à l'IA.",
+    url: "https://prospectai.company",
+    siteName: "ProspectAI",
+    images: [{ url: "https://prospectai.company/favicon.svg", width: 52, height: 52, alt: "ProspectAI" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "ProspectAI — Prospection automatisée par IA",
+    description: "Trouvez des prospects, générez des emails personnalisés et automatisez votre prospection commerciale grâce à l'IA.",
+    images: ["https://prospectai.company/favicon.svg"],
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

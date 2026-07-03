@@ -63,8 +63,8 @@ export function Sidebar() {
       )}
     >
       {/* Logo */}
-      <div className="h-16 px-5 flex items-center gap-3 border-b border-gray-800/60 shrink-0">
-        <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg" width="32" height="32" className="shrink-0">
+      <div className="h-16 px-4 flex items-center gap-3 border-b border-gray-800/60 shrink-0">
+        <svg viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg" width="40" height="40" className="shrink-0">
           <defs>
             <linearGradient id="sidebar-logo-g" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#7B61FF"/>
@@ -77,16 +77,14 @@ export function Sidebar() {
                 strokeLinecap="round" strokeLinejoin="round"/>
           <circle cx="42" cy="43" r="4" fill="white"/>
         </svg>
-        <div className="flex flex-col leading-none">
-          <span className="font-bold text-sm tracking-tight">
+        <div className="flex flex-col gap-0.5 leading-none min-w-0">
+          <span className="font-bold text-base tracking-tight">
             <span className="text-white">Prospect</span>
-            <span className="bg-gradient-to-r from-violet-400 to-purple-300 bg-clip-text text-transparent">AI</span>
+            <span style={{ background: "linear-gradient(135deg,#7B61FF,#C77DFF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI</span>
           </span>
-          {isPro && (
-            <span className="mt-1 self-start text-[10px] px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-400 font-semibold uppercase tracking-wide leading-none">
-              PRO
-            </span>
-          )}
+          <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: "#9B8CFF" }}>
+            Prospection · IA
+          </span>
         </div>
       </div>
 
