@@ -5,11 +5,26 @@ import { resend } from "@/lib/resend";
 const VALID_TYPES      = ["vitrine", "pro_seo", "boutique", "webapp", "native"] as const;
 const VALID_OPTIONS    = ["reservation", "mobile_money", "espace_client", "seo_avance", "chat_whatsapp", "maintenance"] as const;
 const VALID_CATEGORIES = ["site", "app"] as const;
-const VALID_MARCHES    = ["afrique", "europe"] as const;
+const VALID_ZONES      = ["africa-fr", "africa-en", "europe", "amerique"] as const;
 
 type ValidType     = typeof VALID_TYPES[number];
 type ValidCategory = typeof VALID_CATEGORIES[number];
-type ValidMarche   = typeof VALID_MARCHES[number];
+type ValidZone     = typeof VALID_ZONES[number];
+
+// Devise imposed by zone — prevents client-side tampering
+const ZONE_DEVISE: Record<ValidZone, string> = {
+  "africa-fr":  "FCFA",
+  "africa-en":  "USD",
+  "europe":     "EUR",
+  "amerique":   "USD",
+};
+
+const ZONE_LABELS: Record<ValidZone, string> = {
+  "africa-fr": "🌍 Africa FR (FCFA)",
+  "africa-en": "🌍 Africa EN (USD)",
+  "europe":    "🇪🇺 Europe (EUR)",
+  "amerique":  "🌎 Amérique (USD)",
+};
 
 const TYPE_LABELS: Record<ValidType, string> = {
   vitrine:  "Site vitrine",
@@ -28,9 +43,11 @@ const OPTION_LABELS: Record<string, string> = {
   maintenance:   "Maintenance mensuelle",
 };
 
-const MAINT_RANGE: Record<ValidMarche, string> = {
-  afrique: "15 000 – 25 000 FCFA/mois",
-  europe:  "49 – 99 €/mois",
+const MAINT_RANGE: Record<ValidZone, string> = {
+  "africa-fr": "15 000 – 25 000 FCFA/mois",
+  "africa-en": "$25 – $40/month",
+  "europe":    "49 – 99 €/mois",
+  "amerique":  "$55 – $110/month",
 };
 
 const EUR_RATE = 655.957;
@@ -39,13 +56,14 @@ function formatPrice(amount: number, devise: string): string {
   if (devise === "FCFA") {
     return `${amount.toLocaleString("fr-FR")} FCFA (≈ ${Math.round(amount / EUR_RATE).toLocaleString("fr-FR")} €)`;
   }
+  if (devise === "USD") return `$${amount.toLocaleString("en-US")}`;
   return `${amount.toLocaleString("fr-FR")} €`;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nom, entreprise, email, telephone, besoin, categorie, typePrecis, options, marche, devise, prixEstime } = body;
+    const { nom, entreprise, email, telephone, besoin, categorie, typePrecis, options, marche, prixEstime } = body;
 
     // Validation
     if (!nom || typeof nom !== "string" || nom.trim().length < 2)
@@ -62,15 +80,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Type de service invalide" }, { status: 400 });
     if (!Array.isArray(options) || options.some((o: string) => !VALID_OPTIONS.includes(o as any)))
       return NextResponse.json({ error: "Options invalides" }, { status: 400 });
-    if (!VALID_MARCHES.includes(marche))
-      return NextResponse.json({ error: "Marché invalide" }, { status: 400 });
-    const expectedDevise = marche === "afrique" ? "FCFA" : "EUR";
-    if (devise !== expectedDevise)
-      return NextResponse.json({ error: "Devise incohérente avec le marché" }, { status: 400 });
+    if (!VALID_ZONES.includes(marche))
+      return NextResponse.json({ error: "Zone invalide" }, { status: 400 });
     if (typeof prixEstime !== "number" || prixEstime < 0)
       return NextResponse.json({ error: "Prix estimé invalide" }, { status: 400 });
     if (!process.env.DATABASE_URL_ADMIN)
       return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
+
+    // Devise is derived from zone server-side — never trust client input
+    const devise = ZONE_DEVISE[marche as ValidZone];
 
     const order = await prismaAdmin.serviceOrder.create({
       data: {
@@ -82,10 +100,10 @@ export async function POST(req: NextRequest) {
         categorie:  categorie as ValidCategory,
         typePrecis: typePrecis as ValidType,
         options,
-        marche:     marche as ValidMarche,
-        devise:     expectedDevise,
+        marche,
+        devise,
         prixEstime,
-        statut:     "nouvelle",
+        statut: "nouvelle",
       },
     });
 
@@ -96,13 +114,13 @@ export async function POST(req: NextRequest) {
     const optionsList = mainOptions.length > 0
       ? mainOptions.map(o => `• ${OPTION_LABELS[o] ?? o}`).join("\n")
       : "Aucune";
-    const marcheLabel = marche === "afrique" ? "🌍 Afrique (FCFA)" : "🇪🇺 Europe (EUR)";
-    const waNum       = telephone.replace(/[^0-9]/g, "");
+    const zoneLabel = ZONE_LABELS[marche as ValidZone] ?? marche;
+    const waNum     = telephone.replace(/[^0-9]/g, "");
 
     await resend.emails.send({
       from: `ProspectAI Commandes <${process.env.RESEND_FROM_EMAIL || "contact@prospectai.company"}>`,
       to: notifEmail,
-      subject: `🆕 ${marcheLabel} — ${TYPE_LABELS[typePrecis as ValidType]} — ${nom.trim()}`,
+      subject: `🆕 ${zoneLabel} — ${TYPE_LABELS[typePrecis as ValidType]} — ${nom.trim()}`,
       html: `
         <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:32px 20px;background:#fff;color:#111">
           <div style="background:linear-gradient(135deg,#7B61FF,#C77DFF);border-radius:12px;padding:20px 24px;margin-bottom:24px">
@@ -115,11 +133,11 @@ export async function POST(req: NextRequest) {
             ${entreprise ? `<tr><td style="padding:8px 0;color:#6b7280">Entreprise</td><td style="padding:8px 0">${entreprise.trim()}</td></tr>` : ""}
             <tr><td style="padding:8px 0;color:#6b7280">Email</td><td style="padding:8px 0"><a href="mailto:${email}" style="color:#7B61FF">${email}</a></td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Téléphone</td><td style="padding:8px 0"><a href="https://wa.me/${waNum}" style="color:#25D366">${telephone.trim()}</a></td></tr>
-            <tr><td style="padding:8px 0;color:#6b7280">Marché</td><td style="padding:8px 0;font-weight:600">${marcheLabel}</td></tr>
+            <tr><td style="padding:8px 0;color:#6b7280">Zone</td><td style="padding:8px 0;font-weight:600">${zoneLabel}</td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Catégorie</td><td style="padding:8px 0">${categorie === "site" ? "Site Web" : "Application"}</td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Type</td><td style="padding:8px 0;font-weight:600">${TYPE_LABELS[typePrecis as ValidType]}</td></tr>
-            <tr><td style="padding:8px 0;color:#6b7280">Prix estimé</td><td style="padding:8px 0;font-weight:600;color:#7B61FF">${formatPrice(prixEstime, expectedDevise)}</td></tr>
-            ${hasMaint ? `<tr><td style="padding:8px 0;color:#6b7280">Maintenance</td><td style="padding:8px 0;color:#8b5cf6">${MAINT_RANGE[marche as ValidMarche]} <span style="font-size:11px;color:#9ca3af">(récurrent)</span></td></tr>` : ""}
+            <tr><td style="padding:8px 0;color:#6b7280">Prix estimé</td><td style="padding:8px 0;font-weight:600;color:#7B61FF">${formatPrice(prixEstime, devise)}</td></tr>
+            ${hasMaint ? `<tr><td style="padding:8px 0;color:#6b7280">Maintenance</td><td style="padding:8px 0;color:#8b5cf6">${MAINT_RANGE[marche as ValidZone]} <span style="font-size:11px;color:#9ca3af">(récurrent)</span></td></tr>` : ""}
           </table>
 
           <div style="margin:20px 0;padding:16px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">

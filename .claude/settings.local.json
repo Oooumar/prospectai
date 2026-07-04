@@ -58,7 +58,24 @@
       "Bash(curl -s -X POST http://localhost:3099/api/auto-campaigns -H 'Content-Type: application/json' -d '{\"niche\":\"plombier\",\"cities\":\"Paris, Lyon\",\"frequency\":\"daily\",\"prospectsPerCycle\":\"5\"}')",
       "Bash(curl -s http://localhost:3099/api/auto-campaigns)",
       "Bash(grep -v 'node_modules\\\\|$transaction')",
-      "Bash(node -e \"const l = require\\('lucide-react'\\); const icons = Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('globe'\\)\\); console.log\\(icons\\);\")"
+      "Bash(node -e \"const l = require\\('lucide-react'\\); const icons = Object.keys\\(l\\).filter\\(k => k.toLowerCase\\(\\).includes\\('globe'\\)\\); console.log\\(icons\\);\")",
+      "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/profiles/\\\\[id\\\\])",
+      "Bash(curl -s http://localhost:3000/api/profiles)",
+      "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/api/whatsapp/campaigns/\\\\[id\\\\] \\\\ *)",
+      "Bash(mkdir -p /Users/ouedraogocheckoumaraziz/Desktop/ProspectAI/src/app/dashboard/whatsapp-campaigns/\\\\[id\\\\])",
+      "Bash(git restore *)",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} -> %{redirect_url}\\\\n\" http://localhost:3000/dashboard/whatsapp-campaigns)",
+      "Bash(curl -sI http://localhost:3000/dashboard/whatsapp-campaigns)",
+      "Bash(vercel --version)",
+      "Bash(vercel ls *)",
+      "Bash(vercel inspect *)",
+      "Bash(vercel domains *)",
+      "Bash(curl -sI \"https://prospectai.company/dashboard/whatsapp-campaigns\")",
+      "Bash(curl -sI \"https://prospectai.company/dashboard/prospects\")",
+      "Bash(vercel logs *)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

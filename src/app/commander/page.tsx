@@ -1,121 +1,260 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Check, ChevronRight, Globe, Smartphone, Zap,
-  ShoppingCart, Code2, Phone, Wrench,
+  ShoppingCart, Code2, Phone, Wrench, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { type Locale, LOCALES, LOCALE_FLAGS, LOCALE_LABELS, translations } from "@/lib/i18n";
+import type { T } from "@/lib/i18n";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Zone system ───────────────────────────────────────────────────────────────
 
-type Market   = "afrique" | "europe";
-type Category = "site" | "app";
+type Zone   = "africa-fr" | "africa-en" | "europe" | "amerique";
+type Devise = "FCFA" | "USD" | "EUR";
+type Tf     = (key: keyof T) => string;
 
-interface DualPrice   { afrique: number; europe: number }
+interface ZoneConfig {
+  label:  string;   // display label (language-agnostic identifier)
+  emoji:  string;
+  locale: Locale;
+  devise: Devise;
+}
+
+const ZONES: Record<Zone, ZoneConfig> = {
+  "africa-fr": { label: "Africa FR", emoji: "🌍", locale: "fr", devise: "FCFA" },
+  "africa-en": { label: "Africa EN", emoji: "🌍", locale: "en", devise: "USD"  },
+  "europe":    { label: "Europe",    emoji: "🇪🇺", locale: "fr", devise: "EUR"  },
+  "amerique":  { label: "Amérique",  emoji: "🌎", locale: "en", devise: "USD"  },
+};
+
+const ZONE_ORDER: Zone[] = ["africa-fr", "africa-en", "europe", "amerique"];
+
+const DEVISE_LABEL: Record<Zone, string> = {
+  "africa-fr": "FCFA", "africa-en": "USD", "europe": "EUR", "amerique": "USD",
+};
+
+// ─── Data types ────────────────────────────────────────────────────────────────
+
+type QuadPrice = Record<Zone, number>;
+
 interface ServiceItem {
-  id: string; label: string; price: DualPrice;
-  monthlyEurope?: number; priceLabel?: string;
-  desc: string; icon: React.ElementType; color: string;
+  id:           string;
+  price:        QuadPrice;
+  monthly?:     Partial<QuadPrice>;
+  priceLabel?:  boolean;
+  icon:         React.ElementType;
+  color:        string;
+  lk:           keyof T;
+  dk:           keyof T;
 }
-interface OptionItem { id: string; label: string; price: DualPrice }
+interface OptionItem { id: string; price: QuadPrice; lk: keyof T }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-const EUR_RATE = 655.957;
-const fmt = (n: number) => n.toLocaleString("fr-FR");
-
-function fmtP(n: number, m: Market) {
-  return m === "afrique" ? `${fmt(n)} FCFA` : `${fmt(n)} €`;
-}
-function fmtEq(n: number, m: Market) {
-  return m === "afrique" ? `≈ ${fmt(Math.round(n / EUR_RATE))} €` : "";
-}
-
-// ─── Data ──────────────────────────────────────────────────────────────────────
+// ─── Price data ────────────────────────────────────────────────────────────────
 
 const SITES: ServiceItem[] = [
   {
-    id: "vitrine", label: "Site vitrine",
-    price: { afrique: 150_000, europe: 990 }, monthlyEurope: 49,
-    desc: "3-5 pages, domaine + hébergement 1 an, responsive, WhatsApp intégré",
+    id: "vitrine",
+    price:   { "africa-fr": 150_000, "africa-en": 250,   "europe": 690,   "amerique": 770   },
+    monthly: { "europe": 69,         "amerique": 79 },
     icon: Globe, color: "from-violet-500 to-purple-600",
+    lk: "cmd_vitrine_label", dk: "cmd_vitrine_desc",
   },
   {
-    id: "pro_seo", label: "Site Pro + SEO",
-    price: { afrique: 350_000, europe: 1_900 },
-    desc: "Jusqu'à 8 pages, SEO local, email pro, formulaire de devis",
+    id: "pro_seo",
+    price: { "africa-fr": 350_000, "africa-en": 580,   "europe": 1_400, "amerique": 1_550 },
     icon: Zap, color: "from-indigo-500 to-violet-600",
+    lk: "cmd_pro_seo_label", dk: "cmd_pro_seo_desc",
   },
   {
-    id: "boutique", label: "Boutique en ligne",
-    price: { afrique: 600_000, europe: 3_500 },
-    desc: "E-commerce complet, paiement Mobile Money, gestion de catalogue",
+    id: "boutique",
+    price: { "africa-fr": 600_000, "africa-en": 990,   "europe": 2_500, "amerique": 2_800 },
     icon: ShoppingCart, color: "from-purple-500 to-pink-600",
+    lk: "cmd_boutique_label", dk: "cmd_boutique_desc",
   },
 ];
 
 const APPS: ServiceItem[] = [
   {
-    id: "webapp", label: "Web App / PWA",
-    price: { afrique: 800_000, europe: 5_000 }, priceLabel: "à partir de",
-    desc: "Application navigateur installable sur mobile. Réservation, gestion, commande en ligne.",
+    id: "webapp",
+    price: { "africa-fr": 800_000, "africa-en": 1_300, "europe": 3_500, "amerique": 3_900 },
+    priceLabel: true,
     icon: Code2, color: "from-cyan-500 to-blue-600",
+    lk: "cmd_webapp_label", dk: "cmd_webapp_desc",
   },
   {
-    id: "native", label: "App mobile native",
-    price: { afrique: 1_500_000, europe: 8_000 }, priceLabel: "à partir de",
-    desc: "Flutter, publiée sur Play Store & App Store. Devis personnalisé selon les fonctionnalités.",
+    id: "native",
+    price: { "africa-fr": 1_500_000, "africa-en": 2_500, "europe": 6_500, "amerique": 7_200 },
+    priceLabel: true,
     icon: Smartphone, color: "from-emerald-500 to-teal-600",
+    lk: "cmd_native_label", dk: "cmd_native_desc",
   },
 ];
 
 const OPTIONS: OptionItem[] = [
-  { id: "reservation",   label: "Réservation en ligne",     price: { afrique:  50_000, europe:  99 } },
-  { id: "mobile_money",  label: "Paiement Mobile Money",     price: { afrique:  80_000, europe: 149 } },
-  { id: "espace_client", label: "Espace client / Connexion", price: { afrique: 100_000, europe: 199 } },
-  { id: "seo_avance",    label: "SEO avancé",                price: { afrique: 120_000, europe: 249 } },
-  { id: "chat_whatsapp", label: "Chat / WhatsApp intégré",   price: { afrique:  30_000, europe:  49 } },
+  { id: "reservation",   lk: "cmd_opt_reservation",
+    price: { "africa-fr": 50_000,  "africa-en": 85,  "europe": 99,  "amerique": 110 } },
+  { id: "mobile_money",  lk: "cmd_opt_mobile_money",
+    price: { "africa-fr": 80_000,  "africa-en": 130, "europe": 149, "amerique": 165 } },
+  { id: "espace_client", lk: "cmd_opt_espace_client",
+    price: { "africa-fr": 100_000, "africa-en": 165, "europe": 199, "amerique": 220 } },
+  { id: "seo_avance",    lk: "cmd_opt_seo_avance",
+    price: { "africa-fr": 120_000, "africa-en": 199, "europe": 249, "amerique": 275 } },
+  { id: "chat_whatsapp", lk: "cmd_opt_chat_whatsapp",
+    price: { "africa-fr": 30_000,  "africa-en": 50,  "europe": 49,  "amerique": 55  } },
 ];
 
-const MAINT = {
-  afrique: { min: 15_000, max: 25_000 },
-  europe:  { min: 49,     max: 99 },
-} as const;
+const MAINT: Record<Zone, { min: number; max: number }> = {
+  "africa-fr":  { min: 15_000, max: 25_000 },
+  "africa-en":  { min: 25,     max: 40     },
+  "europe":     { min: 49,     max: 99     },
+  "amerique":   { min: 55,     max: 110    },
+};
 
-// ─── Components ────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function MarketToggle({ market, onChange }: { market: Market; onChange: (m: Market) => void }) {
+const EUR_RATE = 655.957;
+
+function fmtNum(n: number, devise: Devise): string {
+  return devise === "USD" ? n.toLocaleString("en-US") : n.toLocaleString("fr-FR");
+}
+
+function fmtP(n: number, devise: Devise): string {
+  const f = fmtNum(n, devise);
+  if (devise === "FCFA") return `${f} FCFA`;
+  if (devise === "USD")  return `$${f}`;
+  return `${f} €`;
+}
+
+function fmtEq(n: number, devise: Devise): string {
+  if (devise === "FCFA") return `≈ ${fmtNum(Math.round(n / EUR_RATE), "EUR")} €`;
+  return "";
+}
+
+// ─── Zone selector ─────────────────────────────────────────────────────────────
+
+function ZoneSelector({ zone, onChange }: { zone: Zone; onChange: (z: Zone) => void }) {
   return (
     <div className="flex justify-center mb-8">
-      <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-gray-900 border border-gray-800">
-        {(["afrique", "europe"] as const).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => onChange(m)}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              market === m
-                ? "bg-violet-600 text-white shadow-lg shadow-violet-500/25"
-                : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <span role="img" aria-label={m}>{m === "afrique" ? "🌍" : "🇪🇺"}</span>
-            {m === "afrique" ? "Afrique" : "Europe"}
-          </button>
-        ))}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full max-w-xl">
+        {ZONE_ORDER.map(zId => {
+          const z = ZONES[zId];
+          const active = zone === zId;
+          return (
+            <button
+              key={zId}
+              type="button"
+              onClick={() => onChange(zId)}
+              className={`flex flex-col items-center gap-1.5 rounded-xl border py-3 px-2 transition-all duration-200 ${
+                active
+                  ? "border-violet-500/60 bg-violet-500/15 shadow-lg shadow-violet-500/10"
+                  : "border-gray-800 bg-gray-900/60 hover:border-gray-700 hover:bg-gray-900"
+              }`}
+            >
+              <span className="text-xl">{z.emoji}</span>
+              <span className={`text-xs font-semibold leading-tight ${active ? "text-violet-200" : "text-gray-300"}`}>
+                {z.label}
+              </span>
+              <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
+                active ? "bg-violet-500/30 text-violet-300" : "bg-gray-800 text-gray-500"
+              }`}>
+                {DEVISE_LABEL[zId]}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function ServiceCard({ item, market, selected, onSelect }: {
-  item: ServiceItem; market: Market; selected: boolean; onSelect: () => void;
+// ─── Language selector ─────────────────────────────────────────────────────────
+
+function LangSelector({ locale, onChange }: { locale: Locale; onChange: (l: Locale) => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-gray-800"
+      >
+        <span>{LOCALE_FLAGS[locale]}</span>
+        <span className="hidden sm:inline">{LOCALE_LABELS[locale]}</span>
+        <ChevronDown className="w-3 h-3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-50 rounded-xl border border-gray-800 bg-gray-950 shadow-xl overflow-hidden min-w-[120px]">
+            {LOCALES.map(l => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => { onChange(l); setOpen(false); }}
+                className={`flex items-center gap-2.5 w-full px-3 py-2 text-xs transition-colors hover:bg-gray-800 ${
+                  l === locale ? "text-violet-300 bg-violet-500/10" : "text-gray-300"
+                }`}
+              >
+                <span>{LOCALE_FLAGS[l]}</span>
+                <span>{LOCALE_LABELS[l]}</span>
+                {l === locale && <Check className="w-3 h-3 ml-auto text-violet-400" />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Trust steps ───────────────────────────────────────────────────────────────
+
+function TrustSteps({ t }: { t: Tf }) {
+  const steps: Array<{ n: string; tk: keyof T; sk: keyof T }> = [
+    { n: "1", tk: "cmd_step1_title", sk: "cmd_step1_sub" },
+    { n: "2", tk: "cmd_step2_title", sk: "cmd_step2_sub" },
+    { n: "3", tk: "cmd_step3_title", sk: "cmd_step3_sub" },
+    { n: "4", tk: "cmd_step4_title", sk: "cmd_step4_sub" },
+  ];
+  return (
+    <div className="mb-10 rounded-2xl border border-gray-800 bg-gray-900/50 p-5 sm:p-6">
+      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider text-center mb-5">
+        {t("cmd_how_it_works")}
+      </p>
+      <div className="grid sm:grid-cols-4 gap-5">
+        {steps.map(({ n, tk, sk }) => (
+          <div key={n} className="flex sm:flex-col items-start sm:items-center gap-3 sm:gap-2 sm:text-center">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
+              <span className="text-sm font-bold text-white">{n}</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white leading-tight">{t(tk)}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{t(sk)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-4 py-3 text-center">
+        <p className="text-sm text-emerald-300 font-medium leading-relaxed">{t("cmd_trust_banner")}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Service card ──────────────────────────────────────────────────────────────
+
+function ServiceCard({ item, zone, devise, selected, onSelect, t, locale }: {
+  item: ServiceItem; zone: Zone; devise: Devise; selected: boolean;
+  onSelect: () => void; t: Tf; locale: Locale;
 }) {
-  const { label, price, priceLabel, monthlyEurope, desc, icon: Icon, color } = item;
-  const amount = price[market];
-  const equiv  = fmtEq(amount, market);
+  const { price, priceLabel, monthly, icon: Icon, color, lk, dk } = item;
+  const amount   = price[zone];
+  const equiv    = fmtEq(amount, devise);
+  const monthlyV = monthly?.[zone];
 
   return (
     <button
@@ -133,20 +272,22 @@ function ServiceCard({ item, market, selected, onSelect }: {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-white text-sm">{label}</span>
+            <span className="font-semibold text-white text-sm">{t(lk)}</span>
             {selected && (
               <span className="flex items-center gap-1 text-[11px] text-violet-400 bg-violet-500/20 rounded-full px-2 py-0.5">
-                <Check className="w-3 h-3" />Sélectionné
+                <Check className="w-3 h-3" />{t("cmd_selected")}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1 leading-relaxed">{desc}</p>
+          <p className="text-xs text-gray-400 mt-1 leading-relaxed">{t(dk)}</p>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-            {priceLabel && <span className="text-xs text-gray-400">{priceLabel}</span>}
-            <span className="font-bold text-white text-sm">{fmtP(amount, market)}</span>
+            {priceLabel && <span className="text-xs text-gray-400">{t("cmd_from")}</span>}
+            <span className="font-bold text-white text-sm">{fmtP(amount, devise)}</span>
             {equiv && <span className="text-xs text-gray-500">({equiv})</span>}
-            {market === "europe" && monthlyEurope && (
-              <span className="text-xs text-gray-400">· ou {fmt(monthlyEurope)} €/mois</span>
+            {monthlyV != null && (
+              <span className="text-xs text-gray-400">
+                · {fmtP(monthlyV, devise)}/{locale === "fr" ? "mois" : "mo"}
+              </span>
             )}
           </div>
         </div>
@@ -155,10 +296,12 @@ function ServiceCard({ item, market, selected, onSelect }: {
   );
 }
 
-function OptionCheckbox({ opt, market, checked, onChange }: {
-  opt: OptionItem; market: Market; checked: boolean; onChange: () => void;
+// ─── Option checkbox ───────────────────────────────────────────────────────────
+
+function OptionCheckbox({ opt, zone, devise, checked, onChange, t }: {
+  opt: OptionItem; zone: Zone; devise: Devise; checked: boolean; onChange: () => void; t: Tf;
 }) {
-  const amount = opt.price[market];
+  const amount = opt.price[zone];
   return (
     <label className={`flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all duration-150 ${
       checked ? "border-violet-500/50 bg-violet-500/8" : "border-gray-800 hover:border-gray-700"
@@ -169,22 +312,23 @@ function OptionCheckbox({ opt, market, checked, onChange }: {
         {checked && <Check className="w-3 h-3 text-white" />}
       </div>
       <input type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
-      <span className="flex-1 text-sm text-white font-medium">{opt.label}</span>
+      <span className="flex-1 text-sm text-white font-medium">{t(opt.lk)}</span>
       <div className="text-right shrink-0">
-        <span className="text-sm text-gray-400">+{fmtP(amount, market)}</span>
-        {market === "afrique" && (
-          <span className="block text-[11px] text-gray-600">{fmtEq(amount, market)}</span>
+        <span className="text-sm text-gray-400">+{fmtP(amount, devise)}</span>
+        {devise === "FCFA" && (
+          <span className="block text-[11px] text-gray-600">{fmtEq(amount, devise)}</span>
         )}
       </div>
     </label>
   );
 }
 
-function MaintenanceRow({ market, checked, onChange }: {
-  market: Market; checked: boolean; onChange: () => void;
+// ─── Maintenance row ───────────────────────────────────────────────────────────
+
+function MaintenanceRow({ zone, devise, checked, onChange, t, locale }: {
+  zone: Zone; devise: Devise; checked: boolean; onChange: () => void; t: Tf; locale: Locale;
 }) {
-  const { min, max } = MAINT[market];
-  const devise = market === "afrique" ? "FCFA" : "€";
+  const { min, max } = MAINT[zone];
   return (
     <label className={`flex items-start gap-3 rounded-xl border p-3.5 cursor-pointer transition-all duration-150 ${
       checked ? "border-violet-500/50 bg-violet-500/8" : "border-gray-800 hover:border-gray-700"
@@ -198,30 +342,91 @@ function MaintenanceRow({ market, checked, onChange }: {
       <div className="flex-1">
         <div className="flex items-center gap-1.5">
           <Wrench className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-          <span className="text-sm text-white font-medium">Maintenance mensuelle</span>
+          <span className="text-sm text-white font-medium">{t("cmd_opt_maintenance")}</span>
         </div>
-        <p className="text-xs text-gray-500 mt-0.5">Mises à jour, sauvegardes, support technique</p>
+        <p className="text-xs text-gray-500 mt-0.5">{t("cmd_maint_desc")}</p>
       </div>
       <div className="text-right shrink-0">
         <span className="text-xs text-gray-400 whitespace-nowrap">
-          {fmt(min)} – {fmt(max)} {devise}/mois
+          {fmtP(min, devise)} – {fmtP(max, devise)}/{locale === "fr" ? "mois" : "mo"}
         </span>
-        <span className="block text-[11px] text-gray-600">récurrent</span>
+        <span className="block text-[11px] text-gray-600">{t("cmd_maint_recurrent")}</span>
       </div>
     </label>
   );
 }
 
-// ─── Main page ─────────────────────────────────────────────────────────────────
+// ─── Category types ────────────────────────────────────────────────────────────
 
-export default function CommanderPage() {
-  const [market, setMarket]       = useState<Market>("afrique");
-  const [category, setCategory]   = useState<Category>("site");
+type Category = "site" | "app";
+
+// ─── Main page (inner — needs Suspense for useSearchParams) ───────────────────
+
+function CommanderPageInner() {
+  const searchParams = useSearchParams();
+
+  const [zone,   setZoneState]   = useState<Zone>("africa-fr");
+  const [locale, setLocaleState] = useState<Locale>("fr");
+
+  // Priority:
+  //  1. ?lang=  → always wins, regardless of zone
+  //  2. ?zone= (no lang) → zone's natural language
+  //     Exception: europe with no lang → browser language or fr
+  //  3. Neither → browser language or fr (zone: africa-fr)
+  useEffect(() => {
+    const rawZone = searchParams.get("zone");
+    const rawLang = searchParams.get("lang");
+
+    // Resolve zone (only affects devise + prices)
+    const resolvedZone: Zone = rawZone && (ZONE_ORDER as string[]).includes(rawZone)
+      ? rawZone as Zone
+      : "africa-fr";
+    setZoneState(resolvedZone);
+
+    // ?lang= wins over everything — check raw string against locale list
+    if (rawLang && (LOCALES as string[]).includes(rawLang)) {
+      setLocaleState(rawLang as Locale);
+      return;
+    }
+
+    // No ?lang= — derive from zone or browser
+    const browserLang = typeof navigator !== "undefined"
+      ? (navigator.language.slice(0, 2).toLowerCase() as Locale)
+      : "fr";
+    const browserLocale: Locale = (LOCALES as string[]).includes(browserLang) ? browserLang : "fr";
+
+    if (!rawZone) {
+      // No zone, no lang → browser
+      setLocaleState(browserLocale);
+    } else if (resolvedZone === "europe") {
+      // Europe with no ?lang= → honour visitor's browser language
+      setLocaleState(browserLocale);
+    } else {
+      // Other zones have a fixed natural language
+      setLocaleState(ZONES[resolvedZone].locale);
+    }
+  }, [searchParams]);
+
+  function setZone(z: Zone) {
+    setZoneState(z);
+    // Manual zone click → switch to that zone's natural language (good UX default).
+    // The user can always override with the LangSelector afterwards.
+    setLocaleState(ZONES[z].locale);
+  }
+
+  const devise = ZONES[zone].devise;
+
+  function t(key: keyof T): string {
+    return String(translations[locale][key] ?? translations["fr"][key] ?? key);
+  }
+
+  // ── Page state ──────────────────────────────────────────────────────────────
+  const [category, setCategory] = useState<Category>("site");
   const [selectedType, setSelectedType] = useState("vitrine");
   const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set());
   const [maintenanceSelected, setMaintenanceSelected] = useState(false);
 
-  const [form, setForm] = useState({ nom: "", entreprise: "", email: "", telephone: "", besoin: "" });
+  const [form, setForm]         = useState({ nom: "", entreprise: "", email: "", telephone: "", besoin: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
   const [error, setError]           = useState("");
@@ -235,13 +440,13 @@ export default function CommanderPage() {
   const items = category === "site" ? SITES : APPS;
 
   const basePrice = useMemo(
-    () => (category === "site" ? SITES : APPS).find(i => i.id === selectedType)?.price[market] ?? 0,
-    [category, selectedType, market]
+    () => (category === "site" ? SITES : APPS).find(i => i.id === selectedType)?.price[zone] ?? 0,
+    [category, selectedType, zone]
   );
 
   const optionsTotal = useMemo(
-    () => OPTIONS.filter(o => selectedOptions.has(o.id)).reduce((s, o) => s + o.price[market], 0),
-    [selectedOptions, market]
+    () => OPTIONS.filter(o => selectedOptions.has(o.id)).reduce((s, o) => s + o.price[zone], 0),
+    [selectedOptions, zone]
   );
 
   const totalPrice  = basePrice + optionsTotal;
@@ -272,13 +477,13 @@ export default function CommanderPage() {
           categorie:  category,
           typePrecis: selectedType,
           options:    [...Array.from(selectedOptions), ...(maintenanceSelected ? ["maintenance"] : [])],
-          marche:     market,
-          devise:     market === "afrique" ? "FCFA" : "EUR",
+          marche:     zone,
+          devise,
           prixEstime: totalPrice,
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || "Erreur. Veuillez réessayer."); return; }
+      if (!res.ok) { setError(data.error || t("cmd_form_submitting")); return; }
       setSubmitted(true);
     } catch {
       setError("Impossible de contacter le serveur. Vérifiez votre connexion.");
@@ -287,55 +492,68 @@ export default function CommanderPage() {
     }
   }
 
-  // ── Success ──────────────────────────────────────────────────────────────────
+  // ── Success ─────────────────────────────────────────────────────────────────
   if (submitted) {
+    const zConf = ZONES[zone];
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-6">
         <div className="max-w-md w-full text-center">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-6 shadow-xl shadow-violet-500/30">
             <Check className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">Commande envoyée !</h1>
+          <h1 className="text-2xl font-bold text-white mb-3">{t("cmd_success_title")}</h1>
           <p className="text-gray-400 text-sm leading-relaxed mb-2">
-            Merci <strong className="text-white">{form.nom}</strong>, votre demande a bien été reçue.
+            {t("cmd_success_thanks").replace("{nom}", form.nom)}
           </p>
           <p className="text-gray-400 text-sm leading-relaxed mb-8">
-            Nous vous recontactons sous <strong className="text-white">24-48 h</strong> par email ou WhatsApp pour confirmer les détails et démarrer votre projet.
+            {t("cmd_success_next_contact")}
           </p>
           <div className="rounded-2xl border border-violet-500/20 bg-violet-500/8 p-5 text-left mb-6">
-            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-3">Récapitulatif</p>
-            <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 mb-2">
-              {market === "afrique" ? "🌍 Afrique · FCFA" : "🇪🇺 Europe · EUR"}
+            <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-3">
+              {t("cmd_success_recap")}
+            </p>
+            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-300 mb-2">
+              {zConf.emoji} {zConf.label} · {devise}
             </span>
-            <p className="text-sm text-white font-medium">{selectedItem?.label}</p>
+            <p className="text-sm text-white font-medium">{selectedItem ? t(selectedItem.lk) : ""}</p>
             {(selectedOptions.size > 0 || maintenanceSelected) && (
               <ul className="mt-2 space-y-1">
                 {OPTIONS.filter(o => selectedOptions.has(o.id)).map(o => (
                   <li key={o.id} className="text-xs text-gray-400 flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-violet-400" />{o.label}
+                    <Check className="w-3 h-3 text-violet-400" />{t(o.lk)}
                   </li>
                 ))}
                 {maintenanceSelected && (
                   <li className="text-xs text-gray-400 flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-violet-400" />Maintenance mensuelle
+                    <Check className="w-3 h-3 text-violet-400" />{t("cmd_opt_maintenance")}
                   </li>
                 )}
               </ul>
             )}
             <p className="mt-3 font-bold text-white">
-              Estimation : {fmtP(totalPrice, market)}
-              {market === "afrique" && (
-                <span className="text-xs font-normal text-gray-400 ml-2">({fmtEq(totalPrice, market)})</span>
+              {t("cmd_success_estimate").replace("{price}", fmtP(totalPrice, devise))}
+              {devise === "FCFA" && (
+                <span className="text-xs font-normal text-gray-400 ml-2">({fmtEq(totalPrice, devise)})</span>
               )}
             </p>
           </div>
-          <Link href="/"><Button variant="outline" className="w-full">Retour à l&apos;accueil</Button></Link>
+
+          {/* Next-step reminder */}
+          <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/8 p-5 mb-6 text-left">
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-2">
+              {t("cmd_success_step_title")}
+            </p>
+            <p className="text-sm text-white font-medium mb-1.5">{t("cmd_success_step_msg")}</p>
+            <p className="text-xs text-gray-400 leading-relaxed">{t("cmd_success_step_detail")}</p>
+          </div>
+
+          <Link href="/"><Button variant="outline" className="w-full">{t("cmd_back_home")}</Button></Link>
         </div>
       </div>
     );
   }
 
-  // ── Main form ─────────────────────────────────────────────────────────────────
+  // ── Main form ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Nav */}
@@ -357,11 +575,14 @@ export default function CommanderPage() {
             </svg>
             <span className="font-bold text-sm text-white">ProspectAI</span>
           </Link>
-          <a href="https://wa.me/+4915566701184" target="_blank" rel="noopener noreferrer"
-             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
-            <Phone className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Besoin d&apos;aide ?</span>
-          </a>
+          <div className="flex items-center gap-3">
+            <LangSelector locale={locale} onChange={setLocaleState} />
+            <a href="https://wa.me/+4915566701184" target="_blank" rel="noopener noreferrer"
+               className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t("cmd_help")}</span>
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -370,20 +591,22 @@ export default function CommanderPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-xs font-medium mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-            Sites web & Applications mobiles
+            {t("cmd_badge")}
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 leading-tight">
-            Commander votre{" "}
-            <span className="gradient-text">présence digitale</span>
+            {t("cmd_title").split(" ").slice(0, -2).join(" ")}{" "}
+            <span className="gradient-text">{t("cmd_title").split(" ").slice(-2).join(" ")}</span>
           </h1>
           <p className="text-gray-400 text-base max-w-xl mx-auto leading-relaxed">
-            Artisans, commerçants, PME — obtenez un site ou une app sur-mesure.
-            Réponse sous 24 h. Paiement par Mobile Money ou virement.
+            {t("cmd_subtitle")}
           </p>
         </div>
 
-        {/* Market toggle */}
-        <MarketToggle market={market} onChange={setMarket} />
+        {/* Trust steps */}
+        <TrustSteps t={t} />
+
+        {/* Zone selector (replaces market toggle) */}
+        <ZoneSelector zone={zone} onChange={setZone} />
 
         <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
           {/* Left column */}
@@ -391,10 +614,10 @@ export default function CommanderPage() {
             {/* Step 1 */}
             <div>
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                1 — Que souhaitez-vous créer ?
+                {t("cmd_cat_title")}
               </h2>
               <div className="grid grid-cols-2 gap-3">
-                {([["site", "Site web", Globe], ["app", "Application", Smartphone]] as const).map(([id, label, Icon]) => (
+                {([["site", "cmd_cat_site", Globe], ["app", "cmd_cat_app", Smartphone]] as const).map(([id, lk, Icon]) => (
                   <button key={id} type="button" onClick={() => switchCategory(id)}
                     className={`flex items-center justify-center gap-2.5 rounded-xl border py-4 font-semibold text-sm transition-all duration-200 ${
                       category === id
@@ -402,7 +625,7 @@ export default function CommanderPage() {
                         : "border-gray-800 bg-gray-900/60 text-gray-400 hover:border-gray-700 hover:text-white"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />{label}
+                    <Icon className="w-4 h-4" />{t(lk)}
                   </button>
                 ))}
               </div>
@@ -411,14 +634,15 @@ export default function CommanderPage() {
             {/* Step 2 */}
             <div>
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                2 — Choisissez votre formule
+                {t("cmd_formula_title")}
               </h2>
               <div className="space-y-3">
                 {items.map(item => (
                   <ServiceCard
-                    key={item.id} item={item} market={market}
+                    key={item.id} item={item} zone={zone} devise={devise}
                     selected={selectedType === item.id}
                     onSelect={() => setSelectedType(item.id)}
+                    t={t} locale={locale}
                   />
                 ))}
               </div>
@@ -427,21 +651,23 @@ export default function CommanderPage() {
             {/* Step 3 */}
             <div>
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                3 — Options supplémentaires
+                {t("cmd_options_title")}
               </h2>
               <div className="space-y-2.5">
                 {OPTIONS.map(opt => (
                   <OptionCheckbox
-                    key={opt.id} opt={opt} market={market}
+                    key={opt.id} opt={opt} zone={zone} devise={devise}
                     checked={selectedOptions.has(opt.id)}
                     onChange={() => toggleOption(opt.id)}
+                    t={t}
                   />
                 ))}
                 <div className="pt-2.5 border-t border-gray-800/60">
                   <MaintenanceRow
-                    market={market}
+                    zone={zone} devise={devise}
                     checked={maintenanceSelected}
                     onChange={() => setMaintenanceSelected(v => !v)}
+                    t={t} locale={locale}
                   />
                 </div>
               </div>
@@ -450,37 +676,49 @@ export default function CommanderPage() {
             {/* Step 4 */}
             <div>
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                4 — Vos coordonnées
+                {t("cmd_form_title")}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1.5">Prénom / Nom <span className="text-red-400">*</span></label>
-                    <input name="nom" value={form.nom} onChange={handleField} required placeholder="Jean Koné"
+                    <label className="block text-xs text-gray-400 mb-1.5">
+                      {t("cmd_form_nom")} <span className="text-red-400">*</span>
+                    </label>
+                    <input name="nom" value={form.nom} onChange={handleField} required
+                      placeholder={t("cmd_form_nom_ph")}
                       className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1.5">Entreprise / Activité</label>
-                    <input name="entreprise" value={form.entreprise} onChange={handleField} placeholder="Boulangerie Koffi"
+                    <label className="block text-xs text-gray-400 mb-1.5">{t("cmd_form_entreprise")}</label>
+                    <input name="entreprise" value={form.entreprise} onChange={handleField}
+                      placeholder={t("cmd_form_entreprise_ph")}
                       className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors" />
                   </div>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1.5">Email <span className="text-red-400">*</span></label>
-                    <input name="email" type="email" value={form.email} onChange={handleField} required placeholder="jean@exemple.com"
+                    <label className="block text-xs text-gray-400 mb-1.5">
+                      {t("cmd_form_email")} <span className="text-red-400">*</span>
+                    </label>
+                    <input name="email" type="email" value={form.email} onChange={handleField} required
+                      placeholder={t("cmd_form_email_ph")}
                       className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors" />
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-400 mb-1.5">Téléphone / WhatsApp <span className="text-red-400">*</span></label>
-                    <input name="telephone" type="tel" value={form.telephone} onChange={handleField} required placeholder="+225 07 XX XX XX XX"
+                    <label className="block text-xs text-gray-400 mb-1.5">
+                      {t("cmd_form_tel")} <span className="text-red-400">*</span>
+                    </label>
+                    <input name="telephone" type="tel" value={form.telephone} onChange={handleField} required
+                      placeholder={t("cmd_form_tel_ph")}
                       className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-colors" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1.5">Décrivez votre projet <span className="text-red-400">*</span></label>
+                  <label className="block text-xs text-gray-400 mb-1.5">
+                    {t("cmd_form_besoin")} <span className="text-red-400">*</span>
+                  </label>
                   <textarea name="besoin" value={form.besoin} onChange={handleField} required rows={4}
-                    placeholder="Ex : Je vends des pâtisseries à Abidjan. J'ai besoin d'un site pour présenter mes gâteaux et permettre aux clients de commander en ligne..."
+                    placeholder={t("cmd_form_besoin_ph")}
                     className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none transition-colors" />
                 </div>
 
@@ -489,11 +727,9 @@ export default function CommanderPage() {
                 )}
 
                 <Button type="submit" variant="gradient" size="lg" disabled={submitting} className="w-full">
-                  {submitting ? "Envoi en cours…" : (<>Envoyer ma demande <ChevronRight className="w-4 h-4" /></>)}
+                  {submitting ? t("cmd_form_submitting") : (<>{t("cmd_form_submit")} <ChevronRight className="w-4 h-4" /></>)}
                 </Button>
-                <p className="text-center text-xs text-gray-500">
-                  Pas de paiement en ligne — encaissement par Mobile Money ou virement après accord.
-                </p>
+                <p className="text-center text-xs text-gray-500">{t("cmd_form_no_payment")}</p>
               </form>
             </div>
           </div>
@@ -502,23 +738,23 @@ export default function CommanderPage() {
           <div className="lg:sticky lg:top-20">
             <div className="rounded-2xl border border-violet-500/20 bg-gray-900/80 backdrop-blur p-5">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Estimation</p>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-300">
-                  {market === "afrique" ? "🌍 FCFA" : "🇪🇺 EUR"}
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("cmd_estimate")}</p>
+                <span className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full bg-gray-800 border border-gray-700 text-gray-300">
+                  {ZONES[zone].emoji} {ZONES[zone].label}
                 </span>
               </div>
 
               <div className="space-y-2 text-sm mb-4">
                 <div className="flex justify-between items-start gap-2">
-                  <span className="text-gray-300">{selectedItem?.label}</span>
-                  <span className="text-white font-medium shrink-0">{fmtP(basePrice, market)}</span>
+                  <span className="text-gray-300">{selectedItem ? t(selectedItem.lk) : ""}</span>
+                  <span className="text-white font-medium shrink-0">{fmtP(basePrice, devise)}</span>
                 </div>
                 {OPTIONS.filter(o => selectedOptions.has(o.id)).map(o => (
                   <div key={o.id} className="flex justify-between items-start gap-2 text-gray-400">
                     <span className="flex items-center gap-1.5">
-                      <Check className="w-3 h-3 text-violet-400 shrink-0" />{o.label}
+                      <Check className="w-3 h-3 text-violet-400 shrink-0" />{t(o.lk)}
                     </span>
-                    <span className="shrink-0">+{fmtP(o.price[market], market)}</span>
+                    <span className="shrink-0">+{fmtP(o.price[zone], devise)}</span>
                   </div>
                 ))}
               </div>
@@ -526,12 +762,12 @@ export default function CommanderPage() {
               <div className="border-t border-gray-800 pt-4">
                 <div className="flex justify-between items-end gap-2">
                   <span className="text-sm text-gray-400">
-                    {maintenanceSelected ? "Hors maintenance" : "Total estimé"}
+                    {maintenanceSelected ? t("cmd_excl_maint") : t("cmd_total")}
                   </span>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-white">{fmtP(totalPrice, market)}</p>
-                    {market === "afrique" && (
-                      <p className="text-xs text-gray-500">{fmtEq(totalPrice, market)}</p>
+                    <p className="text-xl font-bold text-white">{fmtP(totalPrice, devise)}</p>
+                    {devise === "FCFA" && (
+                      <p className="text-xs text-gray-500">{fmtEq(totalPrice, devise)}</p>
                     )}
                   </div>
                 </div>
@@ -540,39 +776,46 @@ export default function CommanderPage() {
               {maintenanceSelected && (
                 <div className="mt-3 pt-3 border-t border-gray-800 flex justify-between items-start gap-2">
                   <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                    <Wrench className="w-3 h-3 text-violet-400 shrink-0" />Maintenance
+                    <Wrench className="w-3 h-3 text-violet-400 shrink-0" />{t("cmd_opt_maintenance")}
                   </span>
                   <span className="text-xs text-gray-400 text-right whitespace-nowrap">
-                    {fmt(MAINT[market].min)} – {fmt(MAINT[market].max)}{" "}
-                    {market === "afrique" ? "FCFA" : "€"}/mois
+                    {fmtP(MAINT[zone].min, devise)} – {fmtP(MAINT[zone].max, devise)}/{locale === "fr" ? "mois" : "mo"}
                   </span>
                 </div>
               )}
 
               {selectedType === "native" && (
                 <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2.5">
-                  <p className="text-xs text-emerald-400 leading-relaxed">
-                    Prix indicatif — devis définitif après analyse de votre projet.
-                  </p>
+                  <p className="text-xs text-emerald-400 leading-relaxed">{t("cmd_custom_quote")}</p>
                 </div>
               )}
 
               <div className="mt-5 space-y-2.5">
-                {[
-                  "Réponse sous 24-48 h",
-                  "Paiement Mobile Money ou virement",
-                  "Marchés Afrique & Europe",
-                  "Support WhatsApp inclus",
-                ].map(txt => (
-                  <div key={txt} className="flex items-start gap-2.5 text-xs text-gray-400">
-                    <Check className="w-3.5 h-3.5 text-violet-400 shrink-0 mt-0.5" />{txt}
+                {(["cmd_reassurance_1", "cmd_reassurance_2", "cmd_reassurance_3", "cmd_reassurance_4"] as const).map(k => (
+                  <div key={k} className="flex items-start gap-2.5 text-xs text-gray-400">
+                    <Check className="w-3.5 h-3.5 text-violet-400 shrink-0 mt-0.5" />{t(k)}
                   </div>
                 ))}
+              </div>
+
+              <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/25 px-3.5 py-3 text-center">
+                <p className="text-xs font-semibold text-emerald-300 leading-relaxed">{t("cmd_trust_30")}</p>
+                <p className="text-[11px] text-gray-500 mt-1">{t("cmd_trust_free")}</p>
               </div>
             </div>
           </div>
         </div>
       </main>
     </div>
+  );
+}
+
+// ─── Default export (Suspense required for useSearchParams) ───────────────────
+
+export default function CommanderPage() {
+  return (
+    <Suspense>
+      <CommanderPageInner />
+    </Suspense>
   );
 }

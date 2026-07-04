@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
   Settings, LogOut, ChevronRight, MessageSquareReply, FileText, MessageCircle,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export function Sidebar() {
     { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
     { href: "/dashboard/drafts", label: t("sb_drafts"), icon: FileText, badge: pendingDrafts },
     { href: "/dashboard/replies", label: t("sb_replies"), icon: MessageSquareReply, badge: pendingReplies },
+    { href: "/dashboard/commandes", label: t("sb_commandes"), icon: ClipboardList },
     { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
   ];
 

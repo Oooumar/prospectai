@@ -160,6 +160,7 @@ export interface T {
   ec_no_company: string; ec_no_company_link: string;
   // Drafts page
   sb_drafts: string;
+  sb_commandes: string;
   dr_title: string; dr_desc: string; dr_no: string; dr_no_desc: string; dr_help: string;
   dr_edit: string; dr_send: string; dr_delete: string; dr_sending: string;
   dr_delete_confirm: string; dr_subject: string; dr_body_label: string;
@@ -181,4 +182,39 @@ export interface T {
   rep_ai_analysis: string; rep_draft: string; rep_message: string;
   rep_approve: string; rep_approving: string; rep_archive: string;
   rep_human_warning: string;
+  // Commander public page
+  cmd_help: string; cmd_badge: string; cmd_title: string; cmd_subtitle: string;
+  cmd_how_it_works: string;
+  cmd_step1_title: string; cmd_step1_sub: string;
+  cmd_step2_title: string; cmd_step2_sub: string;
+  cmd_step3_title: string; cmd_step3_sub: string;
+  cmd_step4_title: string; cmd_step4_sub: string;
+  cmd_trust_banner: string;
+  cmd_cat_title: string; cmd_cat_site: string; cmd_cat_app: string;
+  cmd_formula_title: string; cmd_selected: string; cmd_from: string; cmd_monthly: string;
+  cmd_vitrine_label: string; cmd_vitrine_desc: string;
+  cmd_pro_seo_label: string; cmd_pro_seo_desc: string;
+  cmd_boutique_label: string; cmd_boutique_desc: string;
+  cmd_webapp_label: string; cmd_webapp_desc: string;
+  cmd_native_label: string; cmd_native_desc: string;
+  cmd_options_title: string;
+  cmd_opt_reservation: string; cmd_opt_mobile_money: string; cmd_opt_espace_client: string;
+  cmd_opt_seo_avance: string; cmd_opt_chat_whatsapp: string; cmd_opt_maintenance: string;
+  cmd_maint_desc: string; cmd_maint_recurrent: string;
+  cmd_form_title: string;
+  cmd_form_nom: string; cmd_form_nom_ph: string;
+  cmd_form_entreprise: string; cmd_form_entreprise_ph: string;
+  cmd_form_email: string; cmd_form_email_ph: string;
+  cmd_form_tel: string; cmd_form_tel_ph: string;
+  cmd_form_besoin: string; cmd_form_besoin_ph: string;
+  cmd_form_submit: string; cmd_form_submitting: string; cmd_form_no_payment: string;
+  cmd_estimate: string; cmd_excl_maint: string; cmd_total: string;
+  cmd_custom_quote: string;
+  cmd_reassurance_1: string; cmd_reassurance_2: string;
+  cmd_reassurance_3: string; cmd_reassurance_4: string;
+  cmd_trust_30: string; cmd_trust_free: string;
+  cmd_success_title: string; cmd_success_thanks: string; cmd_success_next_contact: string;
+  cmd_success_recap: string; cmd_success_estimate: string;
+  cmd_success_step_title: string; cmd_success_step_msg: string; cmd_success_step_detail: string;
+  cmd_back_home: string; cmd_market_afrique: string; cmd_market_europe: string;
 }

@@ -275,8 +275,8 @@ model ServiceOrder {
   categorie    String   // "site" | "app"
   typePrecis   String   // ex: "vitrine" | "pro_seo" | "boutique" | "webapp" | "native"
   options      String[]
-  marche       String   @default("afrique")  // "afrique" | "europe"
-  devise       String   @default("FCFA")     // "FCFA" | "EUR"
+  marche       String   @default("africa-fr") // "africa-fr" | "africa-en" | "europe" | "amerique"
+  devise       String   @default("FCFA")     // "FCFA" | "USD" | "EUR"
   prixEstime   Int      // montant dans la devise choisie
   statut       String   @default("nouvelle")
   createdAt    DateTime @default(now())
