@@ -49,6 +49,116 @@ export function detectEmailLanguage(city: string): EmailLanguage {
   return LANG_CITIES[normalized] ?? "fr";
 }
 
+// ── City → /commander URL ───────────────────────────────────────────────────
+
+const COMMANDER_BASE = "https://prospectai.company/commander";
+
+type CommanderZone = "africa-fr" | "africa-en" | "europe" | "amerique";
+
+interface CityCommanderInfo { zone: CommanderZone; lang?: EmailLanguage }
+
+const CITY_COMMANDER: Record<string, CityCommanderInfo> = {
+  // ── Africa FR (Côte d'Ivoire)
+  abidjan: { zone: "africa-fr" }, yamoussoukro: { zone: "africa-fr" },
+  // ── Africa FR (Burkina Faso)
+  ouagadougou: { zone: "africa-fr" }, "bobo-dioulasso": { zone: "africa-fr" },
+  // ── Africa FR (Sénégal)
+  dakar: { zone: "africa-fr" }, thiès: { zone: "africa-fr" }, thies: { zone: "africa-fr" },
+  "saint-louis": { zone: "africa-fr" },
+  // ── Africa FR (Mali)
+  bamako: { zone: "africa-fr" }, sikasso: { zone: "africa-fr" },
+  // ── Africa FR (autres)
+  cotonou: { zone: "africa-fr" }, "porto-novo": { zone: "africa-fr" },
+  lomé: { zone: "africa-fr" }, lome: { zone: "africa-fr" },
+  niamey: { zone: "africa-fr" },
+  yaoundé: { zone: "africa-fr" }, yaounde: { zone: "africa-fr" }, douala: { zone: "africa-fr" },
+  conakry: { zone: "africa-fr" }, antananarivo: { zone: "africa-fr" },
+  brazzaville: { zone: "africa-fr" }, kinshasa: { zone: "africa-fr" }, lubumbashi: { zone: "africa-fr" },
+  libreville: { zone: "africa-fr" }, nouakchott: { zone: "africa-fr" },
+  bujumbura: { zone: "africa-fr" }, bangui: { zone: "africa-fr" },
+  ndjamena: { zone: "africa-fr" }, "n'djamena": { zone: "africa-fr" },
+  // ── Africa EN
+  lagos: { zone: "africa-en" }, abuja: { zone: "africa-en" },
+  kano: { zone: "africa-en" }, ibadan: { zone: "africa-en" },
+  accra: { zone: "africa-en" }, kumasi: { zone: "africa-en" },
+  nairobi: { zone: "africa-en" },
+  johannesburg: { zone: "africa-en" }, "cape town": { zone: "africa-en" }, durban: { zone: "africa-en" },
+  "dar es salaam": { zone: "africa-en" }, kampala: { zone: "africa-en" },
+  kigali: { zone: "africa-en" }, harare: { zone: "africa-en" },
+  "addis ababa": { zone: "africa-en" },
+  freetown: { zone: "africa-en" }, monrovia: { zone: "africa-en" },
+  // ── Europe FR (France + Belgique FR + Suisse FR)
+  paris: { zone: "europe", lang: "fr" }, lyon: { zone: "europe", lang: "fr" },
+  marseille: { zone: "europe", lang: "fr" }, toulouse: { zone: "europe", lang: "fr" },
+  nice: { zone: "europe", lang: "fr" }, nantes: { zone: "europe", lang: "fr" },
+  montpellier: { zone: "europe", lang: "fr" }, strasbourg: { zone: "europe", lang: "fr" },
+  bordeaux: { zone: "europe", lang: "fr" }, lille: { zone: "europe", lang: "fr" },
+  rennes: { zone: "europe", lang: "fr" }, grenoble: { zone: "europe", lang: "fr" },
+  dijon: { zone: "europe", lang: "fr" }, reims: { zone: "europe", lang: "fr" },
+  bruxelles: { zone: "europe", lang: "fr" },
+  genève: { zone: "europe", lang: "fr" }, geneve: { zone: "europe", lang: "fr" },
+  lausanne: { zone: "europe", lang: "fr" },
+  // ── Europe DE (Allemagne + Autriche + Suisse DE)
+  berlin: { zone: "europe", lang: "de" }, munich: { zone: "europe", lang: "de" },
+  münchen: { zone: "europe", lang: "de" }, hamburg: { zone: "europe", lang: "de" },
+  cologne: { zone: "europe", lang: "de" }, köln: { zone: "europe", lang: "de" },
+  frankfurt: { zone: "europe", lang: "de" }, stuttgart: { zone: "europe", lang: "de" },
+  düsseldorf: { zone: "europe", lang: "de" }, dortmund: { zone: "europe", lang: "de" },
+  essen: { zone: "europe", lang: "de" }, leipzig: { zone: "europe", lang: "de" },
+  bremen: { zone: "europe", lang: "de" }, dresden: { zone: "europe", lang: "de" },
+  hannover: { zone: "europe", lang: "de" }, nuremberg: { zone: "europe", lang: "de" },
+  nürnberg: { zone: "europe", lang: "de" }, aachen: { zone: "europe", lang: "de" },
+  vienna: { zone: "europe", lang: "de" }, wien: { zone: "europe", lang: "de" },
+  graz: { zone: "europe", lang: "de" }, salzburg: { zone: "europe", lang: "de" },
+  innsbruck: { zone: "europe", lang: "de" },
+  zurich: { zone: "europe", lang: "de" }, zürich: { zone: "europe", lang: "de" },
+  bern: { zone: "europe", lang: "de" }, basel: { zone: "europe", lang: "de" },
+  // ── Europe IT
+  rome: { zone: "europe", lang: "it" }, roma: { zone: "europe", lang: "it" },
+  milan: { zone: "europe", lang: "it" }, milano: { zone: "europe", lang: "it" },
+  naples: { zone: "europe", lang: "it" }, napoli: { zone: "europe", lang: "it" },
+  turin: { zone: "europe", lang: "it" }, torino: { zone: "europe", lang: "it" },
+  bologna: { zone: "europe", lang: "it" },
+  florence: { zone: "europe", lang: "it" }, firenze: { zone: "europe", lang: "it" },
+  venice: { zone: "europe", lang: "it" }, venezia: { zone: "europe", lang: "it" },
+  genoa: { zone: "europe", lang: "it" }, genova: { zone: "europe", lang: "it" },
+  // ── Europe ES
+  madrid: { zone: "europe", lang: "es" }, barcelona: { zone: "europe", lang: "es" },
+  valencia: { zone: "europe", lang: "es" }, seville: { zone: "europe", lang: "es" },
+  sevilla: { zone: "europe", lang: "es" }, zaragoza: { zone: "europe", lang: "es" },
+  bilbao: { zone: "europe", lang: "es" }, málaga: { zone: "europe", lang: "es" },
+  malaga: { zone: "europe", lang: "es" }, granada: { zone: "europe", lang: "es" },
+  // ── Europe EN (UK)
+  london: { zone: "europe", lang: "en" }, manchester: { zone: "europe", lang: "en" },
+  birmingham: { zone: "europe", lang: "en" }, glasgow: { zone: "europe", lang: "en" },
+  edinburgh: { zone: "europe", lang: "en" }, liverpool: { zone: "europe", lang: "en" },
+  leeds: { zone: "europe", lang: "en" }, bristol: { zone: "europe", lang: "en" },
+  cardiff: { zone: "europe", lang: "en" }, sheffield: { zone: "europe", lang: "en" },
+  // ── Europe multilingue (pas de lang override)
+  amsterdam: { zone: "europe" }, brussels: { zone: "europe" },
+  // ── Amérique (USA / Canada / Océanie / Golfe / Asie SE)
+  "new york": { zone: "amerique" }, "los angeles": { zone: "amerique" },
+  chicago: { zone: "amerique" }, houston: { zone: "amerique" },
+  phoenix: { zone: "amerique" }, dallas: { zone: "amerique" },
+  "san antonio": { zone: "amerique" }, "san diego": { zone: "amerique" },
+  "san francisco": { zone: "amerique" }, miami: { zone: "amerique" },
+  philadelphia: { zone: "amerique" }, seattle: { zone: "amerique" },
+  toronto: { zone: "amerique" }, vancouver: { zone: "amerique" },
+  montreal: { zone: "amerique" }, montréal: { zone: "amerique" },
+  calgary: { zone: "amerique" }, ottawa: { zone: "amerique" },
+  sydney: { zone: "amerique" }, melbourne: { zone: "amerique" },
+  dubai: { zone: "amerique" }, singapore: { zone: "amerique" },
+};
+
+export function getCommanderUrl(city: string): string {
+  const key = city.toLowerCase().trim();
+  const info = CITY_COMMANDER[key];
+  if (!info) return `${COMMANDER_BASE}?zone=africa-fr`;
+  let url = `${COMMANDER_BASE}?zone=${info.zone}`;
+  if (info.lang) url += `&lang=${info.lang}`;
+  return url;
+}
+
 function getLangName(lang: EmailLanguage): string {
   return { fr: "French", en: "English", de: "German", it: "Italian", es: "Spanish" }[lang];
 }
@@ -105,16 +215,26 @@ function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType,
   sender?: { companyName?: string; website?: string; productDescription?: string; whatsappNumber?: string },
-  lang?: EmailLanguage
+  lang?: EmailLanguage,
+  commanderUrl?: string
 ): string {
   const senderName = sender?.companyName ?? "our solution";
   const prospectId = `${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}`;
   const langName = lang ? getLangName(lang) : null;
   const langSuffix = langName ? `\n\nOUTPUT LANGUAGE: ${langName}. Write the subject AND body ONLY in ${langName}, regardless of the language used above.` : "";
   const waUrl = sender?.whatsappNumber ? formatWhatsAppUrl(sender.whatsappNumber) : null;
-  const ctaInstruction = waUrl
-    ? `Propose to WRITE a WhatsApp message (never a phone call) with this exact link: ${waUrl} — and also offer email reply as an alternative.`
-    : `Propose to reply by email only. NEVER suggest a phone call, video call, or meeting.`;
+
+  // commander URL is the primary CTA (order page); WA/email are secondary contact methods
+  const orderCta = commanderUrl
+    ? `Include this order link in the email body with localized anchor text (e.g. "Commander maintenant" / "Order now" / "Jetzt bestellen" / "Ordina ora" / "Pedir ahora"): ${commanderUrl}`
+    : null;
+  const ctaInstruction = orderCta
+    ? (waUrl
+        ? `${orderCta}. Also offer WhatsApp as secondary contact (never a phone call): ${waUrl}.`
+        : `${orderCta}. Also invite the prospect to reply by email.`)
+    : (waUrl
+        ? `Propose to WRITE a WhatsApp message (never a phone call) with this exact link: ${waUrl} — and also offer email reply as an alternative.`
+        : `Propose to reply by email only. NEVER suggest a phone call, video call, or meeting.`);
 
   if (profileType === "creator") {
     const identity = sender?.productDescription
@@ -165,7 +285,7 @@ EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 3. ${ctaInstruction}${langSuffix}`;
 }
 
-function generateFallbackEmail(
+function generateFallbackEmailInner(
   prospect: { name: string; niche: string; city: string },
   profileType: ProfileType,
   lang: EmailLanguage
@@ -212,6 +332,25 @@ function generateFallbackEmail(
   };
 }
 
+// Wrapper — appends the commander order link to fallback email bodies
+function generateFallbackEmail(
+  prospect: { name: string; niche: string; city: string },
+  profileType: ProfileType,
+  lang: EmailLanguage,
+  commanderUrl?: string
+): { subject: string; body: string } {
+  const result = generateFallbackEmailInner(prospect, profileType, lang);
+  if (!commanderUrl) return result;
+  const CTA: Record<EmailLanguage, string> = {
+    fr: `Commander maintenant : ${commanderUrl}`,
+    en: `Order now: ${commanderUrl}`,
+    de: `Jetzt bestellen: ${commanderUrl}`,
+    it: `Ordina ora: ${commanderUrl}`,
+    es: `Pedir ahora: ${commanderUrl}`,
+  };
+  return { ...result, body: result.body + `\n\n${CTA[lang]}` };
+}
+
 function buildSignatureLine(
   lang: EmailLanguage,
   companyName?: string,
@@ -250,6 +389,7 @@ export async function generateProspectEmail(
   sender?: { companyName?: string; website?: string; productDescription?: string; whatsappNumber?: string }
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
+  const commanderUrl = getCommanderUrl(prospect.city);
   const signatureLine = buildSignatureLine(lang, sender?.companyName, sender?.website);
 
   try {
@@ -257,7 +397,7 @@ export async function generateProspectEmail(
       model: MODEL,
       messages: [
         { role: "system", content: getSystemPrompt(profileType, lang) },
-        { role: "user", content: getUserPrompt(prospect, profileType, sender, lang) },
+        { role: "user", content: getUserPrompt(prospect, profileType, sender, lang, commanderUrl) },
       ],
       temperature: 0.7,
       max_tokens: 600,
@@ -271,14 +411,14 @@ export async function generateProspectEmail(
     }
 
     console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
-    const fallback = generateFallbackEmail(prospect, profileType, lang);
+    const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl);
     return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
     const code = err?.error?.code || err?.code || "";
     console.error("[groq] API error:", { status, code, message: err?.message });
     if (status === 429 || code === "rate_limit_exceeded" || code === "model_decommissioned") {
-      const fallback = generateFallbackEmail(prospect, profileType, lang);
+      const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl);
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
     throw err;
@@ -291,6 +431,7 @@ export async function generateWhatsAppMessage(
   promo?: string
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
+  const commanderUrl = getCommanderUrl(prospect.city);
   const langName = getLangName(lang);
   const senderName = sender.companyName ?? "notre solution";
   const whatWeDo = sender.productDescription
@@ -302,6 +443,7 @@ export async function generateWhatsAppMessage(
   const waLine = sender.whatsappNumber
     ? `SENDER WHATSAPP (offer as contact option alongside direct reply): ${formatWhatsAppUrl(sender.whatsappNumber)}`
     : "";
+  const commanderLine = `ORDER PAGE (include once as the main CTA with localized text — e.g. "Commander ici" / "Order here" / "Jetzt bestellen" / "Ordina qui" / "Pedir aquí"): ${commanderUrl}`;
 
   console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| prospect.city:", prospect.city, "| lang:", lang);
 
@@ -356,6 +498,7 @@ SENDER: ${senderName}
 WHAT WE DO: ${whatWeDo}
 PROMOTIONAL OFFER (main focus): ${promo}
 BOTH CHANNELS TO MENTION: (1) AI-personalized emails, (2) unlimited manual WhatsApp connected to prospect's own WhatsApp
+${commanderLine}
 ${websiteLine}
 ${waLine}
 PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
@@ -366,6 +509,7 @@ OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`
 SENDER: ${senderName}
 WHAT WE DO: ${whatWeDo}
 BOTH CHANNELS TO MENTION: (1) AI-personalized emails, (2) unlimited manual WhatsApp connected to prospect's own WhatsApp
+${commanderLine}
 ${websiteLine}
 ${waLine}
 PROSPECT: ${prospect.name} — ${prospect.niche} in ${prospect.city}
@@ -379,11 +523,11 @@ OUTPUT LANGUAGE: ${langName}. Write ONLY in ${langName}.`;
   const websiteSnippetEs = sender.website ? ` Más info en ${sender.website}.` : "";
 
   const fallbackMessages: Record<EmailLanguage, string> = {
-    fr: `Bonjour ${prospect.name}, j'ai découvert votre activité de ${prospect.niche} à ${prospect.city} et je souhaitais vous contacter. ${senderName} automatise votre prospection commerciale : emails personnalisés par IA ET messages WhatsApp illimités en manuel, directement connecté à votre WhatsApp.${websiteSnippet} Seriez-vous disponible pour en discuter ?`,
-    en: `Hi ${prospect.name}, I came across your ${prospect.niche} business in ${prospect.city} and wanted to reach out. ${senderName} automates your prospecting: AI-personalized emails AND unlimited manual WhatsApp messages, directly connected to your personal WhatsApp.${websiteSnippetEn} Would you be open to a quick chat?`,
-    de: `Hallo ${prospect.name}, ich habe Ihr ${prospect.niche}-Unternehmen in ${prospect.city} entdeckt und wollte mich melden. ${senderName} automatisiert Ihre Kundenakquise: KI-personalisierte E-Mails UND unbegrenzte manuelle WhatsApp-Nachrichten, direkt mit Ihrem persönlichen WhatsApp verbunden.${websiteSnippetDe} Wären Sie an einem kurzen Austausch interessiert?`,
-    it: `Ciao ${prospect.name}, ho scoperto la sua attività di ${prospect.niche} a ${prospect.city} e volevo contattarla. ${senderName} automatizza la sua prospezione: email personalizzate dall'IA E messaggi WhatsApp illimitati in manuale, collegati al suo WhatsApp personale.${websiteSnippetIt} Sarebbe disponibile per parlarne?`,
-    es: `Hola ${prospect.name}, he visto su negocio de ${prospect.niche} en ${prospect.city} y quería contactarle. ${senderName} automatiza su prospección: emails personalizados por IA Y mensajes WhatsApp ilimitados en manual, conectados a su WhatsApp personal.${websiteSnippetEs} ¿Estaría disponible para hablarlo?`,
+    fr: `Bonjour ${prospect.name}, j'ai découvert votre activité de ${prospect.niche} à ${prospect.city} et je souhaitais vous contacter. ${senderName} automatise votre prospection commerciale : emails personnalisés par IA ET messages WhatsApp illimités en manuel, directement connecté à votre WhatsApp.${websiteSnippet} Commander ici : ${commanderUrl} — Seriez-vous disponible pour en discuter ?`,
+    en: `Hi ${prospect.name}, I came across your ${prospect.niche} business in ${prospect.city} and wanted to reach out. ${senderName} automates your prospecting: AI-personalized emails AND unlimited manual WhatsApp messages, directly connected to your personal WhatsApp.${websiteSnippetEn} Order here: ${commanderUrl} — Would you be open to a quick chat?`,
+    de: `Hallo ${prospect.name}, ich habe Ihr ${prospect.niche}-Unternehmen in ${prospect.city} entdeckt und wollte mich melden. ${senderName} automatisiert Ihre Kundenakquise: KI-personalisierte E-Mails UND unbegrenzte manuelle WhatsApp-Nachrichten, direkt mit Ihrem persönlichen WhatsApp verbunden.${websiteSnippetDe} Jetzt bestellen: ${commanderUrl} — Wären Sie an einem kurzen Austausch interessiert?`,
+    it: `Ciao ${prospect.name}, ho scoperto la sua attività di ${prospect.niche} a ${prospect.city} e volevo contattarla. ${senderName} automatizza la sua prospezione: email personalizzate dall'IA E messaggi WhatsApp illimitati in manuale, collegati al suo WhatsApp personale.${websiteSnippetIt} Ordina qui: ${commanderUrl} — Sarebbe disponibile per parlarne?`,
+    es: `Hola ${prospect.name}, he visto su negocio de ${prospect.niche} en ${prospect.city} y quería contactarle. ${senderName} automatiza su prospección: emails personalizados por IA Y mensajes WhatsApp ilimitados en manual, conectados a su WhatsApp personal.${websiteSnippetEs} Pedir ahora: ${commanderUrl} — ¿Estaría disponible para hablarlo?`,
   };
 
   try {
