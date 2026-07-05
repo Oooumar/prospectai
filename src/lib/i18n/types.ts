@@ -217,4 +217,8 @@ export interface T {
   cmd_success_recap: string; cmd_success_estimate: string;
   cmd_success_step_title: string; cmd_success_step_msg: string; cmd_success_step_detail: string;
   cmd_back_home: string; cmd_market_afrique: string; cmd_market_europe: string;
+  // ProspectAI Duo section
+  cmd_duo_tag: string; cmd_duo_title: string; cmd_duo_tagline: string; cmd_duo_pitch: string;
+  cmd_duo_feat1: string; cmd_duo_feat2: string; cmd_duo_feat3: string;
+  cmd_duo_cta: string; cmd_duo_note: string;
 }
