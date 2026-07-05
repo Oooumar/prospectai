@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { X, MessageCircle, Wand2, Loader2, Copy, Check, ExternalLink, Info, ChevronDown } from "lucide-react";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
+import { normalizePhoneForWA } from "@/lib/phone";
 
 const PROFILE_LS_KEY = "pa_last_profile_id";
 
@@ -21,10 +22,6 @@ interface Profile {
 interface WhatsAppComposerProps {
   prospect: Prospect;
   onClose: () => void;
-}
-
-function cleanPhone(raw: string): string {
-  return raw.replace(/[^0-9]/g, "");
 }
 
 export function WhatsAppComposer({ prospect, onClose }: WhatsAppComposerProps) {
@@ -85,7 +82,7 @@ export function WhatsAppComposer({ prospect, onClose }: WhatsAppComposerProps) {
   }
 
   const whatsappUrl = prospect.phone
-    ? `https://wa.me/${cleanPhone(prospect.phone)}${message ? `?text=${encodeURIComponent(message)}` : ""}`
+    ? `https://wa.me/${normalizePhoneForWA(prospect.phone, prospect.city)}${message ? `?text=${encodeURIComponent(message)}` : ""}`
     : null;
 
   return (
