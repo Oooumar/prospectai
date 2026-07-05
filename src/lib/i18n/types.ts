@@ -221,4 +221,8 @@ export interface T {
   cmd_duo_tag: string; cmd_duo_title: string; cmd_duo_tagline: string; cmd_duo_pitch: string;
   cmd_duo_feat1: string; cmd_duo_feat2: string; cmd_duo_feat3: string;
   cmd_duo_cta: string; cmd_duo_note: string;
+  // Payment / Mobile Money section (confirmation screen)
+  cmd_pay_title: string; cmd_pay_account: string;
+  cmd_pay_after: string; cmd_pay_btn: string;
+  cmd_pay_other: string; cmd_pay_journey: string;
 }

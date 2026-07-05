@@ -134,6 +134,16 @@ function fmtEq(n: number, devise: Devise): string {
   return "";
 }
 
+// ─── Payment constants — Mobile Money (africa-fr only) ────────────────────────
+// Edit these values to update payment numbers without touching the UI.
+const PAIEMENT_MOBILE = {
+  nomCompte:   "Yameogo Sophie Léa",
+  orangeMoney: "+22677456549",
+  wave:        "+22677456549",
+  moovMoney:   "+22670245211",
+  whatsapp:    "https://wa.me/4915566701184",
+} as const;
+
 // ─── Zone selector ─────────────────────────────────────────────────────────────
 
 function ZoneSelector({ zone, onChange }: { zone: Zone; onChange: (z: Zone) => void }) {
@@ -420,6 +430,70 @@ function DuoSection({ t }: { t: Tf }) {
   );
 }
 
+// ─── Payment block (confirmation screen) ──────────────────────────────────────
+
+const MM_METHODS = [
+  { label: "Orange Money", key: "orangeMoney" as const, colorCls: "text-orange-400", bgCls: "bg-orange-500/10 border-orange-500/20" },
+  { label: "Wave",         key: "wave"        as const, colorCls: "text-blue-400",   bgCls: "bg-blue-500/10 border-blue-500/20"   },
+  { label: "Moov Money",  key: "moovMoney"   as const, colorCls: "text-teal-400",   bgCls: "bg-teal-500/10 border-teal-500/20"   },
+] as const;
+
+function PaymentBlock({ zone, t }: { zone: Zone; t: Tf }) {
+  if (zone === "africa-fr") {
+    const { nomCompte, whatsapp } = PAIEMENT_MOBILE;
+    return (
+      <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-5 mb-6 text-left">
+        {/* Journey reminder */}
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] mb-4">
+          <span className="text-emerald-400 font-semibold">Aperçu gratuit</span>
+          <span className="text-gray-600">→</span>
+          <span className="text-amber-400 font-semibold">30 % pour démarrer</span>
+          <span className="text-gray-600">→</span>
+          <span className="text-gray-400">70 % à la livraison</span>
+        </div>
+
+        <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">
+          {t("cmd_pay_title")}
+        </p>
+
+        <div className="space-y-2 mb-4">
+          {MM_METHODS.map(({ label, key, colorCls, bgCls }) => (
+            <div key={label} className={`rounded-xl border ${bgCls} px-3.5 py-2.5 flex items-center justify-between gap-3`}>
+              <span className={`text-xs font-bold ${colorCls} shrink-0`}>{label}</span>
+              <div className="text-right min-w-0">
+                <p className="text-sm text-white font-mono font-medium tracking-wide">{PAIEMENT_MOBILE[key]}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">
+                  {t("cmd_pay_account")} <span className="text-gray-400">{nomCompte}</span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-gray-400 leading-relaxed mb-3">{t("cmd_pay_after")}</p>
+
+        <a
+          href={whatsapp}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-md shadow-green-500/20"
+        >
+          {WA_SVG}
+          {t("cmd_pay_btn")}
+        </a>
+      </div>
+    );
+  }
+
+  // Other zones: contact message + journey reminder
+  return (
+    <div className="rounded-2xl border border-gray-800 bg-gray-900/50 px-5 py-4 mb-6 text-center">
+      <p className="text-sm text-gray-300 leading-relaxed">{t("cmd_pay_other")}</p>
+      <p className="text-[11px] text-gray-500 mt-1.5">{t("cmd_pay_journey")}</p>
+    </div>
+  );
+}
+
 // ─── Category types ────────────────────────────────────────────────────────────
 
 type Category = "site" | "app";
@@ -610,6 +684,9 @@ function CommanderPageInner() {
             <p className="text-sm text-white font-medium mb-1.5">{t("cmd_success_step_msg")}</p>
             <p className="text-xs text-gray-400 leading-relaxed">{t("cmd_success_step_detail")}</p>
           </div>
+
+          {/* Payment block — Mobile Money for africa-fr, contact message otherwise */}
+          <PaymentBlock zone={zone} t={t} />
 
           <Link href="/"><Button variant="outline" className="w-full">{t("cmd_back_home")}</Button></Link>
         </div>
