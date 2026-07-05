@@ -128,6 +128,86 @@ const CITY_DIAL_CODE: Record<string, string> = {
   singapore: "65",
 };
 
+// Prefixes of the national subscriber number (after stripping the country code)
+// that indicate a mobile/cellular line. Empty array → cannot determine.
+const MOBILE_NATIONAL_PREFIXES: Record<string, string[]> = {
+  // ── Africa FR ────────────────────────────────────────────────────────────────
+  "226": ["5", "6", "7"],          // Burkina Faso (fixe: 20, 25)
+  "225": ["07", "05", "06", "01", "02"], // Côte d'Ivoire (format: 0X XXXXXXXX)
+  "221": ["7"],                    // Sénégal (mobile: 7x; fixe: 33)
+  "223": ["6", "7", "8", "9"],     // Mali
+  "229": ["6", "9", "4", "5"],     // Bénin
+  "228": ["9", "7"],               // Togo
+  "227": ["7", "8", "9", "6"],     // Niger
+  "237": ["6", "7"],               // Cameroun
+  "224": ["6"],                    // Guinée
+  "261": ["3"],                    // Madagascar
+  "242": ["06", "05", "04"],       // Congo
+  "243": ["8", "9"],               // RDC
+  "241": ["06", "07"],             // Gabon
+  "222": ["2", "3", "4"],          // Mauritanie
+  "257": ["6", "7", "9"],          // Burundi
+  "236": ["7"],                    // Centrafrique
+  "235": ["6", "9", "3"],          // Tchad
+  // ── Africa EN ────────────────────────────────────────────────────────────────
+  "234": ["7", "8", "9"],          // Nigeria
+  "233": ["2", "5"],               // Ghana (024x, 023x, 054x, 055x)
+  "254": ["7", "1"],               // Kenya
+  "27":  ["6", "7", "8"],          // South Africa
+  "255": ["6", "7"],               // Tanzania
+  "256": ["7", "3", "4"],          // Uganda
+  "250": ["7"],                    // Rwanda
+  "263": ["7"],                    // Zimbabwe
+  "251": ["9"],                    // Ethiopia
+  "232": ["7", "8"],               // Sierra Leone
+  "231": ["8", "7"],               // Liberia
+  // ── Europe ───────────────────────────────────────────────────────────────────
+  "33":  ["6", "7"],               // France
+  "49":  ["15", "16", "17"],       // Allemagne
+  "43":  ["6"],                    // Autriche
+  "41":  ["7"],                    // Suisse (075-079)
+  "39":  ["3"],                    // Italie
+  "34":  ["6", "7"],               // Espagne
+  "32":  ["4"],                    // Belgique (047x-049x)
+  "44":  ["7"],                    // UK (07xxx)
+  "31":  ["6"],                    // Pays-Bas
+  // ── Americas / Reste ─────────────────────────────────────────────────────────
+  "1":   [],                       // USA/Canada — indistinguishable
+  "52":  ["4", "5", "6", "7", "8", "9"], // Mexique
+  "57":  ["3"],                    // Colombie (3xx)
+  "54":  ["9"],                    // Argentine (9 XXXXXXXXXX)
+  "51":  ["9"],                    // Pérou
+  "56":  ["9"],                    // Chili
+  "58":  ["4"],                    // Venezuela (04xx)
+  "61":  ["4"],                    // Australie (04xx → national starts with 4)
+  "971": ["5"],                    // UAE
+  "65":  ["8", "9"],               // Singapore
+};
+
+/**
+ * Returns whether a phone number is a mobile, landline, or unknown.
+ * Pass the raw stored number and the prospect's city for best accuracy.
+ */
+export function detectPhoneType(raw: string, city?: string): "mobile" | "landline" | "unknown" {
+  const normalized = normalizePhoneForWA(raw, city);
+  if (!normalized || normalized.length < 7) return "unknown";
+
+  // Try country codes longest-first to avoid false prefix matches (e.g. "1" vs "27")
+  const codes = Object.keys(MOBILE_NATIONAL_PREFIXES).sort((a, b) => b.length - a.length);
+
+  for (const cc of codes) {
+    if (normalized.startsWith(cc)) {
+      const national = normalized.slice(cc.length);
+      if (!national) return "unknown";
+      const mobilePrefixes = MOBILE_NATIONAL_PREFIXES[cc];
+      if (mobilePrefixes.length === 0) return "unknown";
+      return mobilePrefixes.some(p => national.startsWith(p)) ? "mobile" : "landline";
+    }
+  }
+
+  return "unknown";
+}
+
 /**
  * Normalise un numéro brut pour wa.me : retourne uniquement des chiffres
  * avec l'indicatif pays au début (sans "0" de tronc initial).

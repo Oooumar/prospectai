@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Loader2, Target, Check, Mail, Phone, Ban } from "lucide-react";
+import { Search, X, Loader2, Target, Check, Mail, Phone, Ban, Smartphone, Globe, PhoneCall } from "lucide-react";
+import { detectPhoneType } from "@/lib/phone";
 import { useI18n } from "@/components/language-provider";
 
 type FormData = { niche: string; city: string; limit: number };
@@ -253,33 +254,50 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
             </div>
 
             <div className="max-h-80 overflow-y-auto space-y-2 rounded-xl border border-gray-800 bg-gray-900/50 p-2">
-              {results.slice(0, 10).map((p: any, i: number) => (
-                <div key={i} className="flex items-start justify-between p-3 rounded-lg bg-gray-800/40 hover:bg-gray-800/60 transition-colors">
-                  <div>
-                    <p className="text-sm font-medium text-gray-200">{p.name}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      {p.email && (
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Mail className="w-3 h-3" /> {p.email}
+              {results.slice(0, 10).map((p: any, i: number) => {
+                const phoneType = p.phone ? detectPhoneType(p.phone, p.city) : "unknown";
+                return (
+                  <div key={i} className="flex items-start justify-between p-3 rounded-lg bg-gray-800/40 hover:bg-gray-800/60 transition-colors">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-200">{p.name}</p>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {p.email && (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Mail className="w-3 h-3" /> {p.email}
+                          </span>
+                        )}
+                        {p.phone && (
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Phone className="w-3 h-3" /> {p.phone}
+                            {phoneType === "mobile" && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <Smartphone className="w-2.5 h-2.5" />
+                              </span>
+                            )}
+                            {phoneType === "landline" && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] px-1 py-0.5 rounded bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                                <PhoneCall className="w-2.5 h-2.5" />
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      {p.website ? (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                          <Globe className="w-2.5 h-2.5" />
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                          <Ban className="w-2.5 h-2.5" />
                         </span>
                       )}
-                      {p.phone && (
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Phone className="w-3 h-3" /> {p.phone}
-                        </span>
-                      )}
+                      <Badge variant="secondary" className="text-xs">{p.city}</Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {!p.website && (
-                      <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                        <Ban className="w-2.5 h-2.5" />
-                      </span>
-                    )}
-                    <Badge variant="secondary" className="text-xs">{p.city}</Badge>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {results.length > 10 && (
                 <p className="text-center text-xs text-gray-500 py-2">
                   {t("sc_more", { n: results.length - 10 })}

@@ -107,6 +107,7 @@ export const es: T = {
   pp_website: "Sitio web", pp_email_ai: "Email IA",
   pp_delete_confirm: "¿Eliminar este prospecto?",
   pp_no_website: "Sin sitio web", pp_no_website_badge: "Sin sitio",
+  pp_mobile_filter: "📱 Solo Móvil", pp_mobile_badge: "Móvil", pp_landline_badge: "Fijo",
   pp_page: "Página {n}", pp_total_label: "{n} prospectos en total",
   pp_prev: "Anterior", pp_next: "Siguiente",
 

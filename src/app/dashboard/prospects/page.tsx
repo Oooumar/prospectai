@@ -8,8 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Target, Trash2, Mail, Loader2,
-  Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X,
+  Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X, Smartphone, PhoneCall,
 } from "lucide-react";
+import { detectPhoneType } from "@/lib/phone";
 import { ScrapingModule } from "@/components/scraping/scraping-module";
 import { EmailComposer } from "@/components/emails/email-composer";
 import { WhatsAppComposer } from "@/components/whatsapp/whatsapp-composer";
@@ -39,6 +40,7 @@ export default function ProspectsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [noWebsite, setNoWebsite] = useState(false);
+  const [mobileOnly, setMobileOnly] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [whatsappProspect, setWhatsappProspect] = useState<Prospect | null>(null);
   const [showScraping, setShowScraping] = useState(false);
@@ -85,7 +87,11 @@ export default function ProspectsPage() {
     }
   }
 
-  const prospectsWithPhone = prospects.filter(p => p.phone);
+  const displayedProspects = mobileOnly
+    ? prospects.filter(p => p.phone && detectPhoneType(p.phone, p.city) === "mobile")
+    : prospects;
+
+  const prospectsWithPhone = displayedProspects.filter(p => p.phone);
   const allCurrentSelected = prospectsWithPhone.length > 0 && prospectsWithPhone.every(p => selectedIds.has(p.id));
 
   return (
@@ -113,6 +119,17 @@ export default function ProspectsPage() {
           >
             <Ban className="w-3.5 h-3.5" />
             {t("pp_no_website")}
+          </button>
+          <button
+            onClick={() => setMobileOnly(v => !v)}
+            className={`flex items-center justify-center gap-1.5 text-xs border rounded-lg px-3 py-2 transition-colors shrink-0 w-full sm:w-auto ${
+              mobileOnly
+                ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+                : "border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+            }`}
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            {t("pp_mobile_filter")}
           </button>
           <Button variant="warm" className="w-full sm:w-auto" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
@@ -186,8 +203,9 @@ export default function ProspectsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800/60">
-                    {prospects.map((p) => {
+                    {displayedProspects.map((p) => {
                       const isSelected = selectedIds.has(p.id);
+                      const phoneType = p.phone ? detectPhoneType(p.phone, p.city) : "unknown";
                       return (
                         <tr
                           key={p.id}
@@ -209,9 +227,13 @@ export default function ProspectsPage() {
                                 <Building2 className="w-4 h-4 text-violet-400" />
                               </div>
                               <div>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
                                   <p className="text-sm font-medium text-gray-200">{p.name}</p>
-                                  {!p.website && (
+                                  {p.website ? (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/20">
+                                      <Globe className="w-2.5 h-2.5" />{t("pp_website")}
+                                    </span>
+                                  ) : (
                                     <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
                                       <Ban className="w-2.5 h-2.5" />{t("pp_no_website_badge")}
                                     </span>
@@ -235,8 +257,20 @@ export default function ProspectsPage() {
                                 </div>
                               )}
                               {p.phone && (
-                                <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                                  <Phone className="w-3 h-3 text-gray-500" />{p.phone}
+                                <div className="flex items-center gap-1.5 text-xs text-gray-400 flex-wrap">
+                                  <div className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3 text-gray-500" />{p.phone}
+                                  </div>
+                                  {phoneType === "mobile" && (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                      <Smartphone className="w-2.5 h-2.5" />{t("pp_mobile_badge")}
+                                    </span>
+                                  )}
+                                  {phoneType === "landline" && (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-gray-500/10 text-gray-400 border border-gray-500/30">
+                                      <PhoneCall className="w-2.5 h-2.5" />{t("pp_landline_badge")}
+                                    </span>
+                                  )}
                                 </div>
                               )}
                               {p.website && (
