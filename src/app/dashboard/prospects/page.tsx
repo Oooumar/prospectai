@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Search, Target, Trash2, Mail, Loader2,
-  Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X, Smartphone, PhoneCall,
+  Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X, Smartphone, PhoneCall, MailCheck,
 } from "lucide-react";
 import { detectPhoneType } from "@/lib/phone";
 import { ScrapingModule } from "@/components/scraping/scraping-module";
@@ -41,6 +41,7 @@ export default function ProspectsPage() {
   const [page, setPage] = useState(1);
   const [noWebsite, setNoWebsite] = useState(false);
   const [mobileOnly, setMobileOnly] = useState(false);
+  const [withEmail, setWithEmail] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
   const [whatsappProspect, setWhatsappProspect] = useState<Prospect | null>(null);
   const [showScraping, setShowScraping] = useState(false);
@@ -53,12 +54,13 @@ export default function ProspectsPage() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), search });
     if (noWebsite) params.set("noWebsite", "true");
+    if (withEmail) params.set("withEmail", "true");
     const res = await fetch(`/api/prospects?${params}`);
     const data = await res.json();
     setProspects(data.prospects || []);
     setTotal(data.total || 0);
     setLoading(false);
-  }, [page, search, noWebsite]);
+  }, [page, search, noWebsite, withEmail]);
 
   useEffect(() => { fetchProspects(); }, [fetchProspects]);
 
@@ -130,6 +132,17 @@ export default function ProspectsPage() {
           >
             <Smartphone className="w-3.5 h-3.5" />
             {t("pp_mobile_filter")}
+          </button>
+          <button
+            onClick={() => { setWithEmail(v => !v); setPage(1); }}
+            className={`flex items-center justify-center gap-1.5 text-xs border rounded-lg px-3 py-2 transition-colors shrink-0 w-full sm:w-auto ${
+              withEmail
+                ? "bg-blue-500/15 border-blue-500/40 text-blue-300"
+                : "border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+            }`}
+          >
+            <MailCheck className="w-3.5 h-3.5" />
+            {t("pp_email_filter")}
           </button>
           <Button variant="warm" className="w-full sm:w-auto" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
@@ -236,6 +249,11 @@ export default function ProspectsPage() {
                                   ) : (
                                     <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
                                       <Ban className="w-2.5 h-2.5" />{t("pp_no_website_badge")}
+                                    </span>
+                                  )}
+                                  {p.email && (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                      <MailCheck className="w-2.5 h-2.5" />{t("pp_email_badge")}
                                     </span>
                                   )}
                                 </div>

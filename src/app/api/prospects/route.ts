@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status");
     const niche = searchParams.get("niche");
     const noWebsite = searchParams.get("noWebsite") === "true";
+    const withEmail = searchParams.get("withEmail") === "true";
 
     const and: any[] = [];
     if (search) {
@@ -27,6 +28,9 @@ export async function GET(req: NextRequest) {
     }
     if (noWebsite) {
       and.push({ OR: [{ website: null }, { website: "" }] });
+    }
+    if (withEmail) {
+      and.push({ email: { not: null } });
     }
 
     const where = {

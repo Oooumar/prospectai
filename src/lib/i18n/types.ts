@@ -76,6 +76,7 @@ export interface T {
   pp_email_ai: string; pp_delete_confirm: string;
   pp_no_website: string; pp_no_website_badge: string;
   pp_mobile_filter: string; pp_mobile_badge: string; pp_landline_badge: string;
+  pp_email_filter: string; pp_email_badge: string;
   pp_page: string; pp_total_label: string; pp_prev: string; pp_next: string;
   // Campaigns
   cam_title: string; cam_desc: string; cam_new_btn: string;

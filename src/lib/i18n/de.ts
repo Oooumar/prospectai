@@ -108,6 +108,7 @@ export const de: T = {
   pp_delete_confirm: "Diesen Interessenten löschen?",
   pp_no_website: "Ohne Website", pp_no_website_badge: "Keine Site",
   pp_mobile_filter: "📱 Nur Mobil", pp_mobile_badge: "Mobil", pp_landline_badge: "Festnetz",
+  pp_email_filter: "📧 Mit E-Mail", pp_email_badge: "E-Mail",
   pp_page: "Seite {n}", pp_total_label: "{n} Interessenten insgesamt",
   pp_prev: "Zurück", pp_next: "Weiter",
 

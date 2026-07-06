@@ -108,6 +108,7 @@ export const es: T = {
   pp_delete_confirm: "¿Eliminar este prospecto?",
   pp_no_website: "Sin sitio web", pp_no_website_badge: "Sin sitio",
   pp_mobile_filter: "📱 Solo Móvil", pp_mobile_badge: "Móvil", pp_landline_badge: "Fijo",
+  pp_email_filter: "📧 Con email", pp_email_badge: "Email",
   pp_page: "Página {n}", pp_total_label: "{n} prospectos en total",
   pp_prev: "Anterior", pp_next: "Siguiente",
 
