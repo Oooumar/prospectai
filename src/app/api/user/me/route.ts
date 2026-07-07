@@ -8,11 +8,12 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { plan: true, subscriptionStatus: true },
+    select: { plan: true, subscriptionStatus: true, role: true },
   });
 
   return NextResponse.json({
     plan: user?.plan ?? "starter",
-    subscriptionStatus: user?.subscriptionStatus ?? "trialing",
+    subscriptionStatus: user?.subscriptionStatus ?? "pending",
+    role: user?.role ?? "user",
   });
 }

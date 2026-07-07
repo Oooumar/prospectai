@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
   Settings, LogOut, ChevronRight, MessageSquareReply, FileText, MessageCircle,
-  ClipboardList,
+  ClipboardList, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export function Sidebar() {
   const [pendingReplies, setPendingReplies] = useState(0);
   const [pendingDrafts, setPendingDrafts] = useState(0);
   const [plan, setPlan] = useState("starter");
+  const [role, setRole] = useState("user");
 
   useEffect(() => {
     fetch("/api/inbound?count=true")
@@ -32,8 +33,8 @@ export function Sidebar() {
       .then(d => setPendingDrafts(d.count ?? 0))
       .catch(() => {});
     fetch("/api/user/me")
-      .then(r => r.ok ? r.json() : { plan: "starter" })
-      .then(d => setPlan(d.plan ?? "starter"))
+      .then(r => r.ok ? r.json() : { plan: "starter", role: "user" })
+      .then(d => { setPlan(d.plan ?? "starter"); setRole(d.role ?? "user"); })
       .catch(() => {});
   }, []);
 
@@ -53,6 +54,10 @@ export function Sidebar() {
     { href: "/dashboard/commandes", label: t("sb_commandes"), icon: ClipboardList },
     { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
   ];
+
+  const adminNav = role === "admin"
+    ? [{ href: "/dashboard/admin/users", label: "Admin — Comptes", icon: ShieldCheck }]
+    : [];
 
   return (
     <aside
@@ -92,8 +97,9 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {nav.map((item) => {
+        {[...nav, ...adminNav].map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          const isAdmin = item.href.startsWith("/dashboard/admin");
           return (
             <Link
               key={item.href}
@@ -101,18 +107,28 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group",
                 active
-                  ? "bg-violet-500/15 text-violet-300 border border-violet-500/20"
-                  : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+                  ? isAdmin
+                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/20"
+                    : "bg-violet-500/15 text-violet-300 border border-violet-500/20"
+                  : isAdmin
+                    ? "text-amber-600 hover:text-amber-300 hover:bg-amber-500/10"
+                    : "text-gray-400 hover:text-white hover:bg-gray-800/60"
               )}
             >
-              <item.icon className={cn("w-4 h-4 shrink-0", active ? "text-violet-400" : "text-gray-500 group-hover:text-gray-300")} />
+              <item.icon className={cn("w-4 h-4 shrink-0",
+                active
+                  ? isAdmin ? "text-amber-400" : "text-violet-400"
+                  : isAdmin ? "text-amber-700 group-hover:text-amber-400" : "text-gray-500 group-hover:text-gray-300"
+              )} />
               <span className="truncate">{item.label}</span>
               {(item as any).badge > 0 && (
                 <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold shrink-0">
                   {(item as any).badge > 9 ? "9+" : (item as any).badge}
                 </span>
               )}
-              {active && !(item as any).badge && <ChevronRight className="w-3 h-3 ml-auto text-violet-400/60 shrink-0" />}
+              {active && !(item as any).badge && (
+                <ChevronRight className={cn("w-3 h-3 ml-auto shrink-0", isAdmin ? "text-amber-400/60" : "text-violet-400/60")} />
+              )}
             </Link>
           );
         })}

@@ -75,7 +75,11 @@
       "Bash(curl -sI \"https://prospectai.company/dashboard/whatsapp-campaigns\")",
       "Bash(curl -sI \"https://prospectai.company/dashboard/prospects\")",
       "Bash(vercel logs *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(psql \"postgresql://neondb_owner:npg_s0pCeZba5URO@ep-still-butterfly-aiwov0eb.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require\" -c \"UPDATE \\\\\"User\\\\\" SET role = 'admin', \\\\\"subscriptionStatus\\\\\" = 'active' WHERE email = 'azizssro72@gmail.com' RETURNING id, email, role, \\\\\"subscriptionStatus\\\\\";\")",
+      "Bash(brew install *)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_s0pCeZba5URO@ep-still-butterfly-aiwov0eb.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require\" npx prisma db execute --stdin)",
+      "Bash(node /private/tmp/claude-501/-Users-ouedraogocheckoumaraziz-Desktop-ProspectAI/010aaa44-75dd-40b6-bfa8-73806426a574/scratchpad/verify-admin.mjs)"
     ]
   }
 }
