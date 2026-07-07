@@ -255,6 +255,15 @@ model AutoCampaign {
   @@index([userId])
 }
 
+model AiUsageLog {
+  id        String   @id
+  userId    String
+  type      String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
 enum EmailStatus {
   DRAFT
   PENDING

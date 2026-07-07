@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateWhatsAppMessage } from "@/lib/groq";
+import { getPlanLimits, isUnlimited } from "@/lib/plan-limits";
+import { checkAiGenToday, logAiGen } from "@/lib/email-limits";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +15,25 @@ export async function POST(req: NextRequest) {
     const { prospectId, profileId } = await req.json();
     if (!prospectId) {
       return NextResponse.json({ error: "prospectId requis" }, { status: 400 });
+    }
+
+    // Plan + AI gen quota check
+    type UserLimitRow = { plan: string; role: string };
+    const limitRows = await prisma.$queryRaw<UserLimitRow[]>`
+      SELECT "plan", "role" FROM "User" WHERE "id" = ${session.user.id}
+    `;
+    const u = limitRows[0];
+    const isAdmin = u?.role === "admin";
+    const limits = getPlanLimits(u?.plan ?? "starter");
+
+    if (!isAdmin && !isUnlimited(limits.aiGenPerDay)) {
+      const todayCount = await checkAiGenToday(session.user.id);
+      if (todayCount >= limits.aiGenPerDay) {
+        return NextResponse.json({
+          error: `Limite de génération IA atteinte (${limits.aiGenPerDay}/jour) — passez au plan supérieur.`,
+          limitReached: true,
+        }, { status: 429 });
+      }
     }
 
     const prospect = await prisma.prospect.findFirst({
@@ -50,6 +71,9 @@ export async function POST(req: NextRequest) {
       { name: prospect.name, niche: prospect.niche, city: prospect.city },
       sender
     );
+
+    // Log AI gen (fire-and-forget)
+    void logAiGen(session.user.id, "whatsapp");
 
     return NextResponse.json(result);
   } catch (err) {

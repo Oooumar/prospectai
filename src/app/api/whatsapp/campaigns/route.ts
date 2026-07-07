@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateWhatsAppMessage } from "@/lib/groq";
+import { getPlanLimits, isUnlimited, PLAN_DISPLAY, NEXT_PLAN } from "@/lib/plan-limits";
 
 type CampaignRow = {
   id: string; userId: string; title: string;
@@ -42,12 +43,41 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
+    // Plan check
+    type UserPlanRow = { plan: string; role: string };
+    const planRows = await prisma.$queryRaw<UserPlanRow[]>`
+      SELECT "plan", "role" FROM "User" WHERE "id" = ${session.user.id}
+    `;
+    const u = planRows[0];
+    const isAdmin = u?.role === "admin";
+    const limits = getPlanLimits(u?.plan ?? "starter");
+
+    if (!isAdmin && limits.waCampaigns === 0) {
+      const required = NEXT_PLAN[u?.plan ?? "starter"] ?? "pro";
+      return NextResponse.json({
+        error: `Campagnes WhatsApp disponibles à partir du plan ${PLAN_DISPLAY[required] ?? "PRO"}.`,
+        blockedByPlan: true,
+        requiredPlan: required,
+      }, { status: 403 });
+    }
+
+    if (!isAdmin && !isUnlimited(limits.waCampaigns)) {
+      const existing = await prisma.$queryRaw<{ n: number }[]>`
+        SELECT COUNT(*)::int AS n FROM "WhatsAppCampaign" WHERE "userId" = ${session.user.id}
+      `;
+      if ((existing[0]?.n ?? 0) >= limits.waCampaigns) {
+        return NextResponse.json({
+          error: `Limite de campagnes WhatsApp atteinte (${limits.waCampaigns} max) — passez au plan supérieur.`,
+          limitReached: true,
+        }, { status: 429 });
+      }
+    }
+
     const { prospectIds, promoTitle, imageUrl, imageName, profileId } = await req.json();
 
     if (!promoTitle?.trim()) return NextResponse.json({ error: "La description de la promotion est requise" }, { status: 400 });
     if (!Array.isArray(prospectIds) || prospectIds.length === 0) return NextResponse.json({ error: "Aucun prospect sélectionné" }, { status: 400 });
 
-    // Fetch prospects (verify ownership)
     type ProspectRow = { id: string; name: string; phone: string | null; niche: string; city: string };
     const prospects = await prisma.$queryRaw<ProspectRow[]>`
       SELECT "id","name","phone","niche","city"
@@ -57,7 +87,6 @@ export async function POST(req: NextRequest) {
 
     if (prospects.length === 0) return NextResponse.json({ error: "Aucun prospect valide (avec téléphone) trouvé" }, { status: 400 });
 
-    // Fetch sender profile
     type ProfileRow = { companyName: string | null; website: string | null; productDescription: string | null; whatsappNumber: string | null };
     let sender: ProfileRow = { companyName: null, website: null, productDescription: null, whatsappNumber: null };
     if (profileId) {
@@ -73,7 +102,6 @@ export async function POST(req: NextRequest) {
       if (rows[0]) sender = rows[0];
     }
 
-    // Create campaign
     const campaignId = `wac_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     await prisma.$executeRaw`
       INSERT INTO "WhatsAppCampaign" ("id","userId","title","imageUrl","imageName","createdAt")
@@ -81,7 +109,6 @@ export async function POST(req: NextRequest) {
         ${imageUrl || null}, ${imageName || null}, NOW())
     `;
 
-    // Generate messages in parallel
     const results = await Promise.allSettled(
       prospects.map(async (p) => {
         const { message } = await generateWhatsAppMessage(
@@ -93,7 +120,6 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // Insert messages
     for (const result of results) {
       if (result.status !== "fulfilled") continue;
       const { prospect: p, message } = result.value;

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
 
     const isAdmin = (user as any).role === "admin";
-    const limitCheck = await checkSendLimits(session.user.id, user.createdAt, isAdmin);
+    const limitCheck = await checkSendLimits(session.user.id, (user as any).plan ?? "starter", isAdmin);
     if (!limitCheck.allowed) {
       return NextResponse.json({ error: limitCheck.error }, { status: 429 });
     }

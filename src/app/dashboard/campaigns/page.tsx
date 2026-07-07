@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { TopBar } from "@/components/dashboard/topbar";
+import { PlanGate } from "@/components/dashboard/plan-gate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export default function CampaignsPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [plan, setPlan] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "", niche: "", city: "", subject: "", template: "", dailyLimit: 20,
   });
@@ -35,6 +37,13 @@ export default function CampaignsPage() {
   useEffect(() => {
     setForm(f => ({ ...f, template: t("cam_default_template") }));
   }, [t]);
+
+  useEffect(() => {
+    fetch("/api/user/me")
+      .then(r => r.ok ? r.json() : { plan: "starter" })
+      .then(d => setPlan(d.plan ?? "starter"))
+      .catch(() => setPlan("starter"));
+  }, []);
 
   async function fetchCampaigns() {
     const res = await fetch("/api/campaigns");
@@ -73,6 +82,15 @@ export default function CampaignsPage() {
     if (!confirm(t("cam_delete_confirm"))) return;
     await fetch(`/api/campaigns?id=${id}`, { method: "DELETE" });
     fetchCampaigns();
+  }
+
+  if (plan === "decouverte") {
+    return (
+      <>
+        <TopBar title={t("cam_title")} description={t("cam_desc")} />
+        <PlanGate currentPlan="decouverte" requiredPlan="starter" feature="Campagnes email" />
+      </>
+    );
   }
 
   return (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TopBar } from "@/components/dashboard/topbar";
+import { PlanGate } from "@/components/dashboard/plan-gate";
 import { Card, CardContent } from "@/components/ui/card";
 import { MessageCircle, Loader2, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/language-provider";
@@ -20,6 +21,14 @@ export default function WhatsAppCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [plan, setPlan] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/user/me")
+      .then(r => r.ok ? r.json() : { plan: "starter" })
+      .then(d => setPlan(d.plan ?? "starter"))
+      .catch(() => setPlan("starter"));
+  }, []);
 
   useEffect(() => {
     fetch("/api/whatsapp/campaigns")
@@ -31,6 +40,19 @@ export default function WhatsAppCampaignsPage() {
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  if (plan === "decouverte" || plan === "starter") {
+    return (
+      <>
+        <TopBar title={t("wc_page_title")} description={t("wc_page_desc")} />
+        <PlanGate
+          currentPlan={plan}
+          requiredPlan="pro"
+          feature="Campagnes WhatsApp"
+        />
+      </>
+    );
+  }
 
   return (
     <>

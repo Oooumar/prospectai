@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { getPlanLimits, isUnlimited, PLAN_DISPLAY, NEXT_PLAN } from "@/lib/plan-limits";
 
 const createSchema = z.object({
   name: z.string().min(2),
@@ -33,6 +34,34 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+    // Plan check
+    type UserPlanRow = { plan: string; role: string };
+    const planRows = await prisma.$queryRaw<UserPlanRow[]>`
+      SELECT "plan", "role" FROM "User" WHERE "id" = ${session.user.id}
+    `;
+    const u = planRows[0];
+    const isAdmin = u?.role === "admin";
+    const limits = getPlanLimits(u?.plan ?? "starter");
+
+    if (!isAdmin && limits.emailCampaigns === 0) {
+      const required = NEXT_PLAN[u?.plan ?? "starter"] ?? "starter";
+      return NextResponse.json({
+        error: `Campagnes email disponibles à partir du plan ${PLAN_DISPLAY[required] ?? "STARTER"}.`,
+        blockedByPlan: true,
+        requiredPlan: required,
+      }, { status: 403 });
+    }
+
+    if (!isAdmin && !isUnlimited(limits.emailCampaigns)) {
+      const existing = await prisma.campaign.count({ where: { userId: session.user.id } });
+      if (existing >= limits.emailCampaigns) {
+        return NextResponse.json({
+          error: `Limite de campagnes atteinte (${limits.emailCampaigns} max) — passez au plan supérieur.`,
+          limitReached: true,
+        }, { status: 429 });
+      }
+    }
 
     const body = await req.json();
     const parsed = createSchema.safeParse(body);

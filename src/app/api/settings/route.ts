@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getWarmupTier } from "@/lib/email-limits";
+import { getPlanLimits, PLAN_DISPLAY } from "@/lib/plan-limits";
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -24,11 +24,12 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true },
+      select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true, plan: true },
     });
 
-    const warmup = user ? getWarmupTier(user.createdAt) : null;
-    return NextResponse.json({ user, warmup });
+    const planLimits = user ? getPlanLimits((user as any).plan ?? "starter") : null;
+    const planLabel = user ? (PLAN_DISPLAY[(user as any).plan ?? "starter"] ?? "STARTER") : null;
+    return NextResponse.json({ user, planLimits, planLabel });
   } catch (err: any) {
     console.error("[settings] GET:", err.message);
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });
