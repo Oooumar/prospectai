@@ -94,6 +94,8 @@ export async function POST(req: NextRequest) {
         company: prospect.company || undefined,
         niche: prospect.niche,
         city: prospect.city,
+        website: prospect.website || undefined,
+        email: prospect.email || undefined,
       },
       profileType,
       targetLanguage,

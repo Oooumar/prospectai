@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await generateWhatsAppMessage(
-      { name: prospect.name, niche: prospect.niche, city: prospect.city },
+      { name: prospect.name, niche: prospect.niche, city: prospect.city, website: prospect.website || undefined, email: prospect.email || undefined },
       sender
     );
 
