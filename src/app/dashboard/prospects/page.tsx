@@ -15,6 +15,7 @@ import { ScrapingModule } from "@/components/scraping/scraping-module";
 import { EmailComposer } from "@/components/emails/email-composer";
 import { WhatsAppComposer } from "@/components/whatsapp/whatsapp-composer";
 import { WhatsAppCampaignModal } from "@/components/whatsapp/whatsapp-campaign-modal";
+import { EmailBulkDraftModal } from "@/components/emails/email-bulk-draft-modal";
 import type { Prospect } from "@/types";
 import { useI18n } from "@/components/language-provider";
 
@@ -49,6 +50,7 @@ export default function ProspectsPage() {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showCampaignModal, setShowCampaignModal] = useState(false);
+  const [showEmailCampaignModal, setShowEmailCampaignModal] = useState(false);
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
@@ -387,6 +389,13 @@ export default function ProspectsPage() {
               {t("wc_selected", { n: selectedIds.size })}
             </span>
             <Button
+              size="sm"
+              onClick={() => setShowEmailCampaignModal(true)}
+            >
+              <Mail className="w-4 h-4" />
+              Campagne Email
+            </Button>
+            <Button
               variant="warm"
               size="sm"
               onClick={() => setShowCampaignModal(true)}
@@ -408,6 +417,13 @@ export default function ProspectsPage() {
         <WhatsAppCampaignModal
           prospectIds={Array.from(selectedIds)}
           onClose={() => { setShowCampaignModal(false); setSelectedIds(new Set()); }}
+        />
+      )}
+
+      {showEmailCampaignModal && (
+        <EmailBulkDraftModal
+          prospectIds={Array.from(selectedIds)}
+          onClose={() => { setShowEmailCampaignModal(false); setSelectedIds(new Set()); }}
         />
       )}
     </>
