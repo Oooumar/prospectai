@@ -110,7 +110,14 @@ async function runAutoCampaigns() {
           withEmail.map(async (prospect) => {
             const targetLang = detectEmailLanguage(prospect.city);
             const generated = await generateProspectEmail(
-              { name: prospect.name, company: prospect.company || undefined, niche: prospect.niche, city: prospect.city },
+              {
+                name:    prospect.name,
+                company: prospect.company || undefined,
+                niche:   prospect.niche,
+                city:    prospect.city,
+                website: prospect.website || undefined,
+                email:   prospect.email   || undefined,
+              },
               profileType,
               targetLang,
               sender
@@ -141,7 +148,131 @@ async function runAutoCampaigns() {
   return { processed, totalProspects, totalDrafts };
 }
 
-// ── Task 2: Trial expiry reminders ──────────────────────────────────
+// ── Task 2: Active email campaign sending ───────────────────────────
+
+async function runEmailCampaigns() {
+  let processed = 0;
+  let totalSent = 0;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? "contact@prospectai.company";
+    const replyTo   = process.env.RESEND_REPLY_TO   ?? fromEmail;
+
+    const campaigns = await prisma.campaign.findMany({
+      where: { status: "ACTIVE" },
+    });
+
+    processed = campaigns.length;
+
+    for (const campaign of campaigns) {
+      try {
+        // Count emails already sent/pending TODAY for this campaign
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const sentToday = await prisma.emailLog.count({
+          where: {
+            campaignId: campaign.id,
+            status: { in: ["SENT", "PENDING"] },
+            createdAt: { gte: todayStart },
+          },
+        });
+
+        const quota = campaign.dailyLimit - sentToday;
+        if (quota <= 0) continue;
+
+        // Prospects already emailed in this campaign (any day)
+        const alreadyEmailed = await prisma.emailLog.findMany({
+          where: { campaignId: campaign.id },
+          select: { prospectId: true },
+        });
+        const excludeIds = alreadyEmailed.map(e => e.prospectId);
+
+        const prospects = await prisma.prospect.findMany({
+          where: {
+            userId:  campaign.userId,
+            niche:   campaign.niche,
+            city:    campaign.city,
+            email:   { not: null },
+            status:  { notIn: ["UNSUBSCRIBED"] },
+            ...(excludeIds.length > 0 && { id: { notIn: excludeIds } }),
+          },
+          take: quota,
+        });
+
+        if (prospects.length === 0) continue;
+
+        let sent = 0;
+
+        for (const prospect of prospects) {
+          let logId: string | null = null;
+          try {
+            const body = campaign.template
+              .replace(/\{\{name\}\}/gi,    prospect.name)
+              .replace(/\{\{company\}\}/gi, prospect.company ?? prospect.name)
+              .replace(/\{\{niche\}\}/gi,   prospect.niche)
+              .replace(/\{\{city\}\}/gi,    prospect.city);
+
+            const log = await prisma.emailLog.create({
+              data: {
+                userId:     campaign.userId,
+                prospectId: prospect.id,
+                campaignId: campaign.id,
+                subject:    campaign.subject,
+                body,
+                status:     "PENDING",
+              },
+            });
+            logId = log.id;
+
+            const result = await resend.emails.send({
+              from:    fromEmail,
+              to:      prospect.email!,
+              replyTo,
+              subject: campaign.subject,
+              text:    body,
+            });
+
+            await prisma.emailLog.update({
+              where: { id: log.id },
+              data: { status: "SENT", messageId: result.data?.id ?? null },
+            });
+
+            await prisma.prospect.update({
+              where: { id: prospect.id },
+              data: { status: "CONTACTED" },
+            });
+
+            sent++;
+          } catch (err: any) {
+            console.error(`[email-campaign] send failed prospect ${prospect.id}:`, err.message);
+            if (logId) {
+              await prisma.emailLog.update({ where: { id: logId }, data: { status: "FAILED" } }).catch(() => {});
+            }
+          }
+        }
+
+        totalSent += sent;
+
+        if (sent > 0) {
+          await prisma.campaign.update({
+            where: { id: campaign.id },
+            data: { sentCount: { increment: sent } },
+          });
+        }
+      } catch (err: any) {
+        console.error(`[email-campaign] campaign ${campaign.id} error:`, err.message);
+      }
+    }
+  } catch (err: any) {
+    console.error("[email-campaign] global error:", err.message);
+  }
+
+  return { processed, totalSent };
+}
+
+// ── Task 3: Trial expiry reminders ──────────────────────────────────
 
 const PLAN_LABELS: Record<string, string> = {
   starter: "Starter — 9€/mois",
@@ -230,10 +361,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const [campaigns, trials] = await Promise.all([
+  const [autoCampaigns, emailCampaigns, trials] = await Promise.all([
     runAutoCampaigns(),
+    runEmailCampaigns(),
     runTrialReminders(),
   ]);
 
-  return NextResponse.json({ campaigns, trials });
+  return NextResponse.json({ autoCampaigns, emailCampaigns, trials });
 }
