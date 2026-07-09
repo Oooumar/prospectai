@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import Image from "next/image";
 import { useI18n } from "@/components/language-provider";
 
 export function Footer() {
@@ -11,9 +11,7 @@ export function Footer() {
     <footer className="py-8 px-6 border-t border-gray-800/50 bg-gray-950">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-            <Zap className="w-3 h-3 text-white" />
-          </div>
+          <Image src="/logo-prospectai.png" alt="ProspectAI" width={24} height={24} className="rounded-md" />
           <span className="text-sm font-semibold text-white">ProspectAI</span>
         </div>
 

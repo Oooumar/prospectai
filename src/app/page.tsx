@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   Zap, Target, Mail, BarChart3, ArrowRight, Check, Rocket
 } from "lucide-react";
@@ -11,13 +12,11 @@ import { Footer } from "@/components/footer";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/components/language-provider";
 
-const FEATURE_ICONS = [Target, Zap, Mail, BarChart3];
-
 const PLANS = [
-  { name: "Starter", slug: "starter", price: "9", popular: false },
-  { name: "Creator", slug: "creator", price: "19", popular: true },
-  { name: "Pro", slug: "pro", price: "49", popular: false },
-  { name: "Agency", slug: "agency", price: "99", popular: false },
+  { name: "Découverte", slug: "decouverte", price: "10 000", popular: false, desc: "Pour tester ProspectAI" },
+  { name: "Starter",    slug: "starter",    price: "20 000", popular: false, desc: "Pour indépendants et PME" },
+  { name: "Pro",        slug: "pro",        price: "35 000", popular: true,  desc: "Pour les équipes commerciales" },
+  { name: "Business",   slug: "business",   price: "60 000", popular: false, desc: "Pour les agences" },
 ];
 
 export default function LandingPage() {
@@ -30,9 +29,6 @@ export default function LandingPage() {
     { icon: BarChart3, title: t("feat4_title"), description: t("feat4_desc") },
   ];
 
-  const planDescs = [
-    t("plan_starter_desc"), t("plan_creator_desc"), t("plan_pro_desc"), t("plan_agency_desc"),
-  ];
   const planFeatureKeys = [
     [t("pf_s1"), t("pf_s2"), t("pf_s3"), t("pf_s4"), t("pf_s5")],
     [t("pf_c1"), t("pf_c2"), t("pf_c3"), t("pf_c4"), t("pf_c5"), t("pf_c6")],
@@ -46,9 +42,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <Image src="/logo-prospectai.png" alt="ProspectAI" width={36} height={36} className="rounded-xl" />
             <span className="font-bold text-lg text-white">ProspectAI</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
@@ -103,33 +97,82 @@ export default function LandingPage() {
 
           {/* Dashboard mockup */}
           <div className="mt-16 relative">
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent z-10 pointer-events-none" style={{ top: "60%" }} />
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/50 backdrop-blur-sm p-6 shadow-2xl shadow-black/50">
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {[
-                  { label: t("prev_prospects"), value: "—", color: "text-violet-400" },
-                  { label: t("prev_emails_sent"), value: "—", color: "text-indigo-400" },
-                  { label: t("prev_open_rate"), value: "—", color: "text-emerald-400" },
-                  { label: t("prev_replies"), value: "—", color: "text-amber-400" },
-                ].map((stat) => (
-                  <div key={stat.label} className="rounded-xl bg-gray-800/50 p-4">
-                    <p className="text-xs text-gray-400 mb-1">{stat.label}</p>
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="rounded-xl bg-gray-800/50 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-300 font-medium">{t("prev_scraped")}</span>
-                  <span className="text-xs text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full">{t("prev_live")}</span>
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent z-10 pointer-events-none" style={{ top: "55%" }} />
+            <div className="rounded-2xl border border-gray-800 bg-[#0a0d28] shadow-2xl shadow-violet-900/20 overflow-hidden text-left">
+
+              {/* Browser chrome */}
+              <div className="flex items-center gap-3 px-4 py-2.5 border-b border-gray-800/80 bg-[#070A1C]">
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
                 </div>
-                <div className="space-y-2">
-                  {["Plomberie Dupont — Paris 15e", "Restaurant Le Mistral — Marseille", "Garage Auto Martin — Lyon"].map((p, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-700/50 last:border-0">
-                      <span className="text-sm text-gray-300">{p}</span>
-                      <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">{t("prev_generated")}</span>
+                <div className="flex-1 flex justify-center">
+                  <span className="text-[10px] text-gray-600 bg-gray-800/50 px-3 py-0.5 rounded-md">prospectai.company/dashboard/prospects</span>
+                </div>
+              </div>
+
+              <div className="flex">
+                {/* Mini sidebar */}
+                <div className="hidden md:flex w-40 shrink-0 flex-col border-r border-gray-800/60 bg-[#070A1C] p-3 gap-0.5">
+                  <div className="flex items-center gap-2 px-2 py-2 mb-2">
+                    <Image src="/logo-prospectai.png" alt="" width={20} height={20} className="rounded-md" />
+                    <span className="text-xs font-bold text-white">ProspectAI</span>
+                    <span className="ml-auto text-[8px] bg-violet-600 text-white px-1.5 py-0.5 rounded-full">PRO</span>
+                  </div>
+                  {["Dashboard", "Prospects", "Campagnes", "Emails", "WhatsApp"].map((item, i) => (
+                    <div key={item} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] ${i === 1 ? "bg-violet-600/20 text-violet-300 font-medium" : "text-gray-500"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${i === 1 ? "bg-violet-400" : "bg-gray-700"}`} />
+                      {item}
                     </div>
                   ))}
+                </div>
+
+                {/* Main panel */}
+                <div className="flex-1 p-4 min-w-0">
+                  {/* Stats row */}
+                  <div className="grid grid-cols-4 gap-2.5 mb-4">
+                    {[
+                      { label: "Prospects", value: "328", sub: "+24 sem.", color: "text-violet-400" },
+                      { label: "Emails envoyés", value: "47", sub: "+12 sem.", color: "text-indigo-400" },
+                      { label: "Taux d'ouverture", value: "34%", sub: "Moy: 20%", color: "text-emerald-400" },
+                      { label: "Réponses", value: "8%", sub: "4 reçues", color: "text-amber-400" },
+                    ].map((stat) => (
+                      <div key={stat.label} className="rounded-lg bg-[#0D1035] border border-gray-800/60 p-3">
+                        <p className="text-[9px] text-gray-500 mb-1">{stat.label}</p>
+                        <p className={`text-lg font-bold ${stat.color}`}>{stat.value}</p>
+                        <p className="text-[9px] text-gray-600 mt-0.5">{stat.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Prospect table */}
+                  <div className="rounded-lg border border-gray-800/60 bg-[#0D1035] overflow-hidden">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800/60">
+                      <span className="text-[11px] font-semibold text-white">Prospects récents</span>
+                      <span className="text-[9px] text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-violet-400 inline-block animate-pulse" />
+                        En direct
+                      </span>
+                    </div>
+                    {[
+                      { initials: "AW", name: "Agence Web Dakar",    city: "Dakar",         niche: "Agence digitale",   status: "Répondu", sc: "text-emerald-400 bg-emerald-500/10" },
+                      { initials: "SN", name: "Salon Beauté Nadia",  city: "Abidjan",        niche: "Beauté & bien-être",status: "Ouvert",   sc: "text-violet-400 bg-violet-500/10" },
+                      { initials: "MR", name: "Maquis Royal",        city: "Ouagadougou",    niche: "Restaurant",        status: "Envoyé",   sc: "text-indigo-400 bg-indigo-500/10" },
+                      { initials: "PE", name: "Plombier Express",    city: "Yaoundé",        niche: "Plomberie",         status: "Généré ✦", sc: "text-amber-400 bg-amber-500/10" },
+                    ].map((p) => (
+                      <div key={p.name} className="flex items-center gap-3 px-3 py-2.5 border-b border-gray-800/40 last:border-0">
+                        <div className="w-7 h-7 rounded-full bg-violet-600/20 border border-violet-500/20 flex items-center justify-center text-[9px] font-bold text-violet-300 shrink-0">
+                          {p.initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-medium text-white truncate">{p.name} <span className="text-gray-500">— {p.city}</span></p>
+                          <p className="text-[9px] text-gray-500">{p.niche}</p>
+                        </div>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-medium shrink-0 ${p.sc}`}>{p.status}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -205,14 +248,14 @@ export default function LandingPage() {
                 )}
                 <div className="mb-5">
                   <h3 className="text-base font-bold text-white mb-0.5">{plan.name}</h3>
-                  <p className="text-gray-400 text-xs mb-3">{planDescs[idx]}</p>
+                  <p className="text-gray-400 text-xs mb-3">{plan.desc}</p>
                   <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold text-white">{plan.price}€</span>
-                      <span className="text-gray-400 text-sm">{t("price_month")}</span>
+                    <div className="flex items-baseline gap-1.5 flex-wrap">
+                      <span className="text-3xl font-bold text-white">{plan.price}</span>
+                      <span className="text-gray-400 text-sm">FCFA{t("price_month")}</span>
                     </div>
                     <p className="text-xs text-emerald-400 font-medium">
-                      {t("price_trial_then", { price: `${plan.price}€` })}
+                      {t("price_trial_then", { price: `${plan.price} FCFA` })}
                     </p>
                   </div>
                 </div>
