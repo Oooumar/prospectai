@@ -135,6 +135,12 @@ export default function LandingPage() {
             <Link href="#features">
               <Button variant="outline" size="xl">{t("hero_btn_demo")}</Button>
             </Link>
+            <Link
+              href="/demo"
+              className="border border-white/20 text-white hover:bg-white/10 px-6 py-3 rounded-xl font-medium transition text-sm"
+            >
+              Tester la démo gratuitement →
+            </Link>
           </div>
 
           <p className="mt-4 text-sm text-gray-500">{t("hero_no_card")}</p>
