@@ -546,150 +546,80 @@ export async function generateWhatsAppMessage(
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
   const hasWebsite = !!(prospect.website || prospect.email);
-  const commanderUrl = hasWebsite ? TRIAL_URL : getCommanderUrl(prospect.city);
   const langName = getLangName(lang);
-  const senderName = sender.companyName ?? "notre solution";
-  const whatWeDo = sender.productDescription
-    ? sender.productDescription
-    : `${senderName} aide les entreprises à automatiser leur prospection commerciale`;
-  const websiteLine = sender.website
-    ? `SENDER WEBSITE (include this exact URL once in the message): ${sender.website}`
-    : `NO WEBSITE — do not invent or include any URL.`;
-  const waLine = sender.whatsappNumber
-    ? `SENDER WHATSAPP (offer as contact option alongside direct reply): ${formatWhatsAppUrl(sender.whatsappNumber)}`
-    : "";
-  const commanderLine = `ORDER PAGE (include once as the main CTA with localized text — e.g. "Commander ici" / "Order here" / "Jetzt bestellen" / "Ordina qui" / "Pedir aquí"): ${commanderUrl}`;
+  const name = prospect.name;
 
   console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| prospect.city:", prospect.city, "| lang:", lang);
 
-  // ── WhatsApp prompt — ultra-short format ───────────────────────────
-  // Formal register per language
-  const formalGreeting: Record<EmailLanguage, string> = {
-    fr: '"Bonjour" + VOUS/votre (never tu)',
-    en: '"Hello" or "Hi" + professional tone',
-    de: '"Hallo" or "Guten Tag" + SIE/Ihr (never du)',
-    it: '"Buongiorno" + LEI/Suo (never tu)',
-    es: '"Hola" or "Buenos días" + USTED/su (never tú)',
+  const greeting: Record<EmailLanguage, string> = {
+    fr: `Bonjour ${name} 👋`,
+    en: `Hello ${name} 👋`,
+    de: `Hallo ${name} 👋`,
+    it: `Buongiorno ${name} 👋`,
+    es: `Hola ${name} 👋`,
   };
 
-  // Closing question examples — short, yes/no style
   const closingQ: Record<EmailLanguage, string> = {
-    fr: "Ça vous intéresse ?",
-    en: "Interested?",
-    de: "Interessiert?",
-    it: "Le interessa?",
-    es: "¿Le interesa?",
+    fr: "Ça vous intéresse ? 😊",
+    en: "Interested? 😊",
+    de: "Interessiert? 😊",
+    it: "Le interessa? 😊",
+    es: "¿Le interesa? 😊",
   };
 
-  const linkLine = hasWebsite
-    ? `${TRIAL_CTA[lang]} : ${TRIAL_URL}`
-    : `${lang === "fr" ? "Commander ici" : lang === "de" ? "Jetzt bestellen" : lang === "it" ? "Ordina qui" : lang === "es" ? "Pedir aquí" : "Order here"} : ${commanderUrl}`;
+  // ── System prompt — strict 4-line format, no link ─────────────────
+  const systemPrompt = hasWebsite
+    ? `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
 
-  const hook = hasWebsite
-    ? (lang === "fr" ? `j'ai vu que ${prospect.name} a déjà un site — très bien. Mais recevez-vous régulièrement de nouveaux clients ?`
-      : lang === "de" ? `${prospect.name} hat bereits eine Website — gut. Gewinnen Sie jeden Monat neue Kunden ?`
-      : lang === "it" ? `${prospect.name} ha già un sito — ottimo. Ma riceve regolarmente nuovi clienti ?`
-      : lang === "es" ? `${prospect.name} ya tiene sitio web — muy bien. ¿Recibe nuevos clientes regularmente ?`
-      : `${prospect.name} already has a website — great. But do you consistently get new clients?`)
-    : (lang === "fr" ? `votre activité de ${prospect.niche} n'a pas encore de site web — vos clients potentiels trouvent vos concurrents.`
-      : lang === "de" ? `Ihr ${prospect.niche}-Unternehmen hat noch keine Website — potenzielle Kunden finden Ihre Mitbewerber.`
-      : lang === "it" ? `la sua attività di ${prospect.niche} non ha ancora un sito web — i clienti trovano i suoi concorrenti.`
-      : lang === "es" ? `su negocio de ${prospect.niche} no tiene todavía sitio web — sus clientes encuentran a sus competidores.`
-      : `your ${prospect.niche} business doesn't have a website yet — potential clients find your competitors.`);
+EXACT FORMAT:
+Line 1: "${greeting[lang]}"
+Line 2: Note that they already have a website — but do enough new clients find them every month?
+Line 3: ProspectAI automates their outreach: AI-personalized emails + WhatsApp campaigns, no effort needed.
+Line 4: "${closingQ[lang]}"
 
-  const pitch = hasWebsite
-    ? (lang === "fr" ? "ProspectAI automatise votre prospection : l'outil contacte vos cibles par emails IA et WhatsApp — sans effort de votre part."
-      : lang === "de" ? "ProspectAI automatisiert Ihre Kundengewinnung: KI-E-Mails und WhatsApp-Nachrichten an Ihre Zielkunden."
-      : lang === "it" ? "ProspectAI automatizza la sua prospezione: email IA e WhatsApp ai suoi clienti target in automatico."
-      : lang === "es" ? "ProspectAI automatiza su prospección: emails IA y WhatsApp a sus clientes objetivo de forma automática."
-      : "ProspectAI automates your outreach: AI emails and WhatsApp to your target clients — on autopilot.")
-    : (lang === "fr" ? `Je propose le duo Site + ProspectAI : création de votre site (aperçu gratuit, 30 % pour démarrer) + prospection automatique par emails IA.`
-      : lang === "de" ? `Ich biete das Duo Website + ProspectAI: Website-Erstellung (Vorschau kostenlos, 30 % Anzahlung) + automatisierte Neukundengewinnung per KI-E-Mails.`
-      : lang === "it" ? `Propongo il duo Sito + ProspectAI: creazione sito (anteprima gratuita, 30% per iniziare) + prospezione automatica via email IA.`
-      : lang === "es" ? `Propongo el dúo Sitio + ProspectAI: creación de sitio (vista previa gratis, 30% para empezar) + prospección automática por emails IA.`
-      : `I offer the Site + ProspectAI duo: website creation (free preview, 30% deposit) + automated client acquisition via AI emails.`);
+ABSOLUTE RULES — no exceptions:
+- NO link, NO URL anywhere in the message
+- NO "Essai gratuit", NO "14 jours", NO slogan, NO price, NO city name
+- NO closing line ("Cordialement", "Best regards", etc.)
+- Adapt lines 2–3 naturally to the prospect's sector
+- Write entirely in ${langName}
+- Reply with ONLY the 4 lines, nothing else`
+    : `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
 
-  const systemPrompt = promo
-    ? `You write ultra-short WhatsApp promotional messages. 5 lines maximum. Tone: direct, warm, human — NOT an email.
+EXACT FORMAT:
+Line 1: "${greeting[lang]}"
+Line 2: Observation that their ${prospect.niche} business has no website yet — potential clients find competitors instead.
+Line 3: Offer: I create their website with a FREE preview before any payment, only 30% to start.
+Line 4: "${closingQ[lang]}"
 
-FORMAT (no blank lines, no bullet points):
-Line 1: Greeting (${formalGreeting[lang]}) + prospect name + their sector
-Line 2: Promotional offer in one short sentence
-Line 3: ${hasWebsite ? "ProspectAI pitch" : "Duo offer (site + ProspectAI)"} in one sentence
-Line 4: Link only — ${linkLine}
-Line 5: One short question like "${closingQ[lang]}"
-
-HARD LIMITS: 60 words max (excluding URL). No slogan. No closing ("Cordialement" etc.). No city name. No price.
-STRICT: only use URLs/numbers given. Never invent any.
-Write entirely in ${langName}. Reply with ONLY the message text.`
-    : `You write ultra-short WhatsApp cold messages. 4 lines maximum. Tone: direct, warm, human — NOT an email.
-
-FORMAT (no blank lines, no bullet points):
-Line 1: Greeting (${formalGreeting[lang]}) + ${hook}
-Line 2: ${pitch}
-Line 3: Link only — ${linkLine}
-Line 4: One short question like "${closingQ[lang]}" (never "qu'est-ce qui vous empêche")
-
-HARD LIMITS: 50 words max (excluding URL). No slogan. No closing. No city name. No price.
-STRICT: only use URLs/numbers given. Never invent any.
-Write entirely in ${langName}. Reply with ONLY the message text.`;
+ABSOLUTE RULES — no exceptions:
+- NO link, NO URL anywhere in the message
+- NO "Commander ici", NO "Obtenez un site", NO slogan, NO price, NO city name
+- NO closing line ("Cordialement", "Best regards", etc.)
+- Adapt line 2 naturally to the actual sector (${prospect.niche})
+- Write entirely in ${langName}
+- Reply with ONLY the 4 lines, nothing else`;
 
   const userPrompt = promo
-    ? `WhatsApp promo message.
-SENDER: ${senderName}
-PROMO: ${promo}
-LINK: ${linkLine}${waLine ? `\nSENDER WA: ${formatWhatsAppUrl(sender.whatsappNumber!)}` : ""}
-PROSPECT: ${prospect.name} — ${prospect.niche}
-LANGUAGE: ${langName}`
-    : `WhatsApp cold message.
-SENDER: ${senderName}
-LINK: ${linkLine}${waLine ? `\nSENDER WA: ${formatWhatsAppUrl(sender.whatsappNumber!)}` : ""}
-PROSPECT: ${prospect.name} — ${prospect.niche}
-LANGUAGE: ${langName}`;
+    ? `PROSPECT: ${name} — ${prospect.niche}\nPROMO CONTEXT: ${promo}\nLANGUAGE: ${langName}`
+    : `PROSPECT: ${name} — ${prospect.niche}\nLANGUAGE: ${langName}`;
 
-  const fallbackMessages: Record<EmailLanguage, string> = hasWebsite ? {
-    fr: `Bonjour ${prospect.name}, votre activité de ${prospect.niche} a déjà un site — mais recevez-vous régulièrement de nouveaux clients ?
-ProspectAI automatise votre prospection : emails IA + WhatsApp pour trouver des clients en automatique.
-Essai gratuit 14 jours : ${TRIAL_URL}
-Ça vous intéresserait ?`,
-    en: `Hello ${prospect.name}, your ${prospect.niche} business already has a website — but do you get new clients consistently?
-ProspectAI automates your outreach: AI emails + WhatsApp to find clients on autopilot.
-14-day free trial: ${TRIAL_URL}
-Interested?`,
-    de: `Hallo ${prospect.name}, Ihr ${prospect.niche}-Unternehmen hat bereits eine Website — aber gewinnen Sie regelmäßig neue Kunden?
-ProspectAI automatisiert Ihre Akquise: KI-E-Mails + WhatsApp, um automatisch Kunden zu finden.
-14 Tage kostenlos: ${TRIAL_URL}
-Interessiert?`,
-    it: `Buongiorno ${prospect.name}, la sua attività di ${prospect.niche} ha già un sito — ma riceve nuovi clienti regolarmente?
-ProspectAI automatizza la sua prospezione: email IA + WhatsApp per trovare clienti in automatico.
-14 giorni gratuiti: ${TRIAL_URL}
-Le interessa?`,
-    es: `Hola ${prospect.name}, su negocio de ${prospect.niche} ya tiene sitio web — ¿pero recibe nuevos clientes regularmente?
-ProspectAI automatiza su prospección: emails IA + WhatsApp para encontrar clientes en automático.
-14 días gratis: ${TRIAL_URL}
-¿Le interesa?`,
-  } : {
-    fr: `Bonjour ${prospect.name}, votre activité de ${prospect.niche} n'a pas encore de site web — vos clients potentiels trouvent vos concurrents.
-Je propose le duo Site + ProspectAI : création de site (aperçu gratuit, 30% pour démarrer) + prospection auto par emails IA.
-Commander ici : ${commanderUrl}
-Ça vous intéresse ?`,
-    en: `Hello ${prospect.name}, your ${prospect.niche} business doesn't have a website yet — potential clients find your competitors instead.
-I offer the Site + ProspectAI duo: website creation (free preview, 30% deposit) + automated outreach via AI emails.
-Order here: ${commanderUrl}
-Interested?`,
-    de: `Hallo ${prospect.name}, Ihr ${prospect.niche}-Unternehmen hat noch keine Website — potenzielle Kunden finden Ihre Mitbewerber.
-Ich biete das Duo Website + ProspectAI: Website-Erstellung (Vorschau kostenlos, 30% Anzahlung) + automatisierte Akquise per KI-E-Mail.
-Jetzt bestellen: ${commanderUrl}
-Interessiert?`,
-    it: `Buongiorno ${prospect.name}, la sua attività di ${prospect.niche} non ha ancora un sito — i clienti trovano i suoi concorrenti.
-Propongo il duo Sito + ProspectAI: creazione sito (anteprima gratuita, 30% per iniziare) + prospezione automatica via email IA.
-Ordina qui: ${commanderUrl}
-Le interessa?`,
-    es: `Hola ${prospect.name}, su negocio de ${prospect.niche} no tiene todavía sitio web — sus clientes potenciales encuentran a sus competidores.
-Propongo el dúo Sitio + ProspectAI: creación de sitio (vista previa gratis, 30% para empezar) + prospección automática por emails IA.
-Pedir aquí: ${commanderUrl}
-¿Le interesa?`,
-  };
+  // ── Fallbacks — exact 4-line format, no link ──────────────────────
+  const fallbackMessages: Record<EmailLanguage, string> = hasWebsite
+    ? {
+        fr: `Bonjour ${name} 👋\nJ'ai remarqué que ${name} a déjà un site web — très bien. Mais est-ce que suffisamment de clients vous trouvent chaque mois ?\nProspectAI automatise votre prospection : emails personnalisés par IA et WhatsApp pour trouver vos clients automatiquement.\nÇa vous intéresse ? 😊`,
+        en: `Hello ${name} 👋\nI noticed ${name} already has a website — great. But do enough new clients actually find you every month?\nProspectAI automates your outreach: AI-personalized emails and WhatsApp campaigns to find clients automatically.\nInterested? 😊`,
+        de: `Hallo ${name} 👋\nIch habe gesehen, dass ${name} bereits eine Website hat — sehr gut. Aber finden genug neue Kunden Sie jeden Monat?\nProspectAI automatisiert Ihre Kundengewinnung: KI-E-Mails und WhatsApp-Kampagnen — vollautomatisch.\nInteressiert? 😊`,
+        it: `Buongiorno ${name} 👋\nHo visto che ${name} ha già un sito web — ottimo. Ma abbastanza nuovi clienti la trovano ogni mese?\nProspectAI automatizza la sua prospezione: email IA personalizzate e campagne WhatsApp per trovare clienti automaticamente.\nLe interessa? 😊`,
+        es: `Hola ${name} 👋\nHe visto que ${name} ya tiene sitio web — muy bien. ¿Pero suficientes clientes le encuentran cada mes?\nProspectAI automatiza su prospección: emails IA personalizados y campañas WhatsApp para encontrar clientes automáticamente.\n¿Le interesa? 😊`,
+      }
+    : {
+        fr: `Bonjour ${name} 👋\nJ'ai remarqué que votre activité de ${prospect.niche} n'a pas encore de site web — vos clients potentiels trouvent vos concurrents à votre place.\nJe crée votre site avec un aperçu GRATUIT avant tout paiement, seulement 30% pour démarrer.\nÇa vous intéresse ? 😊`,
+        en: `Hello ${name} 👋\nI noticed your ${prospect.niche} business doesn't have a website yet — potential clients find your competitors instead.\nI build your website with a FREE preview before any payment, only 30% deposit to start.\nInterested? 😊`,
+        de: `Hallo ${name} 👋\nIch habe bemerkt, dass Ihr ${prospect.niche}-Unternehmen noch keine Website hat — potenzielle Kunden finden stattdessen Ihre Mitbewerber.\nIch erstelle Ihre Website mit einer KOSTENLOSEN Vorschau vor jeder Zahlung, nur 30% Anzahlung zum Starten.\nInteressiert? 😊`,
+        it: `Buongiorno ${name} 👋\nHo notato che la sua attività di ${prospect.niche} non ha ancora un sito web — i clienti potenziali trovano i suoi concorrenti.\nCreo il suo sito con un'anteprima GRATUITA prima di qualsiasi pagamento, solo il 30% per iniziare.\nLe interessa? 😊`,
+        es: `Hola ${name} 👋\nHe notado que su negocio de ${prospect.niche} no tiene todavía sitio web — sus clientes potenciales encuentran a sus competidores.\nCreo su sitio con una vista previa GRATUITA antes de cualquier pago, solo el 30% para empezar.\n¿Le interesa? 😊`,
+      };
 
   try {
     const completion = await groq.chat.completions.create({
@@ -698,7 +628,7 @@ Pedir aquí: ${commanderUrl}
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: 0.5,
       max_tokens: 150,
     });
 
