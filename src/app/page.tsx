@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -12,15 +13,58 @@ import { Footer } from "@/components/footer";
 import { LanguageSelector } from "@/components/language-selector";
 import { useI18n } from "@/components/language-provider";
 
+// ── Zone / pricing ────────────────────────────────────────────────────────────
+type PriceZone = "africa-fr" | "africa-en" | "europe" | "amerique";
+const ZONE_COOKIE = "prospectai_zone";
+const VALID_ZONES: PriceZone[] = ["africa-fr", "africa-en", "europe", "amerique"];
+
+// Prices per zone, indexed by plan (0=Découverte, 1=Starter, 2=Pro, 3=Business)
+const ZONE_PRICES: Record<PriceZone, string[]> = {
+  "africa-fr": ["10 000", "20 000", "35 000", "60 000"],
+  "africa-en": ["8",      "16",     "28",     "48"],
+  "europe":    ["9",      "19",     "35",     "59"],
+  "amerique":  ["10",     "20",     "40",     "65"],
+};
+
+const ZONE_OPTIONS: { id: PriceZone; emoji: string; label: string }[] = [
+  { id: "africa-fr", emoji: "🌍", label: "Afrique FR" },
+  { id: "africa-en", emoji: "🌍", label: "Afrique EN" },
+  { id: "europe",    emoji: "🇪🇺", label: "Europe"     },
+  { id: "amerique",  emoji: "🌎", label: "Amérique"   },
+];
+
+function fmtPrice(amount: string, zone: PriceZone): string {
+  if (zone === "africa-fr") return `${amount} FCFA`;
+  if (zone === "europe")    return `${amount} €`;
+  return `$${amount}`;
+}
+
+function readZoneCookie(): PriceZone {
+  if (typeof document === "undefined") return "africa-fr";
+  const m = document.cookie.match(/prospectai_zone=([^;]+)/);
+  const v = m?.[1];
+  return (v && VALID_ZONES.includes(v as PriceZone)) ? (v as PriceZone) : "africa-fr";
+}
+
+// ── Plans (names / slugs / descriptions only — prices are zone-dynamic) ───────
 const PLANS = [
-  { name: "Découverte", slug: "decouverte", price: "10 000", popular: false, desc: "Pour tester ProspectAI" },
-  { name: "Starter",    slug: "starter",    price: "20 000", popular: false, desc: "Pour indépendants et PME" },
-  { name: "Pro",        slug: "pro",        price: "35 000", popular: true,  desc: "Pour les équipes commerciales" },
-  { name: "Business",   slug: "business",   price: "60 000", popular: false, desc: "Pour les agences" },
+  { name: "Découverte", slug: "decouverte", popular: false, desc: "Pour tester ProspectAI" },
+  { name: "Starter",    slug: "starter",    popular: false, desc: "Pour indépendants et PME" },
+  { name: "Pro",        slug: "pro",        popular: true,  desc: "Pour les équipes commerciales" },
+  { name: "Business",   slug: "business",   popular: false, desc: "Pour les agences" },
 ];
 
 export default function LandingPage() {
   const { t } = useI18n();
+  const [zone, setZone] = useState<PriceZone>("africa-fr");
+
+  // Read zone from cookie after hydration (cookie set by proxy on first request)
+  useEffect(() => { setZone(readZoneCookie()); }, []);
+
+  function handleZoneChange(z: PriceZone) {
+    setZone(z);
+    document.cookie = `${ZONE_COOKIE}=${z};path=/;max-age=${60 * 60 * 24 * 7};samesite=lax`;
+  }
 
   const features = [
     { icon: Target, title: t("feat1_title"), description: t("feat1_desc") },
@@ -226,54 +270,82 @@ export default function LandingPage() {
             <p className="text-gray-400 text-lg">{t("price_sub")}</p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mb-12 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 max-w-lg mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-8 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 max-w-lg mx-auto">
             <span className="text-emerald-400 text-lg">🎁</span>
             <p className="text-sm text-emerald-300 font-medium">{t("price_trial_banner")}</p>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
-            {PLANS.map((plan, idx) => (
-              <div
-                key={plan.name}
-                className={`relative rounded-2xl border p-6 flex flex-col ${
-                  plan.popular
-                    ? "border-violet-500 bg-violet-500/5 shadow-xl shadow-violet-500/10 scale-[1.02]"
-                    : "border-gray-800 bg-gray-900/30"
+          {/* Zone switcher */}
+          <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
+            {ZONE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => handleZoneChange(opt.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  zone === opt.id
+                    ? "bg-violet-600 border-violet-500 text-white"
+                    : "bg-gray-900 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600"
                 }`}
               >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-violet-600 rounded-full text-xs font-bold text-white whitespace-nowrap">
-                    ⭐ {t("plan_popular_badge")}
-                  </div>
-                )}
-                <div className="mb-5">
-                  <h3 className="text-base font-bold text-white mb-0.5">{plan.name}</h3>
-                  <p className="text-gray-400 text-xs mb-3">{plan.desc}</p>
-                  <div className="space-y-0.5">
-                    <div className="flex items-baseline gap-1.5 flex-wrap">
-                      <span className="text-3xl font-bold text-white">{plan.price}</span>
-                      <span className="text-gray-400 text-sm">FCFA{t("price_month")}</span>
-                    </div>
-                    <p className="text-xs text-emerald-400 font-medium">
-                      {t("price_trial_then", { price: `${plan.price} FCFA` })}
-                    </p>
-                  </div>
-                </div>
-                <ul className="space-y-2.5 flex-1 mb-6">
-                  {planFeatureKeys[idx].map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
-                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={`/auth/signup?plan=${plan.slug}`}>
-                  <Button variant={plan.popular ? "gradient" : "outline"} size="sm" className="w-full">
-                    {t("price_trial_btn")}
-                  </Button>
-                </Link>
-              </div>
+                <span>{opt.emoji}</span>
+                <span>{opt.label}</span>
+              </button>
             ))}
+          </div>
+
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+            {PLANS.map((plan, idx) => {
+              const price     = ZONE_PRICES[zone][idx];
+              const formatted = fmtPrice(price, zone);
+              const isUsd     = zone === "africa-en" || zone === "amerique";
+              return (
+                <div
+                  key={plan.name}
+                  className={`relative rounded-2xl border p-6 flex flex-col ${
+                    plan.popular
+                      ? "border-violet-500 bg-violet-500/5 shadow-xl shadow-violet-500/10 scale-[1.02]"
+                      : "border-gray-800 bg-gray-900/30"
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-violet-600 rounded-full text-xs font-bold text-white whitespace-nowrap">
+                      ⭐ {t("plan_popular_badge")}
+                    </div>
+                  )}
+                  <div className="mb-5">
+                    <h3 className="text-base font-bold text-white mb-0.5">{plan.name}</h3>
+                    <p className="text-gray-400 text-xs mb-3">{plan.desc}</p>
+                    <div className="space-y-0.5">
+                      <div className="flex items-baseline gap-1 flex-wrap">
+                        {isUsd && <span className="text-2xl font-bold text-white">$</span>}
+                        <span className="text-3xl font-bold text-white">{price}</span>
+                        <span className="text-gray-400 text-sm">
+                          {zone === "africa-fr" && " FCFA"}
+                          {zone === "europe"    && " €"}
+                          {t("price_month")}
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-400 font-medium">
+                        {t("price_trial_then", { price: formatted })}
+                      </p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2.5 flex-1 mb-6">
+                    {planFeatureKeys[idx].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-gray-300">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href={`/auth/signup?plan=${plan.slug}&zone=${zone}`}>
+                    <Button variant={plan.popular ? "gradient" : "outline"} size="sm" className="w-full">
+                      {t("price_trial_btn")}
+                    </Button>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
           <p className="text-center text-xs text-gray-500 mt-6">{t("price_payment_note")}</p>
