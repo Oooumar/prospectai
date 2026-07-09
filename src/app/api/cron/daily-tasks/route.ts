@@ -189,11 +189,15 @@ async function runEmailCampaigns() {
         });
         const excludeIds = alreadyEmailed.map(e => e.prospectId);
 
+        // Trim trailing spaces — Google Maps scraping sometimes adds them
+        const niche = campaign.niche.trim();
+        const city  = campaign.city.trim();
+
         const prospects = await prisma.prospect.findMany({
           where: {
             userId:  campaign.userId,
-            niche:   campaign.niche,
-            city:    campaign.city,
+            niche:   { equals: niche, mode: "insensitive" },
+            city:    { equals: city,  mode: "insensitive" },
             email:   { not: null },
             status:  { notIn: ["UNSUBSCRIBED"] },
             ...(excludeIds.length > 0 && { id: { notIn: excludeIds } }),
@@ -208,18 +212,21 @@ async function runEmailCampaigns() {
         for (const prospect of prospects) {
           let logId: string | null = null;
           try {
-            const body = campaign.template
+            const vars = (s: string) => s
               .replace(/\{\{name\}\}/gi,    prospect.name)
               .replace(/\{\{company\}\}/gi, prospect.company ?? prospect.name)
               .replace(/\{\{niche\}\}/gi,   prospect.niche)
               .replace(/\{\{city\}\}/gi,    prospect.city);
+
+            const subject = vars(campaign.subject);
+            const body    = vars(campaign.template);
 
             const log = await prisma.emailLog.create({
               data: {
                 userId:     campaign.userId,
                 prospectId: prospect.id,
                 campaignId: campaign.id,
-                subject:    campaign.subject,
+                subject,
                 body,
                 status:     "PENDING",
               },
@@ -230,7 +237,7 @@ async function runEmailCampaigns() {
               from:    fromEmail,
               to:      prospect.email!,
               replyTo,
-              subject: campaign.subject,
+              subject,
               text:    body,
             });
 

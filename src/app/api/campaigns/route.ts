@@ -5,9 +5,9 @@ import { z } from "zod";
 import { getPlanLimits, isUnlimited, PLAN_DISPLAY, NEXT_PLAN } from "@/lib/plan-limits";
 
 const createSchema = z.object({
-  name: z.string().min(2),
-  niche: z.string().min(2),
-  city: z.string().min(2),
+  name: z.string().min(2).trim(),
+  niche: z.string().min(2).trim(),
+  city: z.string().min(2).trim(),
   subject: z.string().min(2),
   template: z.string().min(10),
   dailyLimit: z.number().min(1).max(500).default(20),
