@@ -361,6 +361,173 @@ async function runTrialReminders() {
   return { checked, sent };
 }
 
+// ── Task 4: Onboarding email J+7 ────────────────────────────────────
+
+function buildEmail2Html(salutation: string): string {
+  return `<!DOCTYPE html>
+<html>
+<body style="background:#0d0d10;color:#e5e7eb;font-family:sans-serif;padding:40px 20px;max-width:600px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="display:inline-flex;align-items:center;gap:8px">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:inline-block"></div>
+      <span style="font-size:20px;font-weight:700;color:#fff">ProspectAI</span>
+    </div>
+  </div>
+  <div style="background:#111827;border:1px solid #1f2937;border-radius:16px;padding:32px">
+    <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px">Vous êtes à mi-parcours</h1>
+    <p style="color:#d1d5db;margin:0 0 16px">${salutation}</p>
+    <p style="color:#d1d5db;margin:0 0 16px">Votre essai ProspectAI est à mi-parcours.</p>
+    <p style="color:#d1d5db;margin:0 0 24px">Si vous n'avez pas encore lancé votre première campagne email ou WhatsApp, c'est le moment !</p>
+    <div style="background:#1f2937;border-left:3px solid #7c3aed;border-radius:8px;padding:20px;margin-bottom:24px">
+      <p style="margin:0;color:#d1d5db">Les utilisateurs qui lancent une campagne dans leur première semaine trouvent en moyenne <strong style="color:#a78bfa">3× plus de prospects</strong>.</p>
+    </div>
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="https://prospectai.company/dashboard/campaigns" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600">Lancer ma première campagne →</a>
+    </div>
+    <p style="color:#9ca3af;margin:0">Des questions ? Répondez directement à cet email.<br/><br/><strong style="color:#fff">Aziz — ProspectAI</strong></p>
+  </div>
+  <p style="text-align:center;color:#4b5563;font-size:12px;margin-top:24px">ProspectAI · prospection automatisée B2B</p>
+</body>
+</html>`;
+}
+
+async function runOnboardingEmail2() {
+  let checked = 0;
+  let sent = 0;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? "contact@prospectai.company";
+    const replyTo   = process.env.RESEND_REPLY_TO   ?? fromEmail;
+    const db = prisma as any;
+    const now = new Date();
+    // Window: trialEndsAt in ~7 days (±1 h to survive cron drift)
+    const from = new Date(now.getTime() + (7 * 24 - 1) * 3_600_000);
+    const to   = new Date(now.getTime() + (7 * 24 + 1) * 3_600_000);
+
+    const users = await db.user.findMany({
+      where: {
+        subscriptionStatus:   "trialing",
+        onboardingEmail2Sent: false,
+        trialEndsAt:          { gte: from, lte: to },
+      },
+    });
+
+    checked = users.length;
+
+    const results = await Promise.allSettled(
+      users.map(async (user: any) => {
+        const firstName  = user.name?.split(" ")[0] ?? "";
+        const salutation = firstName ? `Bonjour ${firstName},` : "Bonjour,";
+
+        await resend.emails.send({
+          from:    fromEmail,
+          to:      user.email,
+          replyTo,
+          subject: "Il vous reste 7 jours — avez-vous essayé les campagnes ?",
+          html:    buildEmail2Html(salutation),
+        });
+
+        await db.user.update({
+          where: { id: user.id },
+          data:  { onboardingEmail2Sent: true },
+        });
+      })
+    );
+
+    sent = results.filter((r) => r.status === "fulfilled").length;
+  } catch (err: any) {
+    console.error("[onboarding-email-2]", err?.message);
+  }
+
+  return { checked, sent };
+}
+
+// ── Task 5: Onboarding email J+13 ───────────────────────────────────
+
+function buildEmail3Html(salutation: string): string {
+  return `<!DOCTYPE html>
+<html>
+<body style="background:#0d0d10;color:#e5e7eb;font-family:sans-serif;padding:40px 20px;max-width:600px;margin:0 auto">
+  <div style="text-align:center;margin-bottom:32px">
+    <div style="display:inline-flex;align-items:center;gap:8px">
+      <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#4f46e5);display:inline-block"></div>
+      <span style="font-size:20px;font-weight:700;color:#fff">ProspectAI</span>
+    </div>
+  </div>
+  <div style="background:#111827;border:1px solid #1f2937;border-radius:16px;padding:32px">
+    <h1 style="font-size:22px;font-weight:700;color:#fff;margin:0 0 16px">Votre essai se termine demain ⏰</h1>
+    <p style="color:#d1d5db;margin:0 0 16px">${salutation}</p>
+    <p style="color:#d1d5db;margin:0 0 24px">Votre essai gratuit ProspectAI se termine demain.</p>
+    <p style="color:#d1d5db;margin:0 0 16px">Pour continuer à trouver des clients automatiquement, choisissez votre plan :</p>
+    <div style="background:#1f2937;border-radius:12px;padding:20px;margin-bottom:24px">
+      <p style="margin:0 0 10px;color:#d1d5db">→ <strong style="color:#fff">Découverte</strong> : 10 000 FCFA/mois</p>
+      <p style="margin:0 0 10px;color:#d1d5db">→ <strong style="color:#fff">Starter</strong> : 20 000 FCFA/mois</p>
+      <p style="margin:0;color:#d1d5db">→ <strong style="color:#fff">Pro</strong> : 35 000 FCFA/mois <span style="background:#7c3aed;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">le plus populaire</span></p>
+    </div>
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="https://prospectai.company/pending-payment" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600">Activer mon abonnement →</a>
+    </div>
+    <p style="color:#9ca3af;margin:0 0 12px">Ou contactez-nous sur <a href="https://wa.me/4915566701184" style="color:#a78bfa;text-decoration:none">WhatsApp</a> si vous avez des questions.</p>
+    <p style="color:#9ca3af;margin:0">Merci de nous faire confiance,<br/><strong style="color:#fff">Aziz — ProspectAI</strong></p>
+  </div>
+  <p style="text-align:center;color:#4b5563;font-size:12px;margin-top:24px">ProspectAI · prospection automatisée B2B</p>
+</body>
+</html>`;
+}
+
+async function runOnboardingEmail3() {
+  let checked = 0;
+  let sent = 0;
+
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const fromEmail = process.env.RESEND_FROM_EMAIL ?? "contact@prospectai.company";
+    const replyTo   = process.env.RESEND_REPLY_TO   ?? fromEmail;
+    const db = prisma as any;
+    const now = new Date();
+    // Window: trialEndsAt in ~1 day (±1 h to survive cron drift)
+    const from = new Date(now.getTime() + 23 * 3_600_000);
+    const to   = new Date(now.getTime() + 25 * 3_600_000);
+
+    const users = await db.user.findMany({
+      where: {
+        subscriptionStatus:   "trialing",
+        onboardingEmail3Sent: false,
+        trialEndsAt:          { gte: from, lte: to },
+      },
+    });
+
+    checked = users.length;
+
+    const results = await Promise.allSettled(
+      users.map(async (user: any) => {
+        const firstName  = user.name?.split(" ")[0] ?? "";
+        const salutation = firstName ? `Bonjour ${firstName},` : "Bonjour,";
+
+        await resend.emails.send({
+          from:    fromEmail,
+          to:      user.email,
+          replyTo,
+          subject: "Votre essai se termine demain ⏰",
+          html:    buildEmail3Html(salutation),
+        });
+
+        await db.user.update({
+          where: { id: user.id },
+          data:  { onboardingEmail3Sent: true },
+        });
+      })
+    );
+
+    sent = results.filter((r) => r.status === "fulfilled").length;
+  } catch (err: any) {
+    console.error("[onboarding-email-3]", err?.message);
+  }
+
+  return { checked, sent };
+}
+
 // ── Main handler ────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -368,11 +535,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const [autoCampaigns, emailCampaigns, trials] = await Promise.all([
+  const [autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3] = await Promise.all([
     runAutoCampaigns(),
     runEmailCampaigns(),
     runTrialReminders(),
+    runOnboardingEmail2(),
+    runOnboardingEmail3(),
   ]);
 
-  return NextResponse.json({ autoCampaigns, emailCampaigns, trials });
+  return NextResponse.json({ autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3 });
 }

@@ -113,7 +113,7 @@ function SignUpForm() {
       });
       const stripeJson = await stripeRes.json();
       if (stripeJson.url) { window.location.href = stripeJson.url; return; }
-      router.push("/dashboard");
+      router.push("/onboarding");
     } else {
       const paypalRes = await fetch("/api/checkout/paypal/create", {
         method: "POST",
@@ -122,7 +122,7 @@ function SignUpForm() {
       });
       const paypalJson = await paypalRes.json();
       if (paypalJson.approvalUrl) { window.location.href = paypalJson.approvalUrl; return; }
-      router.push("/dashboard");
+      router.push("/onboarding");
     }
   }
 

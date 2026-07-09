@@ -26,6 +26,9 @@ model User {
   stripeCardFingerprint String?
   paypalSubscriptionId String?
   trialReminderSent    Boolean   @default(false)
+  onboardingEmail1Sent Boolean   @default(false)
+  onboardingEmail2Sent Boolean   @default(false)
+  onboardingEmail3Sent Boolean   @default(false)
   language             String    @default("fr")
   companyName          String?
   website              String?

@@ -78,7 +78,7 @@ export function proxy(req: NextRequest) {
     req.cookies.get("__Secure-authjs.session-token")?.value;
 
   const isLoggedIn = !!token;
-  const isProtected = pathname.startsWith("/dashboard");
+  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding");
   const isAuthPage = pathname === "/auth/signin" || pathname === "/auth/signup";
 
   if (isProtected && !isLoggedIn) {

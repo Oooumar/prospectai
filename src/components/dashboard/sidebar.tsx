@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
   Settings, LogOut, ChevronRight, MessageSquareReply, FileText, MessageCircle,
-  ClipboardList, ShieldCheck,
+  ClipboardList, ShieldCheck, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -135,7 +135,14 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="p-3 border-t border-gray-800/60 shrink-0">
+      <div className="p-3 border-t border-gray-800/60 shrink-0 space-y-1">
+        <Link
+          href="/onboarding"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-violet-400 border border-violet-500/30 bg-violet-500/8 hover:bg-violet-500/15 transition-all"
+        >
+          <Rocket className="w-4 h-4 shrink-0" />
+          <span>Guide de démarrage</span>
+        </Link>
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-gray-400 hover:text-red-400 hover:bg-red-500/10"
