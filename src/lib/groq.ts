@@ -199,7 +199,7 @@ const TRIAL_CTA: Record<EmailLanguage, string> = {
   es: "14 días de prueba gratuita (sin tarjeta de crédito)",
 };
 
-const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. End the email with a generic closing only (e.g. "Cordialement", "Best regards", "Mit freundlichen Grüßen").
+const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. Do NOT add any closing or sign-off ("Cordialement", "Best regards", etc.) — the closing will be added automatically.
 STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.`;
 
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage, hasWebsite = false): string {
@@ -211,7 +211,8 @@ The email must be:
 - Personalized with the brand/company name
 - Focused on partnership, collaboration or sponsorship
 - Highlighting the creator's value (audience, engagement, niche)
-- Short (3 paragraphs max) and impactful
+- Start with: "Bonjour [brand/company name]," (or language equivalent)
+- 3-4 sentences maximum after the salutation, direct and concise
 - Dynamic and professional tone
 ${NO_HALLUCINATION_RULE}
 ${langInstruction}
@@ -224,7 +225,8 @@ The email must be:
 - Focused on ROI and measurable results
 - Highlight expertise and client cases
 - Offer a free audit or consultation (via email or WhatsApp, never a phone call)
-- Short and direct (3-4 paragraphs)
+- Start with: "Bonjour [prospect name]," (or language equivalent)
+- 3-4 sentences maximum after the salutation, direct and concise
 - Professional and results-oriented tone
 ${NO_HALLUCINATION_RULE}
 ${langInstruction}
@@ -240,12 +242,13 @@ ProspectAI — automate client acquisition: AI-personalized cold emails + WhatsA
 USE this exact slogan once in the email: "${PROSPECTAI_SLOGANS[targetLanguage]}"
 
 EMAIL RULES:
+- Start with: "Bonjour [prospect name]," (or language equivalent)
 - Open by acknowledging the prospect already has a website — that's a positive signal
 - Transition to the real question: do enough new clients actually find them every month?
 - Present ProspectAI as the answer: automatic outreach to targeted prospects
 - NEVER suggest they need a website — they already have one
 - NEVER mention /commander — the only CTA is the free trial signup
-- 4-5 sentences, no bullet points in the body
+- 3-4 sentences maximum after the salutation, no bullet points in the body
 - Professional, warm, and confident tone
 ${NO_HALLUCINATION_RULE}
 ${langInstruction}
@@ -261,11 +264,12 @@ THE DUO OFFER:
 USE this exact slogan once in the email: "${DUO_SLOGANS[targetLanguage]}"
 
 EMAIL RULES:
+- Start with: "Bonjour [prospect name]," (or language equivalent)
 - Open with a hook: the prospect's business has no website — potential clients find competitors instead
 - Present BOTH services as one natural package ("Site + ProspectAI")
 - Include the two trust arguments (free preview + 30% to start)
 - NEVER mention any specific city name or any price
-- 4-5 sentences, no bullet points in the body
+- 3-4 sentences maximum after the salutation, no bullet points in the body
 - Professional, warm, and reassuring tone
 ${NO_HALLUCINATION_RULE}
 ${langInstruction}
@@ -314,10 +318,11 @@ SENDER: ${identity}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (4 sentences max, no bullet points in the email):
-1. One-sentence intro connecting my work to the ${prospect.niche} space
-2. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
-3. ${ctaInstruction}
-IMPORTANT: Do not mention any city name.${langSuffix}`;
+1. Salutation: "Bonjour [brand/company name]," (or language equivalent)
+2. One-sentence intro connecting my work to the ${prospect.niche} space
+3. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
+4. ${ctaInstruction}
+IMPORTANT: Do not mention any city name. Do NOT add any closing line.${langSuffix}`;
   }
 
   if (profileType === "agency") {
@@ -331,11 +336,12 @@ WHAT WE DO: ${whatWeDo}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
-1. Open with a specific growth challenge facing ${prospect.niche} businesses
-2. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
-3. Offer a free audit or consultation
-4. ${ctaInstruction}
-IMPORTANT: Do not mention any city name.${langSuffix}`;
+1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+2. Open with a specific growth challenge facing ${prospect.niche} businesses
+3. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
+4. Offer a free audit or consultation
+5. ${ctaInstruction}
+IMPORTANT: Do not mention any city name. Do NOT add any closing line.${langSuffix}`;
   }
 
   // b2b — branch on whether the prospect already has a website
@@ -352,13 +358,14 @@ IMPORTANT: Do not mention any city name.${langSuffix}`;
 SENDER: ${senderName}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector (they already have a website)
 
-EMAIL STRUCTURE (4-5 sentences, no bullet points, NO city, NO price):
-1. Hook: acknowledge that ${businessName} already has a website — that's a positive sign
-2. Transition: but do enough new clients find them every month? Most businesses lose clients to competitors not because of their product, but because of lack of visibility
-3. Present ProspectAI: find and contact targeted prospects automatically — AI-personalized emails + WhatsApp campaigns
-4. Include this exact slogan once: "${PROSPECTAI_SLOGANS[l]}"
-5. ${trialCtaFull}
-IMPORTANT: Do not mention any city name. Do not mention any price. Do NOT suggest they need a website — they already have one.${langSuffix}`;
+EMAIL STRUCTURE (3-4 sentences, no bullet points, NO city, NO price):
+1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+2. Hook: acknowledge that ${businessName} already has a website — that's a positive sign
+3. Transition: but do enough new clients find them every month? Most businesses lose clients to competitors not because of their product, but because of lack of visibility
+4. Present ProspectAI: find and contact targeted prospects automatically — AI-personalized emails + WhatsApp campaigns
+5. Include this exact slogan once: "${PROSPECTAI_SLOGANS[l]}"
+6. ${trialCtaFull}
+IMPORTANT: Do not mention any city name. Do not mention any price. Do NOT suggest they need a website — they already have one. Do NOT add any closing line.${langSuffix}`;
   }
 
   return `Write a B2B prospecting email pitching the Site + ProspectAI duo.
@@ -366,12 +373,13 @@ IMPORTANT: Do not mention any city name. Do not mention any price. Do NOT sugges
 SENDER: ${senderName}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
-EMAIL STRUCTURE (4-5 sentences, no bullet points, NO city, NO price):
-1. Hook: ${businessName} (${prospect.niche}) does not appear to have a website — potential clients find competitors instead
-2. Present the duo: we create their website (${DUO_TRUST[l]}) AND automate their client acquisition with ProspectAI (AI emails + WhatsApp campaigns)
-3. Include this exact slogan once: "${DUO_SLOGANS[l]}"
-4. ${ctaInstruction}
-IMPORTANT: Do not mention any city name. Do not mention any price.${langSuffix}`;
+EMAIL STRUCTURE (3-4 sentences, no bullet points, NO city, NO price):
+1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+2. Hook: ${businessName} (${prospect.niche}) does not appear to have a website — potential clients find competitors instead
+3. Present the duo: we create their website (${DUO_TRUST[l]}) AND automate their client acquisition with ProspectAI (AI emails + WhatsApp campaigns)
+4. Include this exact slogan once: "${DUO_SLOGANS[l]}"
+5. ${ctaInstruction}
+IMPORTANT: Do not mention any city name. Do not mention any price. Do NOT add any closing line.${langSuffix}`;
 }
 
 function generateFallbackEmailInner(
@@ -390,11 +398,11 @@ function generateFallbackEmailInner(
       es: `${prospect.name} tiene un sitio — ¿suficientes clientes lo encuentran?`,
     };
     const bodies: Record<EmailLanguage, string> = {
-      fr: `Bonjour,\n\nJ'ai vu que ${prospect.name} dispose déjà d'un site web — c'est un bon signe. Mais est-ce que suffisamment de nouveaux clients le trouvent chaque mois ?\n\nProspectAI automatise votre prospection : l'outil identifie vos clients cibles et les contacte automatiquement par email personnalisé IA et campagnes WhatsApp.\n\nUn site, c'est bien. Des clients qui le trouvent, c'est mieux.\n\n${TRIAL_CTA.fr} : ${TRIAL_URL}\n\nCordialement`,
-      en: `Hello,\n\nI noticed that ${prospect.name} already has a website — that's a good sign. But do enough new clients actually find it every month?\n\nProspectAI automates your outreach: it identifies your target clients and contacts them automatically with AI-personalized emails and WhatsApp campaigns.\n\nA website is great. Clients who find it are better.\n\n${TRIAL_CTA.en}: ${TRIAL_URL}\n\nBest regards`,
-      de: `Guten Tag,\n\nIch habe gesehen, dass ${prospect.name} bereits eine Website hat — das ist ein gutes Zeichen. Aber finden genug neue Kunden sie jeden Monat?\n\nProspectAI automatisiert Ihre Kundengewinnung: Das Tool findet Zielkunden und kontaktiert sie automatisch per KI-E-Mail und WhatsApp-Kampagnen.\n\nEine Website ist gut. Kunden, die sie finden, sind besser.\n\n${TRIAL_CTA.de}: ${TRIAL_URL}\n\nMit freundlichen Grüßen`,
-      it: `Buongiorno,\n\nHo visto che ${prospect.name} ha già un sito web — è un buon segno. Ma abbastanza nuovi clienti lo trovano ogni mese?\n\nProspectAI automatizza la sua prospezione: il tool identifica i clienti target e li contatta automaticamente con email IA personalizzate e campagne WhatsApp.\n\nUn sito è ottimo. I clienti che lo trovano sono meglio.\n\n${TRIAL_CTA.it}: ${TRIAL_URL}\n\nCordiali saluti`,
-      es: `Buenos días,\n\nHe visto que ${prospect.name} ya tiene un sitio web — es una buena señal. Pero ¿suficientes nuevos clientes lo encuentran cada mes?\n\nProspectAI automatiza su prospección: la herramienta identifica sus clientes objetivo y los contacta automáticamente con emails IA personalizados y campañas de WhatsApp.\n\nUn sitio web está bien. Los clientes que lo encuentran son mejor.\n\n${TRIAL_CTA.es}: ${TRIAL_URL}\n\nAtentamente`,
+      fr: `Bonjour ${prospect.name},\n\nJ'ai vu que ${prospect.name} dispose déjà d'un site web — c'est un bon signe. Mais est-ce que suffisamment de nouveaux clients le trouvent chaque mois ?\n\nProspectAI automatise votre prospection : l'outil identifie vos clients cibles et les contacte automatiquement par email personnalisé IA et campagnes WhatsApp.\n\nUn site, c'est bien. Des clients qui le trouvent, c'est mieux.\n\n${TRIAL_CTA.fr} : ${TRIAL_URL}`,
+      en: `Hello ${prospect.name},\n\nI noticed that ${prospect.name} already has a website — that's a good sign. But do enough new clients actually find it every month?\n\nProspectAI automates your outreach: it identifies your target clients and contacts them automatically with AI-personalized emails and WhatsApp campaigns.\n\nA website is great. Clients who find it are better.\n\n${TRIAL_CTA.en}: ${TRIAL_URL}`,
+      de: `Guten Tag ${prospect.name},\n\nIch habe gesehen, dass ${prospect.name} bereits eine Website hat — das ist ein gutes Zeichen. Aber finden genug neue Kunden sie jeden Monat?\n\nProspectAI automatisiert Ihre Kundengewinnung: Das Tool findet Zielkunden und kontaktiert sie automatisch per KI-E-Mail und WhatsApp-Kampagnen.\n\nEine Website ist gut. Kunden, die sie finden, sind besser.\n\n${TRIAL_CTA.de}: ${TRIAL_URL}`,
+      it: `Buongiorno ${prospect.name},\n\nHo visto che ${prospect.name} ha già un sito web — è un buon segno. Ma abbastanza nuovi clienti lo trovano ogni mese?\n\nProspectAI automatizza la sua prospezione: il tool identifica i clienti target e li contatta automaticamente con email IA personalizzate e campagne WhatsApp.\n\nUn sito è ottimo. I clienti che lo trovano sono meglio.\n\n${TRIAL_CTA.it}: ${TRIAL_URL}`,
+      es: `Buenos días ${prospect.name},\n\nHe visto que ${prospect.name} ya tiene un sitio web — es una buena señal. Pero ¿suficientes nuevos clientes lo encuentran cada mes?\n\nProspectAI automatiza su prospección: la herramienta identifica sus clientes objetivo y los contacta automáticamente con emails IA personalizados y campañas de WhatsApp.\n\nUn sitio web está bien. Los clientes que lo encuentran son mejor.\n\n${TRIAL_CTA.es}: ${TRIAL_URL}`,
     };
     return { subject: subjects[lang], body: bodies[lang] };
   }
@@ -403,42 +411,42 @@ function generateFallbackEmailInner(
   if (lang === "de") {
     return {
       subject: `Ihre Website + Ihre ersten Kunden — ${prospect.name}`,
-      body: `Guten Tag,\n\nIch habe festgestellt, dass ${prospect.name} (${prospect.niche}) noch keine Website zu haben scheint — Ihre potenziellen Kunden finden stattdessen Ihre Mitbewerber.\n\nIch biete das Duo Website + ProspectAI an: Ich erstelle Ihre Website (kostenlose Vorschau, nur 30 % Anzahlung zum Starten) UND automatisiere Ihre Kundengewinnung mit KI-personalisierten E-Mails und WhatsApp-Kampagnen.\n\nEine Website ist gut. Kunden sind besser.\n\nMit freundlichen Grüßen`,
+      body: `Guten Tag ${prospect.name},\n\nIch habe festgestellt, dass ${prospect.name} (${prospect.niche}) noch keine Website zu haben scheint — Ihre potenziellen Kunden finden stattdessen Ihre Mitbewerber.\n\nIch biete das Duo Website + ProspectAI an: Ich erstelle Ihre Website (kostenlose Vorschau, nur 30 % Anzahlung zum Starten) UND automatisiere Ihre Kundengewinnung mit KI-personalisierten E-Mails und WhatsApp-Kampagnen.\n\nEine Website ist gut. Kunden sind besser.`,
     };
   }
   if (lang === "it") {
     return {
       subject: `Il suo sito web + i suoi primi clienti — ${prospect.name}`,
-      body: `Buongiorno,\n\nHo notato che ${prospect.name} (${prospect.niche}) non sembra avere ancora un sito web — i suoi potenziali clienti trovano i suoi concorrenti al suo posto.\n\nPropongo il duo Sito + ProspectAI: creo il suo sito (anteprima gratuita, solo il 30% per iniziare) E automatizzo la sua prospezione con email personalizzate dall'IA e campagne WhatsApp.\n\nUn sito è ottimo. I clienti sono meglio.\n\nCordiali saluti`,
+      body: `Buongiorno ${prospect.name},\n\nHo notato che ${prospect.name} (${prospect.niche}) non sembra avere ancora un sito web — i suoi potenziali clienti trovano i suoi concorrenti al suo posto.\n\nPropongo il duo Sito + ProspectAI: creo il suo sito (anteprima gratuita, solo il 30% per iniziare) E automatizzo la sua prospezione con email personalizzate dall'IA e campagne WhatsApp.\n\nUn sito è ottimo. I clienti sono meglio.`,
     };
   }
   if (lang === "es") {
     return {
       subject: `Su sitio web + sus primeros clientes — ${prospect.name}`,
-      body: `Buenos días,\n\nHe observado que ${prospect.name} (${prospect.niche}) no parece tener todavía un sitio web — sus clientes potenciales encuentran a sus competidores en su lugar.\n\nPropongo el dúo Sitio + ProspectAI: creo su sitio web (vista previa gratuita, solo el 30% para empezar) Y automatizzo su prospección con emails IA y campañas de WhatsApp.\n\nUn sitio web está bien. Los clientes son mejor.\n\nAtentamente`,
+      body: `Buenos días ${prospect.name},\n\nHe observado que ${prospect.name} (${prospect.niche}) no parece tener todavía un sitio web — sus clientes potenciales encuentran a sus competidores en su lugar.\n\nPropongo el dúo Sitio + ProspectAI: creo su sitio web (vista previa gratuita, solo el 30% para empezar) Y automatizzo su prospección con emails IA y campañas de WhatsApp.\n\nUn sitio web está bien. Los clientes son mejor.`,
     };
   }
   if (lang === "en") {
     return {
       subject: `Your website + your first clients — ${prospect.name}`,
-      body: `Hello,\n\nI noticed ${prospect.name} (${prospect.niche}) doesn't appear to have a website — your potential clients find your competitors instead.\n\nI offer the Site + ProspectAI duo: I build your website (free preview, only 30% to start) AND automate your client acquisition with AI-personalized emails and WhatsApp campaigns.\n\nA website is great. Clients are better.\n\nBest regards`,
+      body: `Hello ${prospect.name},\n\nI noticed ${prospect.name} (${prospect.niche}) doesn't appear to have a website — your potential clients find your competitors instead.\n\nI offer the Site + ProspectAI duo: I build your website (free preview, only 30% to start) AND automate your client acquisition with AI-personalized emails and WhatsApp campaigns.\n\nA website is great. Clients are better.`,
     };
   }
   if (profileType === "creator") {
     return {
       subject: `Proposition de partenariat — ${prospect.name}`,
-      body: `Bonjour,\n\nJe suis créateur de contenu spécialisé dans le secteur ${prospect.niche.toLowerCase()} et je suis particulièrement intéressé par vos produits/services.\n\nSeriez-vous ouvert(e) à discuter d'une possible collaboration ? Répondez simplement à cet email.\n\nCordialement`,
+      body: `Bonjour ${prospect.name},\n\nJe suis créateur de contenu spécialisé dans le secteur ${prospect.niche.toLowerCase()} et je suis particulièrement intéressé par vos produits/services.\n\nSeriez-vous ouvert(e) à discuter d'une possible collaboration ? Répondez simplement à cet email.`,
     };
   }
   if (profileType === "agency") {
     return {
       subject: `Boostez votre acquisition client — ${prospect.name}`,
-      body: `Bonjour,\n\nNotre agence accompagne des entreprises du secteur ${prospect.niche.toLowerCase()} pour multiplier leurs leads.\n\nRépondez à cet email pour bénéficier d'un audit gratuit.\n\nCordialement`,
+      body: `Bonjour ${prospect.name},\n\nNotre agence accompagne des entreprises du secteur ${prospect.niche.toLowerCase()} pour multiplier leurs leads.\n\nRépondez à cet email pour bénéficier d'un audit gratuit.`,
     };
   }
   return {
     subject: `Votre site web + vos premiers clients — ${prospect.name}`,
-    body: `Bonjour,\n\nJ'ai remarqué que ${prospect.name} (${prospect.niche}) n'a pas encore de site web — vos clients potentiels trouvent vos concurrents à votre place.\n\nJe propose le duo Site + ProspectAI : je crée votre site (aperçu gratuit, seulement 30 % pour démarrer) ET j'automatise votre prospection — emails personnalisés par IA et campagnes WhatsApp.\n\nUn site, c'est bien. Des clients, c'est mieux.\n\nCordialement`,
+    body: `Bonjour ${prospect.name},\n\nJ'ai remarqué que ${prospect.name} (${prospect.niche}) n'a pas encore de site web — vos clients potentiels trouvent vos concurrents à votre place.\n\nJe propose le duo Site + ProspectAI : je crée votre site (aperçu gratuit, seulement 30 % pour démarrer) ET j'automatise votre prospection — emails personnalisés par IA et campagnes WhatsApp.\n\nUn site, c'est bien. Des clients, c'est mieux.`,
   };
 }
 
@@ -463,15 +471,21 @@ function generateFallbackEmail(
   return { ...result, body: result.body + `\n\n${CTA[lang]}` };
 }
 
+const CLOSING: Record<EmailLanguage, string> = {
+  fr: "Cordialement",
+  en: "Best regards",
+  de: "Mit freundlichen Grüßen",
+  it: "Cordiali saluti",
+  es: "Atentamente",
+};
+
 function buildSignatureLine(
   lang: EmailLanguage,
-  companyName?: string,
-  website?: string
+  companyName?: string
 ): string {
-  if (!companyName && !website) return "";
-  if (companyName && website) return `\n\n— ${companyName}: ${website}`;
-  if (website) return `\n\n— ${website}`;
-  return `\n\n— ${companyName}`;
+  const closing = CLOSING[lang];
+  if (!companyName) return `\n\n${closing}`;
+  return `\n\n${closing},\n${companyName}`;
 }
 
 function extractJson<T>(raw: string): T | null {
@@ -504,7 +518,7 @@ export async function generateProspectEmail(
   // A prospect has a website if the field is set OR if they have an email (scraped from their site)
   const hasWebsite = profileType === "b2b" && !!(prospect.website || prospect.email);
   const commanderUrl = hasWebsite ? undefined : getCommanderUrl(prospect.city);
-  const signatureLine = buildSignatureLine(lang, sender?.companyName, sender?.website);
+  const signatureLine = buildSignatureLine(lang, sender?.companyName);
 
   try {
     const completion = await groq.chat.completions.create({
