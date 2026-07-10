@@ -1,6 +1,17 @@
 import { Resend } from "resend";
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy singleton — avoids "Missing API key" crash at build time when
+// RESEND_API_KEY is not injected in Next.js's static analysis phase.
+let _client: Resend | undefined;
+function getClient(): Resend {
+  if (!_client) _client = new Resend(process.env.RESEND_API_KEY);
+  return _client;
+}
+export const resend = new Proxy({} as Resend, {
+  get(_: Resend, prop: string | symbol) {
+    return (getClient() as any)[prop];
+  },
+});
 
 export async function sendProspectEmail({
   to,
