@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Check, ChevronRight, Globe, Smartphone, Zap,
   ShoppingCart, Code2, Phone, Wrench, ChevronDown,
+  QrCode, Tablet, ClipboardList,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type Locale, LOCALES, LOCALE_FLAGS, LOCALE_LABELS, translations } from "@/lib/i18n";
@@ -74,6 +75,27 @@ const SITES: ServiceItem[] = [
     price: { "africa-fr": 600_000, "africa-en": 990,   "europe": 2_500, "amerique": 2_800 },
     icon: ShoppingCart, color: "from-purple-500 to-pink-600",
     lk: "cmd_boutique_label", dk: "cmd_boutique_desc",
+  },
+];
+
+const MENUS: ServiceItem[] = [
+  {
+    id: "menu_qr",
+    price: { "africa-fr": 50_000, "africa-en": 85, "europe": 99, "amerique": 110 },
+    icon: QrCode, color: "from-slate-500 to-zinc-600",
+    lk: "cmd_menu_qr_label", dk: "cmd_menu_qr_desc",
+  },
+  {
+    id: "menu_tablet",
+    price: { "africa-fr": 150_000, "africa-en": 250, "europe": 290, "amerique": 320 },
+    icon: Tablet, color: "from-amber-500 to-orange-600",
+    lk: "cmd_menu_tablet_label", dk: "cmd_menu_tablet_desc",
+  },
+  {
+    id: "menu_staff",
+    price: { "africa-fr": 500_000, "africa-en": 830, "europe": 990, "amerique": 1_100 },
+    icon: ClipboardList, color: "from-rose-500 to-pink-600",
+    lk: "cmd_menu_staff_label", dk: "cmd_menu_staff_desc",
   },
 ];
 
@@ -496,7 +518,7 @@ function PaymentBlock({ zone, t }: { zone: Zone; t: Tf }) {
 
 // ─── Category types ────────────────────────────────────────────────────────────
 
-type Category = "site" | "app";
+type Category = "site" | "app" | "menu";
 
 // ─── Main page (inner — needs Suspense for useSearchParams) ───────────────────
 
@@ -571,14 +593,14 @@ function CommanderPageInner() {
 
   function switchCategory(cat: Category) {
     setCategory(cat);
-    setSelectedType(cat === "site" ? "vitrine" : "webapp");
+    setSelectedType(cat === "site" ? "vitrine" : cat === "app" ? "webapp" : "menu_qr");
     setSelectedOptions(new Set());
   }
 
-  const items = category === "site" ? SITES : APPS;
+  const items = category === "site" ? SITES : category === "app" ? APPS : MENUS;
 
   const basePrice = useMemo(
-    () => (category === "site" ? SITES : APPS).find(i => i.id === selectedType)?.price[zone] ?? 0,
+    () => (category === "site" ? SITES : category === "app" ? APPS : MENUS).find(i => i.id === selectedType)?.price[zone] ?? 0,
     [category, selectedType, zone]
   );
 
@@ -757,16 +779,16 @@ function CommanderPageInner() {
               <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
                 {t("cmd_cat_title")}
               </h2>
-              <div className="grid grid-cols-2 gap-3">
-                {([["site", "cmd_cat_site", Globe], ["app", "cmd_cat_app", Smartphone]] as const).map(([id, lk, Icon]) => (
+              <div className="grid grid-cols-3 gap-3">
+                {([["site", "cmd_cat_site", Globe], ["app", "cmd_cat_app", Smartphone], ["menu", "cmd_cat_menu", QrCode]] as const).map(([id, lk, Icon]) => (
                   <button key={id} type="button" onClick={() => switchCategory(id)}
-                    className={`flex items-center justify-center gap-2.5 rounded-xl border py-4 font-semibold text-sm transition-all duration-200 ${
+                    className={`flex items-center justify-center gap-2 rounded-xl border py-4 font-semibold text-xs sm:text-sm transition-all duration-200 ${
                       category === id
                         ? "border-violet-500/60 bg-violet-500/15 text-violet-300 shadow-lg shadow-violet-500/10"
                         : "border-gray-800 bg-gray-900/60 text-gray-400 hover:border-gray-700 hover:text-white"
                     }`}
                   >
-                    <Icon className="w-4 h-4" />{t(lk)}
+                    <Icon className="w-4 h-4 shrink-0" />{t(lk)}
                   </button>
                 ))}
               </div>

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prismaAdmin } from "@/lib/prisma-admin";
 import { resend } from "@/lib/resend";
 
-const VALID_TYPES      = ["vitrine", "pro_seo", "boutique", "webapp", "native"] as const;
+const VALID_TYPES      = ["vitrine", "pro_seo", "boutique", "webapp", "native", "menu_qr", "menu_tablet", "menu_staff"] as const;
 const VALID_OPTIONS    = ["reservation", "mobile_money", "espace_client", "seo_avance", "chat_whatsapp", "maintenance"] as const;
-const VALID_CATEGORIES = ["site", "app"] as const;
+const VALID_CATEGORIES = ["site", "app", "menu"] as const;
 const VALID_ZONES      = ["africa-fr", "africa-en", "europe", "amerique"] as const;
 
 type ValidType     = typeof VALID_TYPES[number];
@@ -27,11 +27,14 @@ const ZONE_LABELS: Record<ValidZone, string> = {
 };
 
 const TYPE_LABELS: Record<ValidType, string> = {
-  vitrine:  "Site vitrine",
-  pro_seo:  "Site Pro + SEO",
-  boutique: "Boutique en ligne",
-  webapp:   "Web App / PWA",
-  native:   "App mobile native",
+  vitrine:      "Site vitrine",
+  pro_seo:      "Site Pro + SEO",
+  boutique:     "Boutique en ligne",
+  webapp:       "Web App / PWA",
+  native:       "App mobile native",
+  menu_qr:      "Menu QR Code",
+  menu_tablet:  "Menu tablette clients",
+  menu_staff:   "App tablette serveurs",
 };
 
 const OPTION_LABELS: Record<string, string> = {
@@ -134,7 +137,7 @@ export async function POST(req: NextRequest) {
             <tr><td style="padding:8px 0;color:#6b7280">Email</td><td style="padding:8px 0"><a href="mailto:${email}" style="color:#7B61FF">${email}</a></td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Téléphone</td><td style="padding:8px 0"><a href="https://wa.me/${waNum}" style="color:#25D366">${telephone.trim()}</a></td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Zone</td><td style="padding:8px 0;font-weight:600">${zoneLabel}</td></tr>
-            <tr><td style="padding:8px 0;color:#6b7280">Catégorie</td><td style="padding:8px 0">${categorie === "site" ? "Site Web" : "Application"}</td></tr>
+            <tr><td style="padding:8px 0;color:#6b7280">Catégorie</td><td style="padding:8px 0">${categorie === "site" ? "Site Web" : categorie === "app" ? "Application" : "Menu numérique"}</td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Type</td><td style="padding:8px 0;font-weight:600">${TYPE_LABELS[typePrecis as ValidType]}</td></tr>
             <tr><td style="padding:8px 0;color:#6b7280">Prix estimé</td><td style="padding:8px 0;font-weight:600;color:#7B61FF">${formatPrice(prixEstime, devise)}</td></tr>
             ${hasMaint ? `<tr><td style="padding:8px 0;color:#6b7280">Maintenance</td><td style="padding:8px 0;color:#8b5cf6">${MAINT_RANGE[marche as ValidZone]} <span style="font-size:11px;color:#9ca3af">(récurrent)</span></td></tr>` : ""}

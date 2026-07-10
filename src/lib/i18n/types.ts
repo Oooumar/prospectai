@@ -192,13 +192,16 @@ export interface T {
   cmd_step3_title: string; cmd_step3_sub: string;
   cmd_step4_title: string; cmd_step4_sub: string;
   cmd_trust_banner: string;
-  cmd_cat_title: string; cmd_cat_site: string; cmd_cat_app: string;
+  cmd_cat_title: string; cmd_cat_site: string; cmd_cat_app: string; cmd_cat_menu: string;
   cmd_formula_title: string; cmd_selected: string; cmd_from: string; cmd_monthly: string;
   cmd_vitrine_label: string; cmd_vitrine_desc: string;
   cmd_pro_seo_label: string; cmd_pro_seo_desc: string;
   cmd_boutique_label: string; cmd_boutique_desc: string;
   cmd_webapp_label: string; cmd_webapp_desc: string;
   cmd_native_label: string; cmd_native_desc: string;
+  cmd_menu_qr_label: string; cmd_menu_qr_desc: string;
+  cmd_menu_tablet_label: string; cmd_menu_tablet_desc: string;
+  cmd_menu_staff_label: string; cmd_menu_staff_desc: string;
   cmd_options_title: string;
   cmd_opt_reservation: string; cmd_opt_mobile_money: string; cmd_opt_espace_client: string;
   cmd_opt_seo_avance: string; cmd_opt_chat_whatsapp: string; cmd_opt_maintenance: string;
