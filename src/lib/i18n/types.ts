@@ -1,6 +1,6 @@
 export interface T {
   // Nav
-  nav_features: string; nav_pricing: string; nav_signin: string; nav_signup_free: string;
+  nav_features: string; nav_pricing: string; nav_commander: string; nav_signin: string; nav_signup_free: string;
   // Hero
   hero_badge: string; hero_title1: string; hero_title2: string; hero_sub: string;
   hero_btn_start: string; hero_btn_demo: string; hero_no_card: string;

@@ -55,7 +55,7 @@ const PLANS = [
 ];
 
 export default function LandingPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [zone, setZone] = useState<PriceZone>("africa-fr");
 
   // Read zone from cookie after hydration (cookie set by proxy on first request)
@@ -92,6 +92,9 @@ export default function LandingPage() {
           <div className="hidden md:flex items-center gap-8 text-sm text-gray-400">
             <a href="#features" className="hover:text-white transition-colors">{t("nav_features")}</a>
             <a href="#pricing" className="hover:text-white transition-colors">{t("nav_pricing")}</a>
+            <Link href={`/commander?zone=${zone}&lang=${locale}`} className="hover:text-white transition-colors">
+              {t("nav_commander")}
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSelector />

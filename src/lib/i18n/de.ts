@@ -1,7 +1,7 @@
 import type { T } from "./types";
 
 export const de: T = {
-  nav_features: "Funktionen", nav_pricing: "Preise",
+  nav_features: "Funktionen", nav_pricing: "Preise", nav_commander: "Website bestellen",
   nav_signin: "Anmelden", nav_signup_free: "Kostenlos starten",
 
   hero_badge: "KI-gestützt · Antwort-Tracking in Echtzeit",
