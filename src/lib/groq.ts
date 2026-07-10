@@ -189,7 +189,7 @@ const PROSPECTAI_SLOGANS: Record<EmailLanguage, string> = {
   es: "Un sitio web está bien. Los clientes que lo encuentran son mejor.",
 };
 
-const TRIAL_URL = "https://prospectai.company/auth/signup";
+const TRIAL_URL = "https://prospectai.company/demo";
 
 const TRIAL_CTA: Record<EmailLanguage, string> = {
   fr: "Essai gratuit 14 jours (sans carte bancaire)",
