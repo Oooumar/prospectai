@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://prospectai.company"),
-  title: "ProspectAI — Prospection automatisée par IA pour l'Afrique | Emails & WhatsApp",
+  title: "ProspectAI — Prospection automatisée par IA | Emails & WhatsApp",
   description:
     "Trouvez vos clients automatiquement avec ProspectAI. Scraping Google Maps, emails personnalisés par IA, campagnes WhatsApp. 14 jours gratuits. Burkina Faso, Côte d'Ivoire, Sénégal, Cameroun et toute l'Afrique.",
   keywords: [
