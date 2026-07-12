@@ -516,7 +516,7 @@ export async function generateProspectEmail(
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
   // A prospect has a website if the field is set OR if they have an email (scraped from their site)
-  const hasWebsite = profileType === "b2b" && !!(prospect.website || prospect.email);
+  const hasWebsite = profileType === "b2b" && !!(prospect.website);
   const commanderUrl = hasWebsite ? undefined : getCommanderUrl(prospect.city);
   const signatureLine = buildSignatureLine(lang, sender?.companyName);
 
@@ -559,7 +559,7 @@ export async function generateWhatsAppMessage(
   promo?: string
 ): Promise<{ message: string; fallback?: boolean }> {
   const lang = detectEmailLanguage(prospect.city);
-  const hasWebsite = !!(prospect.website || prospect.email);
+  const hasWebsite = !!(prospect.website);
   const langName = getLangName(lang);
   const name = prospect.name;
 
