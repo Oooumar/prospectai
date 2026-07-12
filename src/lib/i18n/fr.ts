@@ -96,6 +96,11 @@ export const fr: T = {
   est_OPENED: "Ouvert", est_REPLIED: "Répondu", est_BOUNCED: "Bounced",
   pst_NEW: "Nouveau", pst_CONTACTED: "Contacté", pst_OPENED: "Ouvert",
   pst_REPLIED: "Répondu", pst_CONVERTED: "Converti", pst_UNSUBSCRIBED: "Désabonné",
+  pst_HOT: "Très chaud", pst_TO_FOLLOW_UP: "À relancer", pst_LOW_PRIORITY: "Peu prioritaire",
+  pst_CLIENT: "Client", pst_NOT_INTERESTED: "Pas intéressé",
+  cam_stats_sent: "Emails envoyés", cam_stats_open_rate: "Taux d'ouverture",
+  cam_stats_reply_rate: "Taux de réponse", cam_stats_hot: "Prospects chauds",
+  cam_stats_revenue: "Revenus générés",
 
   pp_title: "Prospects", pp_desc: "{n} prospects trouvés",
   pp_search_ph: "Rechercher par nom, email, ville…", pp_scrape_btn: "Scraper des prospects",

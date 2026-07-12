@@ -6,7 +6,7 @@ import { z } from "zod";
 const updateSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  status: z.enum(["NEW","CONTACTED","OPENED","REPLIED","CONVERTED","UNSUBSCRIBED"]).optional(),
+  status: z.enum(["NEW","CONTACTED","OPENED","REPLIED","CONVERTED","UNSUBSCRIBED","HOT","TO_FOLLOW_UP","LOW_PRIORITY","CLIENT","NOT_INTERESTED"]).optional(),
   notes: z.string().optional(),
 });
 
@@ -24,7 +24,7 @@ export async function PATCH(
 
     if (!parsed.success) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
 
-    const prospect = await prisma.prospect.updateMany({
+    const prospect = await (prisma.prospect as any).updateMany({
       where: { id, userId: session.user.id },
       data: parsed.data,
     });

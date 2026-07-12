@@ -5,7 +5,6 @@ import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Search, Target, Trash2, Mail, Loader2,
   Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X, Smartphone, PhoneCall, MailCheck,
@@ -28,10 +27,24 @@ function prospectScore(p: Prospect): number {
   return s;
 }
 
-const statusBadge: Record<string, string> = {
-  NEW: "secondary", CONTACTED: "default", OPENED: "default",
-  REPLIED: "success", CONVERTED: "success", UNSUBSCRIBED: "destructive",
+const STATUS_CLS: Record<string, string> = {
+  NEW:             "bg-gray-500/15 text-gray-400 border-gray-500/30",
+  CONTACTED:       "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  OPENED:          "bg-violet-500/15 text-violet-400 border-violet-500/30",
+  REPLIED:         "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  CONVERTED:       "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  UNSUBSCRIBED:    "bg-red-500/15 text-red-400 border-red-500/30",
+  HOT:             "bg-red-500/20 text-red-400 border-red-500/40",
+  TO_FOLLOW_UP:    "bg-amber-400/15 text-amber-400 border-amber-400/30",
+  CLIENT:          "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+  NOT_INTERESTED:  "bg-gray-600/15 text-gray-500 border-gray-600/30",
+  LOW_PRIORITY:    "bg-sky-500/15 text-sky-400 border-sky-500/30",
 };
+const STATUS_EMOJI: Record<string, string> = {
+  HOT: "🔥", TO_FOLLOW_UP: "🟡", CLIENT: "✅", NOT_INTERESTED: "❌", LOW_PRIORITY: "❄️",
+};
+const MANUAL_STATUSES = ["HOT", "CLIENT", "NOT_INTERESTED", "LOW_PRIORITY"] as const;
+const AUTO_STATUSES = new Set(["NEW", "CONTACTED", "OPENED", "REPLIED", "TO_FOLLOW_UP", "CONVERTED", "UNSUBSCRIBED"]);
 
 export default function ProspectsPage() {
   const { t } = useI18n();
@@ -51,6 +64,7 @@ export default function ProspectsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showEmailCampaignModal, setShowEmailCampaignModal] = useState(false);
+  const [openStatusId, setOpenStatusId] = useState<string | null>(null);
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
@@ -71,6 +85,16 @@ export default function ProspectsPage() {
     await fetch(`/api/prospects?id=${id}`, { method: "DELETE" });
     setSelectedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
     fetchProspects();
+  }
+
+  async function updateProspectStatus(id: string, status: string) {
+    setOpenStatusId(null);
+    setProspects(prev => prev.map(p => p.id === id ? { ...p, status: status as any } : p));
+    await fetch(`/api/prospects/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
   }
 
   function toggleSelect(id: string, hasPhone: boolean) {
@@ -306,10 +330,32 @@ export default function ProspectsPage() {
                             </div>
                             {p.address && <p className="text-xs text-gray-600 mt-0.5">{p.address}</p>}
                           </td>
-                          <td className="px-4 py-4">
-                            <Badge variant={statusBadge[p.status] as any || "secondary"}>
+                          <td className="px-4 py-4 relative">
+                            <button
+                              onClick={() => setOpenStatusId(openStatusId === p.id ? null : p.id)}
+                              className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border font-medium transition-opacity hover:opacity-80 ${STATUS_CLS[p.status] ?? STATUS_CLS.NEW}`}
+                            >
+                              {STATUS_EMOJI[p.status] ?? null}
                               {t(`pst_${p.status}` as any) || p.status}
-                            </Badge>
+                              {!AUTO_STATUSES.has(p.status) || true ? <span className="opacity-40 ml-0.5">▾</span> : null}
+                            </button>
+                            {openStatusId === p.id && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setOpenStatusId(null)} />
+                                <div className="absolute z-50 top-full mt-1 left-0 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-1 min-w-[170px]">
+                                  {MANUAL_STATUSES.map(s => (
+                                    <button
+                                      key={s}
+                                      onClick={() => updateProspectStatus(p.id, s)}
+                                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm hover:bg-gray-800 transition-colors text-left ${(p.status as string) === s ? "bg-gray-800 font-medium" : "text-gray-300"}`}
+                                    >
+                                      <span>{STATUS_EMOJI[s]}</span>
+                                      <span>{t(`pst_${s}` as any)}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
                           </td>
                           <td className="px-4 py-4 hidden sm:table-cell">
                             {(() => {

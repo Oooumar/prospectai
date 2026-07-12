@@ -14,6 +14,7 @@ import Link from "next/link";
 import {
   Megaphone, Plus, Play, Pause, Trash2, Loader2,
   Mail, Target, BarChart2, Sparkles, ArrowRight,
+  Send, Eye, MessageSquare, Flame, TrendingUp, Pencil, Check,
 } from "lucide-react";
 import type { Campaign } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -23,6 +24,10 @@ const statusColors: Record<string, string> = {
   DRAFT: "secondary", ACTIVE: "success", PAUSED: "warning", COMPLETED: "default",
 };
 
+interface CampaignStats {
+  totalSent: number; openRate: number; replyRate: number; hotProspects: number;
+}
+
 export default function CampaignsPage() {
   const { t } = useI18n();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -30,6 +35,9 @@ export default function CampaignsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [plan, setPlan] = useState<string | null>(null);
+  const [stats, setStats] = useState<CampaignStats | null>(null);
+  const [revenue, setRevenue] = useState<string>("");
+  const [editingRevenue, setEditingRevenue] = useState(false);
   const [form, setForm] = useState({
     name: "", niche: "", city: "", subject: "", template: "", dailyLimit: 20,
   });
@@ -37,6 +45,15 @@ export default function CampaignsPage() {
   useEffect(() => {
     setForm(f => ({ ...f, template: t("cam_default_template") }));
   }, [t]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("cam_revenue");
+    if (saved) setRevenue(saved);
+    fetch("/api/campaigns/stats")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStats(d); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/user/me")
@@ -96,6 +113,58 @@ export default function CampaignsPage() {
   return (
     <>
       <TopBar title={t("cam_title")} description={t("cam_desc")} />
+
+      {stats && (
+        <div className="px-4 sm:px-6 pt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { icon: Send,         label: t("cam_stats_sent"),       value: stats.totalSent.toLocaleString(), color: "text-violet-400", bg: "bg-violet-500/10" },
+            { icon: Eye,          label: t("cam_stats_open_rate"),  value: `${stats.openRate}%`,             color: "text-blue-400",   bg: "bg-blue-500/10" },
+            { icon: MessageSquare,label: t("cam_stats_reply_rate"), value: `${stats.replyRate}%`,            color: "text-emerald-400",bg: "bg-emerald-500/10" },
+            { icon: Flame,        label: t("cam_stats_hot"),        value: stats.hotProspects.toLocaleString(), color: "text-red-400", bg: "bg-red-500/10" },
+          ].map(({ icon: Icon, label, value, color, bg }) => (
+            <div key={label} className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
+                <Icon className={`w-4 h-4 ${color}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg font-bold text-white tabular-nums">{value}</p>
+                <p className="text-xs text-gray-500 truncate">{label}</p>
+              </div>
+            </div>
+          ))}
+          {/* Revenue — editable */}
+          <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              {editingRevenue ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    autoFocus
+                    value={revenue}
+                    onChange={e => setRevenue(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" || e.key === "Escape") { localStorage.setItem("cam_revenue", revenue); setEditingRevenue(false); } }}
+                    className="h-7 text-sm bg-gray-800 border-gray-700 px-2"
+                    placeholder="0 €"
+                  />
+                  <button onClick={() => { localStorage.setItem("cam_revenue", revenue); setEditingRevenue(false); }} className="text-emerald-400 hover:text-emerald-300">
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button onClick={() => setEditingRevenue(true)} className="text-left w-full group">
+                  <p className="text-lg font-bold text-white tabular-nums group-hover:text-amber-300 transition-colors">
+                    {revenue || "—"}
+                    <Pencil className="w-3 h-3 inline ml-1.5 opacity-0 group-hover:opacity-50 transition-opacity" />
+                  </p>
+                </button>
+              )}
+              <p className="text-xs text-gray-500 truncate">{t("cam_stats_revenue")}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="p-4 sm:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">

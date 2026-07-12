@@ -233,6 +233,11 @@ enum ProspectStatus {
   REPLIED
   CONVERTED
   UNSUBSCRIBED
+  HOT
+  TO_FOLLOW_UP
+  LOW_PRIORITY
+  CLIENT
+  NOT_INTERESTED
 }
 
 enum CampaignStatus {

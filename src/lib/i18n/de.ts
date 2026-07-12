@@ -96,6 +96,11 @@ export const de: T = {
   est_OPENED: "Geöffnet", est_REPLIED: "Beantwortet", est_BOUNCED: "Bounced",
   pst_NEW: "Neu", pst_CONTACTED: "Kontaktiert", pst_OPENED: "Geöffnet",
   pst_REPLIED: "Beantwortet", pst_CONVERTED: "Konvertiert", pst_UNSUBSCRIBED: "Abgemeldet",
+  pst_HOT: "Sehr heiß", pst_TO_FOLLOW_UP: "Nachfassen", pst_LOW_PRIORITY: "Niedrige Priorität",
+  pst_CLIENT: "Kunde", pst_NOT_INTERESTED: "Kein Interesse",
+  cam_stats_sent: "E-Mails gesendet", cam_stats_open_rate: "Öffnungsrate",
+  cam_stats_reply_rate: "Antwortrate", cam_stats_hot: "Heiße Interessenten",
+  cam_stats_revenue: "Erzielte Einnahmen",
 
   pp_title: "Interessenten", pp_desc: "{n} Interessenten gefunden",
   pp_search_ph: "Nach Name, E-Mail, Stadt suchen…", pp_scrape_btn: "Interessenten scrapen",

@@ -528,6 +528,26 @@ async function runOnboardingEmail3() {
   return { checked, sent };
 }
 
+// ── Task 6: Follow-up detection ─────────────────────────────────────
+
+async function runFollowUpDetection() {
+  let updated = 0;
+  try {
+    const threshold = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const result = await (prisma.prospect as any).updateMany({
+      where: {
+        status: "CONTACTED",
+        updatedAt: { lt: threshold },
+      },
+      data: { status: "TO_FOLLOW_UP" },
+    });
+    updated = result.count;
+  } catch (err: any) {
+    console.error("[follow-up-detection]", err.message);
+  }
+  return { updated };
+}
+
 // ── Main handler ────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -535,13 +555,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const [autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3] = await Promise.all([
+  const [autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3, followUp] = await Promise.all([
     runAutoCampaigns(),
     runEmailCampaigns(),
     runTrialReminders(),
     runOnboardingEmail2(),
     runOnboardingEmail3(),
+    runFollowUpDetection(),
   ]);
 
-  return NextResponse.json({ autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3 });
+  return NextResponse.json({ autoCampaigns, emailCampaigns, trials, onboarding2, onboarding3, followUp });
 }

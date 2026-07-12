@@ -68,6 +68,11 @@ export interface T {
   // Prospect statuses
   pst_NEW: string; pst_CONTACTED: string; pst_OPENED: string;
   pst_REPLIED: string; pst_CONVERTED: string; pst_UNSUBSCRIBED: string;
+  pst_HOT: string; pst_TO_FOLLOW_UP: string; pst_LOW_PRIORITY: string;
+  pst_CLIENT: string; pst_NOT_INTERESTED: string;
+  // Campaigns stats
+  cam_stats_sent: string; cam_stats_open_rate: string; cam_stats_reply_rate: string;
+  cam_stats_hot: string; cam_stats_revenue: string;
   // Prospects page
   pp_title: string; pp_desc: string; pp_search_ph: string; pp_scrape_btn: string;
   pp_list_title: string; pp_total: string; pp_no: string; pp_no_desc: string;
