@@ -195,6 +195,7 @@ export default function ProspectsPage() {
           <EmailComposer
             prospect={selectedProspect}
             onClose={() => setSelectedProspect(null)}
+            onSent={fetchProspects}
           />
         )}
 
@@ -202,6 +203,7 @@ export default function ProspectsPage() {
           <WhatsAppComposer
             prospect={whatsappProspect}
             onClose={() => setWhatsappProspect(null)}
+            onSent={fetchProspects}
           />
         )}
 

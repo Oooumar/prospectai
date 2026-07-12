@@ -22,9 +22,10 @@ interface Profile {
 interface WhatsAppComposerProps {
   prospect: Prospect;
   onClose: () => void;
+  onSent?: () => void;
 }
 
-export function WhatsAppComposer({ prospect, onClose }: WhatsAppComposerProps) {
+export function WhatsAppComposer({ prospect, onClose, onSent }: WhatsAppComposerProps) {
   const { t } = useI18n();
   const [message, setMessage] = useState("");
   const [generating, setGenerating] = useState(false);
@@ -168,7 +169,15 @@ export function WhatsAppComposer({ prospect, onClose }: WhatsAppComposerProps) {
                 <Button
                   variant="warm"
                   className="flex-1"
-                  onClick={() => window.open(whatsappUrl, "_blank", "noopener,noreferrer")}
+                  onClick={() => {
+                    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+                    fetch(`/api/prospects/${prospect.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ status: "CONTACTED" }),
+                    }).catch(() => {});
+                    onSent?.();
+                  }}
                 >
                   <ExternalLink className="w-4 h-4" />
                   {t("wa_open")}
