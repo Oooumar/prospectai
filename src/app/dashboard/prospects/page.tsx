@@ -46,6 +46,12 @@ const STATUS_EMOJI: Record<string, string> = {
 const MANUAL_STATUSES = ["HOT", "CLIENT", "NOT_INTERESTED", "LOW_PRIORITY"] as const;
 const AUTO_STATUSES = new Set(["NEW", "CONTACTED", "OPENED", "REPLIED", "TO_FOLLOW_UP", "CONVERTED", "UNSUBSCRIBED"]);
 
+type TabType = "to_contact" | "contacted";
+const TAB_STATUSES: Record<TabType, string> = {
+  to_contact: "NEW,LOW_PRIORITY",
+  contacted:  "CONTACTED,OPENED,REPLIED,TO_FOLLOW_UP,HOT,CLIENT,NOT_INTERESTED",
+};
+
 export default function ProspectsPage() {
   const { t } = useI18n();
   const [prospects, setProspects] = useState<Prospect[]>([]);
@@ -65,10 +71,12 @@ export default function ProspectsPage() {
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showEmailCampaignModal, setShowEmailCampaignModal] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
+  const [tab, setTab] = useState<TabType>("to_contact");
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), search });
+    params.set("statusIn", TAB_STATUSES[tab]);
     if (noWebsite) params.set("noWebsite", "true");
     if (withEmail) params.set("withEmail", "true");
     const res = await fetch(`/api/prospects?${params}`);
@@ -76,7 +84,7 @@ export default function ProspectsPage() {
     setProspects(data.prospects || []);
     setTotal(data.total || 0);
     setLoading(false);
-  }, [page, search, noWebsite, withEmail]);
+  }, [page, search, noWebsite, withEmail, tab]);
 
   useEffect(() => { fetchProspects(); }, [fetchProspects]);
 
@@ -212,6 +220,21 @@ export default function ProspectsPage() {
                 </button>
               )}
             </CardTitle>
+            <div className="flex gap-1 pt-3 pb-0 border-b border-gray-800 -mx-6 px-6">
+              {(["to_contact", "contacted"] as TabType[]).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => { setTab(key); setPage(1); setSelectedIds(new Set()); }}
+                  className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors relative ${
+                    tab === key
+                      ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-violet-500"
+                      : "text-gray-500 hover:text-gray-300"
+                  }`}
+                >
+                  {t(key === "to_contact" ? "pp_tab_to_contact" : "pp_tab_contacted")}
+                </button>
+              ))}
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (

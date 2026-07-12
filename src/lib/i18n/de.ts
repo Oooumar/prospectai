@@ -116,6 +116,7 @@ export const de: T = {
   pp_email_filter: "📧 Mit E-Mail", pp_email_badge: "E-Mail",
   pp_page: "Seite {n}", pp_total_label: "{n} Interessenten insgesamt",
   pp_prev: "Zurück", pp_next: "Weiter",
+  pp_tab_to_contact: "Zu kontaktieren", pp_tab_contacted: "Kontaktiert",
 
   cam_title: "Kampagnen", cam_desc: "Verwalten Sie Ihre Akquise-Kampagnen",
   cam_new_btn: "Neue Kampagne", cam_no: "Keine Kampagnen",

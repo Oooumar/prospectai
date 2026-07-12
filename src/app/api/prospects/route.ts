@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status");
+    const statusIn = searchParams.get("statusIn");
     const niche = searchParams.get("niche");
     const noWebsite = searchParams.get("noWebsite") === "true";
     const withEmail = searchParams.get("withEmail") === "true";
@@ -36,6 +37,7 @@ export async function GET(req: NextRequest) {
     const where = {
       userId: session.user.id,
       ...(status && { status: status as any }),
+      ...(statusIn && { status: { in: statusIn.split(",") as any[] } }),
       ...(niche && { niche: { contains: niche, mode: "insensitive" as const } }),
       ...(and.length > 0 && { AND: and }),
     };

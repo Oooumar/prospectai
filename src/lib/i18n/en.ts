@@ -116,6 +116,7 @@ export const en: T = {
   pp_email_filter: "📧 With email", pp_email_badge: "Email",
   pp_page: "Page {n}", pp_total_label: "{n} prospects total",
   pp_prev: "Previous", pp_next: "Next",
+  pp_tab_to_contact: "To contact", pp_tab_contacted: "Contacted",
 
   cam_title: "Campaigns", cam_desc: "Manage your prospecting campaigns",
   cam_new_btn: "New campaign", cam_no: "No campaigns",

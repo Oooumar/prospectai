@@ -116,6 +116,7 @@ export const es: T = {
   pp_email_filter: "📧 Con email", pp_email_badge: "Email",
   pp_page: "Página {n}", pp_total_label: "{n} prospectos en total",
   pp_prev: "Anterior", pp_next: "Siguiente",
+  pp_tab_to_contact: "Por contactar", pp_tab_contacted: "Contactados",
 
   cam_title: "Campañas", cam_desc: "Gestiona tus campañas de prospección",
   cam_new_btn: "Nueva campaña", cam_no: "Sin campañas",

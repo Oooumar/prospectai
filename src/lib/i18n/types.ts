@@ -83,6 +83,7 @@ export interface T {
   pp_mobile_filter: string; pp_mobile_badge: string; pp_landline_badge: string;
   pp_email_filter: string; pp_email_badge: string;
   pp_page: string; pp_total_label: string; pp_prev: string; pp_next: string;
+  pp_tab_to_contact: string; pp_tab_contacted: string;
   // Campaigns
   cam_title: string; cam_desc: string; cam_new_btn: string;
   cam_no: string; cam_no_desc: string; cam_create_first: string;
