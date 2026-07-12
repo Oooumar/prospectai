@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "Studio Video IA Interface",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/ouedraogocheckoumaraziz/pinokio/studio-video-ia/interface/server.py"],
+      "port": 7860
     }
   ]
 }
