@@ -79,6 +79,7 @@ export interface T {
   pp_scrape_now: string; pp_col_prospect: string; pp_col_contact: string;
   pp_col_location: string; pp_col_status: string; pp_website: string;
   pp_email_ai: string; pp_delete_confirm: string;
+  pp_delete_all_btn: string; pp_delete_all_title: string; pp_delete_all_msg: string;
   pp_no_website: string; pp_no_website_badge: string;
   pp_mobile_filter: string; pp_mobile_badge: string; pp_landline_badge: string;
   pp_email_filter: string; pp_email_badge: string;

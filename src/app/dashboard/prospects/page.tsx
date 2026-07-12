@@ -5,6 +5,7 @@ import { TopBar } from "@/components/dashboard/topbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
   Search, Target, Trash2, Mail, Loader2,
   Globe, Ban, Phone, Star, MapPin, Building2, MessageCircle, X, Smartphone, PhoneCall, MailCheck,
@@ -72,6 +73,8 @@ export default function ProspectsPage() {
   const [showEmailCampaignModal, setShowEmailCampaignModal] = useState(false);
   const [openStatusId, setOpenStatusId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabType>("to_contact");
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
+  const [deletingAll, setDeletingAll] = useState(false);
 
   const fetchProspects = useCallback(async () => {
     setLoading(true);
@@ -92,6 +95,15 @@ export default function ProspectsPage() {
     if (!confirm(t("pp_delete_confirm"))) return;
     await fetch(`/api/prospects?id=${id}`, { method: "DELETE" });
     setSelectedIds(prev => { const s = new Set(prev); s.delete(id); return s; });
+    fetchProspects();
+  }
+
+  async function deleteAllProspects() {
+    setDeletingAll(true);
+    await fetch("/api/prospects/all", { method: "DELETE" });
+    setShowDeleteAll(false);
+    setDeletingAll(false);
+    setSelectedIds(new Set());
     fetchProspects();
   }
 
@@ -181,6 +193,14 @@ export default function ProspectsPage() {
           <Button variant="warm" className="w-full sm:w-auto" onClick={() => setShowScraping(true)}>
             <Target className="w-4 h-4" />
             {t("pp_scrape_btn")}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 hover:text-red-300"
+            onClick={() => setShowDeleteAll(true)}
+          >
+            <Trash2 className="w-4 h-4" />
+            {t("pp_delete_all_btn")}
           </Button>
         </div>
 
@@ -497,6 +517,34 @@ export default function ProspectsPage() {
           onClose={() => { setShowEmailCampaignModal(false); setSelectedIds(new Set()); }}
         />
       )}
+
+      <Dialog open={showDeleteAll} onOpenChange={setShowDeleteAll}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-400">
+              <Trash2 className="w-4 h-4" />
+              {t("pp_delete_all_title")}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400 pt-1">
+              {t("pp_delete_all_msg")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDeleteAll(false)} disabled={deletingAll}>
+              {t("cam_form_cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={deleteAllProspects}
+              disabled={deletingAll}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              {t("pp_delete_all_btn")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

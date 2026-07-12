@@ -111,6 +111,8 @@ export const en: T = {
   pp_col_location: "Location", pp_col_status: "Status",
   pp_website: "Website", pp_email_ai: "AI Email",
   pp_delete_confirm: "Delete this prospect?",
+  pp_delete_all_btn: "Delete all", pp_delete_all_title: "Delete all prospects",
+  pp_delete_all_msg: "Are you sure you want to delete all your prospects? This action is irreversible.",
   pp_no_website: "No website", pp_no_website_badge: "No site",
   pp_mobile_filter: "📱 Mobile only", pp_mobile_badge: "Mobile", pp_landline_badge: "Landline",
   pp_email_filter: "📧 With email", pp_email_badge: "Email",

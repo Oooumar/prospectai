@@ -111,6 +111,8 @@ export const de: T = {
   pp_col_location: "Standort", pp_col_status: "Status",
   pp_website: "Webseite", pp_email_ai: "KI-E-Mail",
   pp_delete_confirm: "Diesen Interessenten löschen?",
+  pp_delete_all_btn: "Alle löschen", pp_delete_all_title: "Alle Interessenten löschen",
+  pp_delete_all_msg: "Sind Sie sicher, dass Sie alle Ihre Interessenten löschen möchten? Diese Aktion ist unwiderruflich.",
   pp_no_website: "Ohne Website", pp_no_website_badge: "Keine Site",
   pp_mobile_filter: "📱 Nur Mobil", pp_mobile_badge: "Mobil", pp_landline_badge: "Festnetz",
   pp_email_filter: "📧 Mit E-Mail", pp_email_badge: "E-Mail",
