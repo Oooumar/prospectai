@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, getPlanFromPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 async function getCardFingerprint(customerId: string): Promise<string | null> {
@@ -82,9 +82,15 @@ export async function POST(req: NextRequest) {
       };
       const users = await db.user.findMany({ where: { stripeSubscriptionId: sub.id } });
       if (users.length) {
+        const priceId = sub.items?.data?.[0]?.price?.id;
+        const plan = getPlanFromPriceId(priceId);
+
         await db.user.update({
           where: { id: users[0].id },
-          data: { subscriptionStatus: statusMap[sub.status] ?? sub.status },
+          data: {
+            subscriptionStatus: statusMap[sub.status] ?? sub.status,
+            ...(plan && { plan }),
+          },
         });
       }
       break;

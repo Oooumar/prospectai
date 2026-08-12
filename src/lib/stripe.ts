@@ -10,3 +10,10 @@ export const PLAN_META: Record<string, { price: number; label: string; priceId: 
   pro:     { price: 49, label: "Pro",     priceId: process.env.STRIPE_PRICE_PRO!     },
   agency:  { price: 99, label: "Agency",  priceId: process.env.STRIPE_PRICE_AGENCY!  },
 };
+
+// Reverse lookup: Stripe priceId → our internal plan key (starter/creator/pro/agency)
+export function getPlanFromPriceId(priceId: string | null | undefined): string | null {
+  if (!priceId) return null;
+  const entry = Object.entries(PLAN_META).find(([, meta]) => meta.priceId === priceId);
+  return entry ? entry[0] : null;
+}
