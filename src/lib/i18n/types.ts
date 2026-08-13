@@ -237,4 +237,12 @@ export interface T {
   cmd_pay_title: string; cmd_pay_account: string;
   cmd_pay_after: string; cmd_pay_btn: string;
   cmd_pay_other: string; cmd_pay_journey: string;
+  // /commander/success + /commander/cancel (automated payment result pages)
+  cok_checking_title: string; cok_checking_desc: string;
+  cok_paid_deposit_title: string; cok_paid_deposit_desc: string; cok_paid_deposit_balance: string;
+  cok_paid_full_title: string; cok_paid_full_desc: string; cok_paid_full_balance: string;
+  cok_paid_next: string;
+  cok_failed_title: string; cok_failed_desc: string; cok_retry_btn: string;
+  cok_not_found_title: string; cok_not_found_desc: string;
+  cko_title: string; cko_desc: string;
 }

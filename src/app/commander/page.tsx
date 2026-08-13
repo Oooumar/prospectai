@@ -629,6 +629,7 @@ function CommanderPageInner() {
     setError("");
     setSubmitting(true);
     try {
+      // 1. Create the order
       const res = await fetch("/api/commander", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -644,6 +645,28 @@ function CommanderPageInner() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || t("cmd_form_submitting")); return; }
+
+      // 2. Try to start automated payment (Stripe for europe/amerique, CinetPay
+      // for africa-fr/africa-en). Any failure here (misconfigured keys, network,
+      // provider down) falls through to the manual screen below — the order is
+      // already saved either way, nothing is lost for the client.
+      try {
+        const payRes  = await fetch("/api/commander/pay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: data.id, zone }),
+        });
+        const payData = await payRes.json();
+        if (payRes.ok && payData.url) {
+          window.location.href = payData.url;
+          return;
+        }
+      } catch {
+        // ignored — falls through to the manual-payment success screen
+      }
+
+      // 3. Automated payment unavailable — fall back to the manual flow
+      // (Mobile Money instructions / "we'll contact you" screen below).
       setSubmitted(true);
     } catch {
       setError("Impossible de contacter le serveur. Vérifiez votre connexion.");

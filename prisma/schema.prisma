@@ -283,19 +283,32 @@ enum EmailStatus {
 }
 
 model ServiceOrder {
-  id           String   @id @default(cuid())
-  nom          String
-  entreprise   String?
-  email        String
-  telephone    String
-  besoin       String   @db.Text
-  categorie    String   // "site" | "app"
-  typePrecis   String   // ex: "vitrine" | "pro_seo" | "boutique" | "webapp" | "native"
-  options      String[]
-  marche       String   @default("africa-fr") // "africa-fr" | "africa-en" | "europe" | "amerique"
-  devise       String   @default("FCFA")     // "FCFA" | "USD" | "EUR"
-  prixEstime   Int      // montant dans la devise choisie
-  statut       String   @default("nouvelle")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String        @id @default(cuid())
+  nom              String
+  entreprise       String?
+  email            String
+  telephone        String
+  besoin           String        @db.Text
+  categorie        String        // "site" | "app"
+  typePrecis       String        // ex: "vitrine" | "pro_seo" | "boutique" | "webapp" | "native"
+  options          String[]
+  marche           String        @default("africa-fr") // "africa-fr" | "africa-en" | "europe" | "amerique"
+  devise           String        @default("FCFA")     // "FCFA" | "USD" | "EUR"
+  prixEstime       Int           // montant dans la devise choisie
+  statut           String        @default("nouvelle")
+  paymentStatus    PaymentStatus @default(PENDING)
+  paymentProvider  String?       // "stripe" | "cinetpay"
+  paymentRef       String?       // Stripe session id OU CinetPay transaction_id
+  montantAcompte   Float?        // Montant payé en ligne : 30% (CinetPay, Africa) ou 100% (Stripe, Europe/Amérique), même devise
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([paymentRef])
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }

@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaAdmin } from "@/lib/prisma-admin";
 import { resend } from "@/lib/resend";
+import { VALID_ZONES, ZONE_DEVISE, EUR_XOF_RATE, type Zone } from "@/lib/commander-constants";
 
 const VALID_TYPES      = ["vitrine", "pro_seo", "boutique", "webapp", "native", "menu_qr", "menu_tablet", "menu_staff"] as const;
 const VALID_OPTIONS    = ["reservation", "mobile_money", "espace_client", "seo_avance", "chat_whatsapp", "maintenance"] as const;
 const VALID_CATEGORIES = ["site", "app", "menu"] as const;
-const VALID_ZONES      = ["africa-fr", "africa-en", "europe", "amerique"] as const;
 
 type ValidType     = typeof VALID_TYPES[number];
 type ValidCategory = typeof VALID_CATEGORIES[number];
-type ValidZone     = typeof VALID_ZONES[number];
-
-// Devise imposed by zone — prevents client-side tampering
-const ZONE_DEVISE: Record<ValidZone, string> = {
-  "africa-fr":  "FCFA",
-  "africa-en":  "USD",
-  "europe":     "EUR",
-  "amerique":   "USD",
-};
+// Devise imposed by zone — prevents client-side tampering (ZONE_DEVISE is the source of truth)
+type ValidZone     = Zone;
 
 const ZONE_LABELS: Record<ValidZone, string> = {
   "africa-fr": "🌍 Africa FR (FCFA)",
@@ -53,11 +46,9 @@ const MAINT_RANGE: Record<ValidZone, string> = {
   "amerique":  "$55 – $110/month",
 };
 
-const EUR_RATE = 655.957;
-
 function formatPrice(amount: number, devise: string): string {
   if (devise === "FCFA") {
-    return `${amount.toLocaleString("fr-FR")} FCFA (≈ ${Math.round(amount / EUR_RATE).toLocaleString("fr-FR")} €)`;
+    return `${amount.toLocaleString("fr-FR")} FCFA (≈ ${Math.round(amount / EUR_XOF_RATE).toLocaleString("fr-FR")} €)`;
   }
   if (devise === "USD") return `$${amount.toLocaleString("en-US")}`;
   return `${amount.toLocaleString("fr-FR")} €`;
