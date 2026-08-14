@@ -1,23 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Webhook } from "svix";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
 
-function verifyResendWebhook(req: NextRequest): boolean {
+// Verifies the Resend webhook signature (Svix HMAC) and returns the parsed,
+// authenticated payload — or null if verification fails or is unconfigured.
+// Fails CLOSED: unlike the previous implementation, a missing secret rejects
+// the request instead of skipping verification.
+function verifyResendWebhook(rawBody: string, headers: Headers): { type: string; data: any } | null {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
-  if (!secret) return true;
-  const svixId = req.headers.get("svix-id");
-  const svixSig = req.headers.get("svix-signature");
-  const svixTs = req.headers.get("svix-timestamp");
-  return !!(svixId && svixSig && svixTs);
+  if (!secret) {
+    console.error("[emails/webhook] RESEND_WEBHOOK_SECRET non configuré — webhook refusé");
+    return null;
+  }
+
+  const svixId  = headers.get("svix-id");
+  const svixTs  = headers.get("svix-timestamp");
+  const svixSig = headers.get("svix-signature");
+  if (!svixId || !svixTs || !svixSig) return null;
+
+  try {
+    const wh = new Webhook(secret);
+    return wh.verify(rawBody, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTs,
+      "svix-signature": svixSig,
+    }) as { type: string; data: any };
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(req: NextRequest) {
-  if (!verifyResendWebhook(req)) {
+  const rawBody = await req.text();
+  const event = verifyResendWebhook(rawBody, req.headers);
+
+  if (!event) {
     return NextResponse.json({ error: "Webhook non vérifié" }, { status: 401 });
   }
 
   try {
-    const event = await req.json();
     const { type, data } = event;
 
     if (!data?.message_id) {

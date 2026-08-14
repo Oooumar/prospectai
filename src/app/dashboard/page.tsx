@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Users, Mail, TrendingUp, MessageSquare,
-  Megaphone, Send, Eye, ArrowUpRight
+  Megaphone, Send, Eye, ArrowUpRight, ArrowDownRight, Minus
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { formatDateTime } from "@/lib/utils";
@@ -20,6 +20,22 @@ interface Stats {
   replyRate: number;
   activeCampaigns: number;
   todaySent: number;
+}
+
+interface Change { value: number | null; label: string }
+interface Changes {
+  totalProspects: Change;
+  emailsSent: Change;
+  openRate: Change;
+  replyRate: Change;
+}
+
+// value > 0 → up/green, value < 0 → down/red, value === 0 → flat/grey, null ("Nouveau") → neutral/violet
+function changeStyle(c?: Change) {
+  if (!c || c.value === null) return { icon: null, cls: "text-violet-400" };
+  if (c.value > 0) return { icon: ArrowUpRight, cls: "text-emerald-400" };
+  if (c.value < 0) return { icon: ArrowDownRight, cls: "text-red-400" };
+  return { icon: Minus, cls: "text-gray-500" };
 }
 
 interface RecentEmail {
@@ -38,6 +54,7 @@ const statusColors: Record<string, string> = {
 export default function DashboardPage() {
   const { t } = useI18n();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [changes, setChanges] = useState<Changes | null>(null);
   const [recentEmails, setRecentEmails] = useState<RecentEmail[]>([]);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +64,7 @@ export default function DashboardPage() {
       .then((r) => r.json())
       .then((data) => {
         setStats(data.stats);
+        setChanges(data.changes ?? null);
         setRecentEmails(data.recentEmails || []);
         setChartData(data.chartData || []);
       })
@@ -55,10 +73,10 @@ export default function DashboardPage() {
 
   const cards = stats
     ? [
-        { title: t("dh_total_prospects"), value: stats.totalProspects.toLocaleString(), icon: Users, color: "text-violet-400", bg: "bg-violet-500/10", change: "+12%" },
-        { title: t("dh_emails_sent"), value: stats.emailsSent.toLocaleString(), icon: Send, color: "text-indigo-400", bg: "bg-indigo-500/10", change: "+8%" },
-        { title: t("dh_open_rate"), value: `${stats.openRate}%`, icon: Eye, color: "text-emerald-400", bg: "bg-emerald-500/10", change: "+2.1%" },
-        { title: t("dh_reply_rate"), value: `${stats.replyRate}%`, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-500/10", change: "+0.5%" },
+        { title: t("dh_total_prospects"), value: stats.totalProspects.toLocaleString(), icon: Users, color: "text-violet-400", bg: "bg-violet-500/10", change: changes?.totalProspects },
+        { title: t("dh_emails_sent"), value: stats.emailsSent.toLocaleString(), icon: Send, color: "text-indigo-400", bg: "bg-indigo-500/10", change: changes?.emailsSent },
+        { title: t("dh_open_rate"), value: `${stats.openRate}%`, icon: Eye, color: "text-emerald-400", bg: "bg-emerald-500/10", change: changes?.openRate },
+        { title: t("dh_reply_rate"), value: `${stats.replyRate}%`, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-500/10", change: changes?.replyRate },
       ]
     : [];
 
@@ -74,23 +92,28 @@ export default function DashboardPage() {
                   <CardContent className="p-6"><div className="h-16 bg-gray-800 rounded" /></CardContent>
                 </Card>
               ))
-            : cards.map((card) => (
-                <Card key={card.title} className="hover:border-gray-700 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center`}>
-                        <card.icon className={`w-5 h-5 ${card.color}`} />
+            : cards.map((card) => {
+                const { icon: ChangeIcon, cls } = changeStyle(card.change);
+                return (
+                  <Card key={card.title} className="hover:border-gray-700 transition-colors">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center`}>
+                          <card.icon className={`w-5 h-5 ${card.color}`} />
+                        </div>
+                        {card.change && (
+                          <span className={`flex items-center gap-1 text-xs font-medium ${cls}`}>
+                            {ChangeIcon && <ChangeIcon className="w-3 h-3" />}
+                            {card.change.label}
+                          </span>
+                        )}
                       </div>
-                      <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium">
-                        <ArrowUpRight className="w-3 h-3" />
-                        {card.change}
-                      </span>
-                    </div>
-                    <p className="text-3xl font-bold text-white mb-1">{card.value}</p>
-                    <p className="text-sm text-gray-400">{card.title}</p>
-                  </CardContent>
-                </Card>
-              ))}
+                      <p className="text-3xl font-bold text-white mb-1">{card.value}</p>
+                      <p className="text-sm text-gray-400">{card.title}</p>
+                    </CardContent>
+                  </Card>
+                );
+              })}
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

@@ -1,24 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-const PAYPAL_REQUIRED_HEADERS = [
-  "paypal-transmission-id",
-  "paypal-transmission-time",
-  "paypal-transmission-sig",
-  "paypal-auth-algo",
-];
-
-function verifyPayPalOrigin(req: NextRequest): boolean {
-  return PAYPAL_REQUIRED_HEADERS.every(h => req.headers.get(h));
-}
+import { verifyPayPalWebhookSignature } from "@/lib/paypal";
 
 export async function POST(req: NextRequest) {
-  if (!verifyPayPalOrigin(req)) {
-    return NextResponse.json({ error: "Missing PayPal headers" }, { status: 401 });
+  const authAlgo        = req.headers.get("paypal-auth-algo");
+  const certUrl         = req.headers.get("paypal-cert-url");
+  const transmissionId  = req.headers.get("paypal-transmission-id");
+  const transmissionSig = req.headers.get("paypal-transmission-sig");
+  const transmissionTime = req.headers.get("paypal-transmission-time");
+
+  if (!authAlgo || !certUrl || !transmissionId || !transmissionSig || !transmissionTime) {
+    return NextResponse.json({ error: "Headers PayPal manquants" }, { status: 401 });
+  }
+
+  const event = await req.json();
+
+  // Real cryptographic verification via PayPal's own API — never trust
+  // header presence alone (see src/lib/paypal.ts for details).
+  const verified = await verifyPayPalWebhookSignature({
+    authAlgo,
+    certUrl,
+    transmissionId,
+    transmissionSig,
+    transmissionTime,
+    webhookEvent: event,
+  });
+
+  if (!verified) {
+    return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
   }
 
   try {
-    const event = await req.json();
     const db = prisma as any;
 
     switch (event.event_type) {

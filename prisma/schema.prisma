@@ -198,6 +198,7 @@ model EmailLog {
 
   @@index([userId])
   @@index([prospectId])
+  @@index([campaignId])
 }
 
 model InboundEmail {

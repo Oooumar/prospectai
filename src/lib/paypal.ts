@@ -9,7 +9,7 @@ export const PAYPAL_PLAN_IDS: Record<string, string> = {
   agency:  process.env.PAYPAL_AGENCY_PLAN_ID!,
 };
 
-async function getToken(): Promise<string> {
+export async function getToken(): Promise<string> {
   const creds = Buffer.from(
     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
   ).toString("base64");
@@ -59,4 +59,50 @@ export async function createPayPalSubscription(
 
   const approvalUrl = data.links?.find((l: any) => l.rel === "approve")?.href;
   return { id: data.id, approvalUrl };
+}
+
+// Real cryptographic verification of an inbound PayPal webhook, via PayPal's
+// own verify-webhook-signature endpoint (server-to-server — PayPal itself
+// confirms whether the transmission signature is genuine; we never verify it
+// locally). Fails CLOSED: any missing config, network error, or non-SUCCESS
+// verdict returns false, never a default "trust it" pass-through.
+export async function verifyPayPalWebhookSignature(params: {
+  authAlgo: string;
+  certUrl: string;
+  transmissionId: string;
+  transmissionSig: string;
+  transmissionTime: string;
+  webhookEvent: unknown;
+}): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) {
+    console.error("[paypal] PAYPAL_WEBHOOK_ID non configuré — webhook refusé");
+    return false;
+  }
+
+  try {
+    const token = await getToken();
+    const res = await fetch(`${PAYPAL_API}/v1/notifications/verify-webhook-signature`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        auth_algo: params.authAlgo,
+        cert_url: params.certUrl,
+        transmission_id: params.transmissionId,
+        transmission_sig: params.transmissionSig,
+        transmission_time: params.transmissionTime,
+        webhook_id: webhookId,
+        webhook_event: params.webhookEvent,
+      }),
+    });
+
+    const data = await res.json();
+    return data.verification_status === "SUCCESS";
+  } catch (err: any) {
+    console.error("[paypal] webhook verification failed:", err.message);
+    return false;
+  }
 }
