@@ -3,7 +3,7 @@
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Zap, Clock, Phone, MessageCircle, LogOut, RefreshCw } from "lucide-react";
+import { Zap, Clock, Phone, MessageCircle, LogOut, RefreshCw, CreditCard, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // ── Mobile Money payment coordinates ────────────────────────────────────────
@@ -26,6 +26,22 @@ export default function PendingPaymentPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [subStatus, setSubStatus] = useState<string>("pending");
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  async function handleAddCard() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      // fall through
+    }
+    setPortalLoading(false);
+  }
 
   // If the session disappears, redirect to sign-in
   useEffect(() => {
@@ -53,6 +69,44 @@ export default function PendingPaymentPage() {
   }, [router]);
 
   if (status === "loading") return null;
+
+  // Trial ended with no payment method on file (Stripe subscription "paused").
+  // Single, dedicated screen — no other exit than adding a card. Account and
+  // data (prospects, history) are untouched; only feature access is blocked.
+  if (subStatus === "paused") {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/25 mb-2">
+            <Lock className="w-7 h-7 text-red-400" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold text-white">Votre essai gratuit est terminé</h1>
+            <p className="text-gray-400 text-sm leading-relaxed">
+              Ajoutez votre carte bancaire pour continuer à utiliser ProspectAI.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 text-left space-y-2">
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Votre compte, vos prospects et votre historique sont conservés — l'accès aux fonctionnalités
+              (scraping, génération email/WhatsApp, campagnes) reprend dès qu'une carte est enregistrée.
+            </p>
+          </div>
+          <Button variant="gradient" className="w-full" onClick={handleAddCard} disabled={portalLoading}>
+            {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+            Ajouter ma carte bancaire
+          </Button>
+          <button
+            onClick={() => signOut({ callbackUrl: "/auth/signin" })}
+            className="flex items-center justify-center gap-1.5 w-full text-sm text-gray-500 hover:text-gray-300 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Se déconnecter
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const trialExpired = subStatus === "trialing";
   const title  = trialExpired ? "Votre essai gratuit a expiré" : "Compte en attente d'activation";

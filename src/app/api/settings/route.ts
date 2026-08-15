@@ -24,7 +24,7 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true, plan: true },
+      select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true, plan: true, subscriptionStatus: true, paymentMethod: true, trialEndsAt: true },
     });
 
     const planLimits = user ? getPlanLimits((user as any).plan ?? "starter") : null;

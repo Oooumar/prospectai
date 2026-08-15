@@ -135,17 +135,26 @@ function normalizeCountry(country: string): string {
  * primary commercial language today.
  */
 export function resolveEmailLanguage(prospect: { city: string; country?: string | null }): EmailLanguage {
+  // TEMP DEBUG — trace exactly what this function receives and decides.
+  // Remove once the country-based detection is confirmed stable in production.
+  const trace = (result: EmailLanguage, path: string) => {
+    console.log(
+      `[resolveEmailLanguage] city=${JSON.stringify(prospect.city)} country=${JSON.stringify(prospect.country)} -> path=${path} -> lang=${result}`
+    );
+    return result;
+  };
+
   if (prospect.country) {
     const iso = normalizeCountry(prospect.country);
 
     if (iso in AMBIGUOUS_COUNTRY_DEFAULT) {
       const cityLang = LANG_CITIES[prospect.city.toLowerCase().trim()];
-      return cityLang ?? AMBIGUOUS_COUNTRY_DEFAULT[iso];
+      return trace(cityLang ?? AMBIGUOUS_COUNTRY_DEFAULT[iso], cityLang ? "ambiguous-country/city-match" : "ambiguous-country/default");
     }
-    return COUNTRY_LANG[iso] ?? "fr";
+    return trace(COUNTRY_LANG[iso] ?? "fr", iso in COUNTRY_LANG ? "country-match" : "country-unmapped/fr-default");
   }
 
-  return detectEmailLanguage(prospect.city);
+  return trace(detectEmailLanguage(prospect.city), "no-country/legacy-city-fallback");
 }
 
 export function detectEmailLanguage(city: string): EmailLanguage {

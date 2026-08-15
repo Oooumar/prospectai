@@ -108,6 +108,40 @@ export async function POST(req: NextRequest) {
       break;
     }
 
+    // Trial ended with no payment method on file (trial_settings.end_behavior
+    // .missing_payment_method: "pause", set in /api/checkout/stripe). The
+    // subscription — and the customer/user record — are kept intact; only
+    // access is blocked (dashboard/layout.tsx redirects to /pending-payment
+    // for any status that isn't "active" or a still-valid "trialing").
+    case "customer.subscription.paused": {
+      const sub = event.data.object as any;
+      const users = await db.user.findMany({ where: { stripeSubscriptionId: sub.id } });
+      if (users.length) {
+        await db.user.update({
+          where: { id: users[0].id },
+          data: { subscriptionStatus: "paused" },
+        });
+      }
+      break;
+    }
+
+    // Customer added a payment method via the Customer Portal for a paused
+    // subscription ("Start subscription" flow) — Stripe resumes it and
+    // attempts the first charge. invoice.payment_succeeded below also fires
+    // and sets "active"; this handler covers the resume itself in case that
+    // event lags or the charge is still processing.
+    case "customer.subscription.resumed": {
+      const sub = event.data.object as any;
+      const users = await db.user.findMany({ where: { stripeSubscriptionId: sub.id } });
+      if (users.length) {
+        await db.user.update({
+          where: { id: users[0].id },
+          data: { subscriptionStatus: sub.status === "active" ? "active" : "trialing" },
+        });
+      }
+      break;
+    }
+
     case "invoice.payment_succeeded": {
       const invoice = event.data.object as any;
       if (invoice.subscription && invoice.billing_reason !== "subscription_create") {

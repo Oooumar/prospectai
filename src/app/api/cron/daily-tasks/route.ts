@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { searchGooglePlaces, extractCountry } from "@/lib/google-places";
 import { extractEmailsBatch } from "@/lib/email-extractor";
 import { generateProspectEmail, resolveEmailLanguage } from "@/lib/groq";
+import { stripe } from "@/lib/stripe";
 
 function checkCronAuth(req: NextRequest): boolean {
   const expected = process.env.CRON_SECRET;
@@ -317,10 +318,34 @@ async function runTrialReminders() {
           day: "numeric", month: "long", year: "numeric",
         });
 
+        // Stripe users signed up with no card on file (payment_method_collection:
+        // "if_required") — invite them to add one via the Customer Portal before
+        // the trial ends, instead of the old "your card will be charged" copy,
+        // which no longer describes reality now that no card is captured upfront.
+        let ctaUrl = `${process.env.NEXTAUTH_URL}/dashboard/settings`;
+        let ctaLabel = "Gérer mon abonnement";
+        let bodyMsg = `À cette date, votre abonnement <strong style="color:#fff">${planLabel}</strong> sera automatiquement activé selon la méthode de paiement enregistrée.`;
+
+        if (user.stripeCustomerId) {
+          bodyMsg = `Aucune carte n'est enregistrée sur votre compte. Ajoutez-en une avant cette date pour continuer à utiliser ProspectAI sans interruption — sinon l'accès à votre compte sera bloqué jusqu'à ce que vous en ajoutiez une (vos prospects et votre historique restent intacts).`;
+          ctaLabel = "Ajouter ma carte bancaire";
+          try {
+            const portalSession = await stripe.billingPortal.sessions.create({
+              customer: user.stripeCustomerId,
+              return_url: `${process.env.NEXTAUTH_URL}/dashboard`,
+            });
+            ctaUrl = portalSession.url;
+          } catch (err: any) {
+            console.error(`[trial-reminder] portal session failed for ${user.id}:`, err.message);
+          }
+        }
+
         await resend.emails.send({
           from: process.env.RESEND_FROM_EMAIL!,
           to: user.email,
-          subject: "⏰ Votre essai ProspectAI se termine dans 2 jours",
+          subject: user.stripeCustomerId
+            ? "⏰ Ajoutez votre carte avant la fin de votre essai ProspectAI"
+            : "⏰ Votre essai ProspectAI se termine dans 2 jours",
           html: `<!DOCTYPE html>
 <html>
 <body style="background:#0d0d10;color:#e5e7eb;font-family:sans-serif;padding:40px 20px;max-width:600px;margin:0 auto">
@@ -335,11 +360,10 @@ async function runTrialReminders() {
     <p style="color:#9ca3af;margin:0 0 24px">Bonjour ${user.name ?? ""},</p>
     <div style="background:#1f2937;border-radius:12px;padding:20px;margin-bottom:24px">
       <p style="margin:0;color:#d1d5db">Votre essai gratuit de <strong style="color:#fff">14 jours</strong> se termine le <strong style="color:#a78bfa">${endDate}</strong>.</p>
-      <p style="margin:12px 0 0;color:#d1d5db">À cette date, votre abonnement <strong style="color:#fff">${planLabel}</strong> sera automatiquement activé selon la méthode de paiement enregistrée.</p>
+      <p style="margin:12px 0 0;color:#d1d5db">${bodyMsg}</p>
     </div>
-    <p style="color:#9ca3af;margin:0 0 24px">Pour annuler ou modifier votre abonnement avant la fin de l'essai, rendez-vous dans vos paramètres.</p>
     <div style="text-align:center">
-      <a href="${process.env.NEXTAUTH_URL}/dashboard/settings" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600">Gérer mon abonnement</a>
+      <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600">${ctaLabel}</a>
     </div>
   </div>
   <p style="text-align:center;color:#4b5563;font-size:12px;margin-top:24px">ProspectAI · prospection automatisée B2B</p>

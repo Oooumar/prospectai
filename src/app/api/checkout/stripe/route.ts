@@ -20,8 +20,20 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       customer_email: session.user.email!,
       line_items: [{ price: meta.priceId, quantity: 1 }],
+      // No card required to start the trial — Checkout only collects a
+      // payment method if something is due today (it isn't, during a trial).
+      payment_method_collection: "if_required",
       subscription_data: {
         trial_period_days: 14,
+        // Explicit, not left to Stripe's default: if the trial ends with no
+        // payment method on file, PAUSE the subscription rather than cancel
+        // it. This keeps the Stripe customer/subscription (and our User row
+        // + all their data) intact — access is gated by subscriptionStatus
+        // in dashboard/layout.tsx, and resumes automatically once a card is
+        // added via the Customer Portal (see /api/billing/portal).
+        trial_settings: {
+          end_behavior: { missing_payment_method: "pause" },
+        },
         metadata: { userId: session.user.id, plan },
       },
       metadata: { userId: session.user.id, plan },

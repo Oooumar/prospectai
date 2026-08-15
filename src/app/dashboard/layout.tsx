@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id as string },
-    select: { subscriptionStatus: true, role: true, trialEndsAt: true },
+    select: { subscriptionStatus: true, role: true, trialEndsAt: true, paymentMethod: true },
   });
 
   const isAdmin    = dbUser?.role === "admin";
@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileOverlay />
         <Sidebar />
         <main className="flex-1 ml-0 md:ml-64 overflow-y-auto">
-          {daysLeft !== null && <TrialBanner daysLeft={daysLeft} />}
+          {daysLeft !== null && <TrialBanner daysLeft={daysLeft} isStripe={dbUser?.paymentMethod === "stripe"} />}
           {children}
         </main>
       </div>

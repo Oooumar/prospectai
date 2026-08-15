@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle, Info, Plus, Pencil, Trash2, Star, X } from "lucide-react";
+import { User, Shield, Zap, Loader2, Check, Globe, Building2, MessageCircle, Info, Plus, Pencil, Trash2, Star, X, CreditCard, AlertTriangle } from "lucide-react";
 import { getInitials, formatDate } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
 import { LanguageSelector } from "@/components/language-selector";
@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<any>(null);
   const [warmup, setWarmup] = useState<{ limit: number; tier: string; daysLeft: number } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({ name: "" });
   const [pwForm, setPwForm] = useState({ current: "", new: "", confirm: "" });
@@ -86,6 +87,21 @@ export default function SettingsPage() {
   function flash(text: string, ok = true) {
     setProfileMsg({ text, ok });
     setTimeout(() => setProfileMsg(null), 2500);
+  }
+
+  async function openBillingPortal() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/billing/portal", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      // fall through
+    }
+    setPortalLoading(false);
   }
 
   async function saveProfile() {
@@ -270,6 +286,35 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Billing — Stripe users only */}
+        {user?.paymentMethod === "stripe" && (
+          <Card className={user?.subscriptionStatus === "paused" ? "border-red-500/40" : undefined}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <CreditCard className="w-4 h-4 text-violet-400" />
+                Facturation
+              </CardTitle>
+              <CardDescription>
+                {user?.subscriptionStatus === "paused"
+                  ? "Votre essai est terminé et aucune carte n'est enregistrée — l'accès est bloqué jusqu'à l'ajout d'une carte."
+                  : "Gérez votre moyen de paiement via le portail sécurisé Stripe."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {user?.subscriptionStatus === "paused" && (
+                <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-sm text-red-300">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  Aucune carte bancaire enregistrée
+                </div>
+              )}
+              <Button variant="gradient" onClick={openBillingPortal} disabled={portalLoading}>
+                {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                Ajouter ma carte bancaire
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Language */}
         <Card>
