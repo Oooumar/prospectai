@@ -114,7 +114,9 @@ export interface T {
   set_save: string; set_saved: string;
   set_limits_title: string; set_limits_desc: string;
   set_limit_label: string; set_limit_hint: string; set_update: string;
-  set_warmup_desc: string; set_warmup_next: string; set_warmup_hint: string;
+  set_warmup_desc: string; set_warmup_hint: string;
+  set_current_tier: string; set_current_plan: string; set_sent_today_label: string;
+  set_account_age: string; set_account_age_today: string; set_upgrade_cta: string;
   set_security_title: string; set_security_desc: string;
   set_current_pw: string; set_new_pw: string; set_confirm_pw: string;
   set_save_pw: string; set_saved_pw: string; set_pw_mismatch: string; set_pw_wrong: string;

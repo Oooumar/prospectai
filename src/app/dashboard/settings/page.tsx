@@ -39,7 +39,10 @@ export default function SettingsPage() {
   const { data: session, update } = useSession();
   const { t } = useI18n();
   const [user, setUser] = useState<any>(null);
-  const [warmup, setWarmup] = useState<{ limit: number; tier: string; daysLeft: number } | null>(null);
+  const [warmup, setWarmup] = useState<{
+    limit: number; sentToday: number; plan: string; planLabel: string | null;
+    accountAgeDays: number; nextPlan: string | null; nextPlanLabel: string | null; nextPlanLimit: number | null;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -451,7 +454,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Sending limits — warmup */}
+        {/* Sending limits — real numbers for this account */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -463,30 +466,52 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             {warmup && (
               <>
+                {/* 1. Current tier */}
                 <div className="flex items-center gap-4">
-                  <div className="text-center">
+                  <div className="text-center shrink-0">
                     <p className="text-3xl font-bold text-white">{warmup.limit}</p>
                     <p className="text-xs text-gray-400">{t("set_limit_label")}</p>
                   </div>
-                  <div className="flex-1 space-y-1.5">
-                    {[
-                      { tier: "1", label: "5/j", range: "J1–14" },
-                      { tier: "2", label: "15/j", range: "J15–28" },
-                      { tier: "3", label: "30/j", range: "J29+" },
-                    ].map(s => (
-                      <div key={s.tier} className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${s.tier === warmup.tier ? "bg-emerald-400" : s.tier < warmup.tier ? "bg-gray-600" : "bg-gray-800"}`} />
-                        <span className={`text-xs ${s.tier === warmup.tier ? "text-emerald-400 font-medium" : "text-gray-500"}`}>
-                          {s.range} — {s.label}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm text-white font-medium">
+                      {t("set_current_tier", { limit: warmup.limit })}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {t("set_current_plan", { plan: warmup.planLabel ?? warmup.plan })}
+                    </p>
                   </div>
                 </div>
-                {warmup.daysLeft > 0 && (
-                  <p className="text-xs text-amber-400">
-                    {t("set_warmup_next", { days: warmup.daysLeft })}
-                  </p>
+
+                {/* 4. Sent today vs limit */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">{t("set_sent_today_label")}</span>
+                    <span className="text-white font-medium tabular-nums">
+                      {warmup.sentToday}/{warmup.limit}
+                    </span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-gray-800 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${warmup.sentToday >= warmup.limit ? "bg-red-500" : "bg-emerald-500"}`}
+                      style={{ width: `${Math.min(100, (warmup.sentToday / Math.max(warmup.limit, 1)) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* 2. Account age */}
+                <p className="text-xs text-gray-400">
+                  {warmup.accountAgeDays <= 0 ? t("set_account_age_today") : t("set_account_age", { days: warmup.accountAgeDays })}
+                </p>
+
+                {/* 3. Upgrade path — real plan-based CTA instead of a fake day countdown */}
+                {warmup.nextPlan && (
+                  <a
+                    href="/pending-payment"
+                    className="flex items-center gap-2 text-xs text-violet-300 hover:text-violet-200 hover:underline"
+                  >
+                    <Zap className="w-3.5 h-3.5 shrink-0" />
+                    {t("set_upgrade_cta", { plan: warmup.nextPlanLabel ?? warmup.nextPlan, limit: warmup.nextPlanLimit ?? 0 })}
+                  </a>
                 )}
               </>
             )}

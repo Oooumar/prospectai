@@ -41,7 +41,7 @@ export default function WhatsAppCampaignsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (plan === "decouverte" || plan === "starter") {
+  if (plan === "starter" || plan === "creator") {
     return (
       <>
         <TopBar title={t("wc_page_title")} description={t("wc_page_desc")} />

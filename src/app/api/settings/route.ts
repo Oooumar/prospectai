@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { getPlanLimits, PLAN_DISPLAY } from "@/lib/plan-limits";
+import { getPlanLimits, PLAN_DISPLAY, NEXT_PLAN } from "@/lib/plan-limits";
+import { todayStart } from "@/lib/email-limits";
 
 const updateSchema = z.object({
   name: z.string().min(2).optional(),
@@ -27,9 +28,31 @@ export async function GET() {
       select: { id: true, name: true, email: true, dailyLimit: true, createdAt: true, image: true, companyName: true, website: true, productDescription: true, whatsappNumber: true, plan: true, subscriptionStatus: true, paymentMethod: true, trialEndsAt: true },
     });
 
-    const planLimits = user ? getPlanLimits((user as any).plan ?? "starter") : null;
-    const planLabel = user ? (PLAN_DISPLAY[(user as any).plan ?? "starter"] ?? "STARTER") : null;
-    return NextResponse.json({ user, planLimits, planLabel });
+    const plan = (user as any)?.plan ?? "starter";
+    const planLimits = user ? getPlanLimits(plan) : null;
+    const planLabel = user ? (PLAN_DISPLAY[plan] ?? "STARTER") : null;
+
+    let warmup = null;
+    if (user) {
+      const sentToday = await prisma.emailLog.count({
+        where: { userId: user.id, status: { in: ["SENT", "PENDING"] }, sentAt: { gte: todayStart() } },
+      });
+      const accountAgeDays = Math.floor((Date.now() - new Date((user as any).createdAt).getTime()) / 86_400_000);
+      const nextPlan = NEXT_PLAN[plan];
+
+      warmup = {
+        limit: planLimits!.emailsPerDay,
+        sentToday,
+        plan,
+        planLabel,
+        accountAgeDays,
+        nextPlan: nextPlan ?? null,
+        nextPlanLabel: nextPlan ? PLAN_DISPLAY[nextPlan] : null,
+        nextPlanLimit: nextPlan ? getPlanLimits(nextPlan).emailsPerDay : null,
+      };
+    }
+
+    return NextResponse.json({ user, planLimits, planLabel, warmup });
   } catch (err: any) {
     console.error("[settings] GET:", err.message);
     return NextResponse.json({ error: "Erreur interne" }, { status: 500 });

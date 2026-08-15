@@ -101,11 +101,11 @@ export default function CampaignsPage() {
     fetchCampaigns();
   }
 
-  if (plan === "decouverte") {
+  if (plan === "starter") {
     return (
       <>
         <TopBar title={t("cam_title")} description={t("cam_desc")} />
-        <PlanGate currentPlan="decouverte" requiredPlan="starter" feature="Campagnes email" />
+        <PlanGate currentPlan="starter" requiredPlan="creator" feature="Campagnes email" />
       </>
     );
   }

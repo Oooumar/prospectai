@@ -1,4 +1,16 @@
-export type Plan = "decouverte" | "starter" | "pro" | "business";
+// Plan keys match the real, live taxonomy used everywhere else (Stripe
+// PLAN_META in src/lib/stripe.ts, auth/register's zod schema, signup form):
+// starter (9€) / creator (19€) / pro (49€) / agency (99€).
+//
+// Previously these keys were "decouverte/starter/pro/business" — an older
+// FCFA-based 4-tier naming that no longer matched what users actually sign
+// up with. getPlanLimits() silently fell back to the lowest tier for any
+// unrecognized key, so every "creator" and "agency" account was capped at
+// starter-tier limits everywhere (emails/day, prospects, scraping,
+// campaigns...), not just in display. Renamed keys below, values carried
+// over 1:1 in the same ascending order (decouverte->starter, starter->
+// creator, pro->pro, business->agency) — no limit values were invented.
+export type Plan = "starter" | "creator" | "pro" | "agency";
 
 export interface PlanLimits {
   maxProspects: number;       // -1 = illimité
@@ -14,7 +26,7 @@ export interface PlanLimits {
 }
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
-  decouverte: {
+  starter: {
     maxProspects: 100,
     scrapingPerSearch: 20,
     scrapingPerDay: 50,
@@ -26,7 +38,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     maxProfiles: 1,
     imageUpload: false,
   },
-  starter: {
+  creator: {
     maxProspects: 500,
     scrapingPerSearch: 40,
     scrapingPerDay: 200,
@@ -50,7 +62,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     maxProfiles: 5,
     imageUpload: true,
   },
-  business: {
+  agency: {
     maxProspects: -1,
     scrapingPerSearch: 100,
     scrapingPerDay: -1,
@@ -65,23 +77,26 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
 };
 
 export const PLAN_DISPLAY: Record<string, string> = {
-  decouverte: "DÉCOUVERTE",
   starter: "STARTER",
+  creator: "CREATOR",
   pro: "PRO",
-  business: "BUSINESS",
+  agency: "AGENCY",
 };
 
+// Real Stripe prices (see PLAN_META in src/lib/stripe.ts — kept in sync
+// manually since that file instantiates the Stripe SDK and must stay
+// server-only, so it can't be imported from here into client components).
 export const PLAN_PRICE: Record<string, string> = {
-  decouverte: "10 000 FCFA/mois",
-  starter: "20 000 FCFA/mois",
-  pro: "35 000 FCFA/mois",
-  business: "60 000 FCFA/mois",
+  starter: "9€/mois",
+  creator: "19€/mois",
+  pro: "49€/mois",
+  agency: "99€/mois",
 };
 
 export const NEXT_PLAN: Partial<Record<string, Plan>> = {
-  decouverte: "starter",
-  starter: "pro",
-  pro: "business",
+  starter: "creator",
+  creator: "pro",
+  pro: "agency",
 };
 
 export function getPlanLimits(plan: string): PlanLimits {
