@@ -29,6 +29,7 @@ export const fr: T = {
   price_title: "Tarifs simples et transparents", price_sub: "Sans engagement. Annulez à tout moment.",
   price_trial_banner: "Essai gratuit 14 jours sur tous les plans — aucun prélèvement avant le jour 15",
   price_month: "/mois", price_trial_then: "Essai gratuit 14 jours puis {price}/mois",
+  price_fx_note: "Facturé {eur}€/mois via Stripe — montant converti à titre indicatif",
   price_trial_btn: "Essai gratuit 14 jours",
   price_payment_note: "Paiement par carte bancaire (Stripe) ou PayPal · Annulation en 1 clic",
 

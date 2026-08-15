@@ -18,12 +18,20 @@ type PriceZone = "africa-fr" | "africa-en" | "europe" | "amerique";
 const ZONE_COOKIE = "prospectai_zone";
 const VALID_ZONES: PriceZone[] = ["africa-fr", "africa-en", "europe", "amerique"];
 
-// Prices per zone, indexed by plan (0=Starter, 1=Creator, 2=Pro, 3=Agency)
+// Prices per zone, indexed by plan (0=Starter, 1=Creator, 2=Pro, 3=Agency).
+// Stripe always charges these 4 plans in EUR (9/19/49/99€ — see PLAN_META in
+// src/lib/stripe.ts), regardless of the zone shown here: checkout never
+// receives a zone parameter, so there is no real multi-currency billing.
+// "europe" is therefore the only row that's an exact match; the others are
+// currency-converted display estimates (FCFA via the official EUR/XOF peg —
+// exact; USD via a derived, documented rate — see EUR_REFERENCE below and
+// the fx note shown on non-EUR cards).
+const EUR_REFERENCE = ["9", "19", "49", "99"]; // Stripe's real, fixed EUR price per plan
 const ZONE_PRICES: Record<PriceZone, string[]> = {
-  "africa-fr": ["10 000", "20 000", "35 000", "60 000"],
-  "africa-en": ["8",      "16",     "28",     "48"],
-  "europe":    ["9",      "19",     "35",     "59"],
-  "amerique":  ["10",     "20",     "40",     "65"],
+  "africa-fr": ["5 900", "12 450", "32 150", "64 950"], // EUR × 655.957 (XOF peg), rounded to nearest 50
+  "africa-en": ["10",    "21",     "54",     "108"],     // EUR × ~1.093 (derived from the XOF peg), rounded
+  "europe":    ["9",     "19",     "49",     "99"],      // exact — same price Stripe charges
+  "amerique":  ["10",    "21",     "54",     "108"],
 };
 
 const ZONE_OPTIONS: { id: PriceZone; emoji: string; label: string }[] = [
@@ -337,6 +345,11 @@ export default function LandingPage() {
                       <p className="text-xs text-emerald-400 font-medium">
                         {t("price_trial_then", { price: formatted })}
                       </p>
+                      {zone !== "europe" && (
+                        <p className="text-[10px] text-gray-500">
+                          {t("price_fx_note", { eur: EUR_REFERENCE[idx] })}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <ul className="space-y-2.5 flex-1 mb-6">

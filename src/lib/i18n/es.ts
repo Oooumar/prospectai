@@ -29,6 +29,7 @@ export const es: T = {
   price_title: "Precios simples y transparentes", price_sub: "Sin compromiso. Cancela cuando quieras.",
   price_trial_banner: "Prueba gratuita 14 días en todos los planes — sin cargo antes del día 15",
   price_month: "/mes", price_trial_then: "Prueba gratuita 14 días luego {price}/mes",
+  price_fx_note: "Facturado {eur}€/mes vía Stripe — importe convertido a título informativo",
   price_trial_btn: "Iniciar prueba gratuita de 14 días",
   price_payment_note: "Pago con tarjeta (Stripe) o PayPal · Cancelación en 1 clic",
 

@@ -29,6 +29,7 @@ export const it: T = {
   price_title: "Prezzi semplici e trasparenti", price_sub: "Senza impegno. Disdici in qualsiasi momento.",
   price_trial_banner: "Prova gratuita 14 giorni su tutti i piani — nessun addebito prima del giorno 15",
   price_month: "/mese", price_trial_then: "Prova gratuita 14 giorni poi {price}/mese",
+  price_fx_note: "Fatturato {eur}€/mese via Stripe — importo convertito a titolo indicativo",
   price_trial_btn: "Inizia la prova gratuita di 14 giorni",
   price_payment_note: "Pagamento con carta (Stripe) o PayPal · Disdetta in 1 clic",
 

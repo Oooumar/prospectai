@@ -29,6 +29,7 @@ export const de: T = {
   price_title: "Einfache, transparente Preise", price_sub: "Keine Bindung. Jederzeit kündbar.",
   price_trial_banner: "14-tägige kostenlose Testphase für alle Pläne — keine Belastung vor Tag 15",
   price_month: "/Monat", price_trial_then: "Kostenlose Testphase 14 Tage dann {price}/Monat",
+  price_fx_note: "Abgerechnet {eur}€/Monat über Stripe — Betrag nur zur Orientierung umgerechnet",
   price_trial_btn: "14-tägige kostenlose Testphase starten",
   price_payment_note: "Zahlung per Kreditkarte (Stripe) oder PayPal · Kündigung in 1 Klick",
 

@@ -15,7 +15,7 @@ export interface T {
   feat3_title: string; feat3_desc: string; feat4_title: string; feat4_desc: string;
   // Pricing
   price_title: string; price_sub: string; price_trial_banner: string;
-  price_month: string; price_trial_then: string; price_trial_btn: string; price_payment_note: string;
+  price_month: string; price_trial_then: string; price_trial_btn: string; price_payment_note: string; price_fx_note: string;
   // Plan descriptions
   plan_starter_desc: string; plan_creator_desc: string; plan_pro_desc: string; plan_agency_desc: string;
   plan_popular_badge: string;
