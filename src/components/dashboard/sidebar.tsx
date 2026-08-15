@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Target, Mail, Megaphone,
   Settings, LogOut, ChevronRight, MessageSquareReply, FileText, MessageCircle,
-  ClipboardList, ShieldCheck, Rocket,
+  ClipboardList, ShieldCheck, Rocket, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -142,6 +142,18 @@ export function Sidebar() {
         >
           <Rocket className="w-4 h-4 shrink-0" />
           <span>Guide de démarrage</span>
+        </Link>
+        <Link
+          href="/dashboard/guide"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+            pathname.startsWith("/dashboard/guide")
+              ? "text-white bg-gray-800/60"
+              : "text-gray-400 hover:text-white hover:bg-gray-800/60"
+          )}
+        >
+          <BookOpen className="w-4 h-4 shrink-0" />
+          <span>{t("sb_guide")}</span>
         </Link>
         <Button
           variant="ghost"

@@ -250,4 +250,14 @@ export interface T {
   // Mandatory onboarding gate — first product profile
   onb_gate_title: string; onb_gate_subtitle: string;
   onb_gate_continue: string; onb_gate_saving: string; onb_gate_error: string;
+  // Full reference guide (/dashboard/guide) — sidebar entry + 7 sections
+  sb_guide: string;
+  gd_title: string; gd_subtitle: string;
+  gd_s1_title: string; gd_s1_intro: string; gd_s1_b1: string; gd_s1_b2: string; gd_s1_b3: string;
+  gd_s2_title: string; gd_s2_intro: string; gd_s2_b1: string; gd_s2_b2: string; gd_s2_b3: string;
+  gd_s3_title: string; gd_s3_intro: string; gd_s3_b1: string; gd_s3_b2: string; gd_s3_b3: string; gd_s3_b4: string;
+  gd_s4_title: string; gd_s4_intro: string; gd_s4_b1: string; gd_s4_b2: string; gd_s4_b3: string;
+  gd_s5_title: string; gd_s5_intro: string; gd_s5_b1: string; gd_s5_b2: string; gd_s5_b3: string;
+  gd_s6_title: string; gd_s6_intro: string; gd_s6_b1: string; gd_s6_b2: string; gd_s6_b3: string;
+  gd_s7_title: string; gd_s7_intro: string; gd_s7_b1: string; gd_s7_b2: string; gd_s7_b3: string;
 }
