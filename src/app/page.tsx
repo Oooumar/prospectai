@@ -18,7 +18,7 @@ type PriceZone = "africa-fr" | "africa-en" | "europe" | "amerique";
 const ZONE_COOKIE = "prospectai_zone";
 const VALID_ZONES: PriceZone[] = ["africa-fr", "africa-en", "europe", "amerique"];
 
-// Prices per zone, indexed by plan (0=Découverte, 1=Starter, 2=Pro, 3=Business)
+// Prices per zone, indexed by plan (0=Starter, 1=Creator, 2=Pro, 3=Agency)
 const ZONE_PRICES: Record<PriceZone, string[]> = {
   "africa-fr": ["10 000", "20 000", "35 000", "60 000"],
   "africa-en": ["8",      "16",     "28",     "48"],
@@ -48,10 +48,10 @@ function readZoneCookie(): PriceZone {
 
 // ── Plans (names / slugs / descriptions only — prices are zone-dynamic) ───────
 const PLANS = [
-  { name: "Découverte", slug: "decouverte", popular: false, desc: "Pour tester ProspectAI" },
-  { name: "Starter",    slug: "starter",    popular: false, desc: "Pour indépendants et PME" },
-  { name: "Pro",        slug: "pro",        popular: true,  desc: "Pour les équipes commerciales" },
-  { name: "Business",   slug: "business",   popular: false, desc: "Pour les agences" },
+  { name: "Starter", slug: "starter", popular: false, desc: "Pour tester ProspectAI" },
+  { name: "Creator", slug: "creator", popular: false, desc: "Pour indépendants et PME" },
+  { name: "Pro",      slug: "pro",     popular: true,  desc: "Pour les équipes commerciales" },
+  { name: "Agency",  slug: "agency",  popular: false, desc: "Pour les agences" },
 ];
 
 export default function LandingPage() {
