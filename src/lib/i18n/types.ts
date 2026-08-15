@@ -247,4 +247,7 @@ export interface T {
   cok_failed_title: string; cok_failed_desc: string; cok_retry_btn: string;
   cok_not_found_title: string; cok_not_found_desc: string;
   cko_title: string; cko_desc: string;
+  // Mandatory onboarding gate — first product profile
+  onb_gate_title: string; onb_gate_subtitle: string;
+  onb_gate_continue: string; onb_gate_saving: string; onb_gate_error: string;
 }

@@ -29,6 +29,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/pending-payment");
   }
 
+  // Safety net: any dashboard page loaded directly (bookmark, old tab,
+  // abandoned onboarding) sends a profile-less user back to /onboarding,
+  // which gates on the same condition — see src/app/onboarding/layout.tsx.
+  // Existing users who already have a profile are never affected.
+  if (!isAdmin) {
+    const rows = await prisma.$queryRaw<{ n: number }[]>`
+      SELECT COUNT(*)::int AS n FROM "ProductProfile" WHERE "userId" = ${session.user.id as string}
+    `;
+    if ((rows[0]?.n ?? 0) === 0) {
+      redirect("/onboarding");
+    }
+  }
+
   // Days left in trial (null when active or admin)
   const daysLeft = trialValid && dbUser?.trialEndsAt
     ? Math.ceil((dbUser.trialEndsAt.getTime() - now.getTime()) / 86_400_000)
