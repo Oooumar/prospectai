@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const prospect = await prisma.prospect.findFirst({
+    const prospect: any = await prisma.prospect.findFirst({
       where: { id: prospectId, userId: session.user.id },
     });
     if (!prospect) {
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await generateWhatsAppMessage(
-      { name: prospect.name, niche: prospect.niche, city: prospect.city, website: prospect.website || undefined, email: prospect.email || undefined },
+      { name: prospect.name, niche: prospect.niche, city: prospect.city, country: prospect.country, website: prospect.website || undefined, email: prospect.email || undefined },
       sender
     );
 

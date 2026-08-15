@@ -12,6 +12,7 @@ export interface Prospect {
   website?: string | null;
   niche: string;
   city: string;
+  country?: string | null;
   address?: string | null;
   rating?: number | null;
   reviewCount?: number | null;

@@ -6,6 +6,7 @@ export interface PlaceResult {
   websiteUri?: string;
   rating?: number;
   userRatingCount?: number;
+  addressComponents?: Array<{ longText?: string; shortText?: string; types: string[] }>;
 }
 
 const FIELD_MASK = [
@@ -16,8 +17,18 @@ const FIELD_MASK = [
   "places.websiteUri",
   "places.rating",
   "places.userRatingCount",
+  "places.addressComponents",
   "nextPageToken",
 ].join(",");
+
+// Extracts the ISO 3166-1 alpha-2 country code from a Places API result.
+// shortText for the "country" component is always the ISO code regardless
+// of languageCode used in the search request (unlike formattedAddress, which
+// comes back localized) — safe to use directly as a stable detection key.
+export function extractCountry(place: PlaceResult): string | null {
+  const countryComponent = place.addressComponents?.find(c => c.types.includes("country"));
+  return countryComponent?.shortText ?? null;
+}
 
 export async function searchGooglePlaces(query: string, limit: number): Promise<PlaceResult[]> {
   const API_KEY = process.env.GOOGLE_MAPS_API_KEY;

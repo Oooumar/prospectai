@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateProspectEmail, detectEmailLanguage } from "@/lib/groq";
+import { generateProspectEmail, resolveEmailLanguage } from "@/lib/groq";
 import { getPlanLimits, isUnlimited } from "@/lib/plan-limits";
 import { checkAiGenToday, logAiGen } from "@/lib/email-limits";
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     // ── Generate drafts ─────────────────────────────────────────────
     const results = await Promise.allSettled(
       toProcess.map(async (prospect) => {
-        const lang = detectEmailLanguage(prospect.city);
+        const lang = resolveEmailLanguage(prospect);
         const generated = await generateProspectEmail(
           {
             name:    prospect.name,

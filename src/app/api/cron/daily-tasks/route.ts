@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
-import { searchGooglePlaces } from "@/lib/google-places";
+import { searchGooglePlaces, extractCountry } from "@/lib/google-places";
 import { extractEmailsBatch } from "@/lib/email-extractor";
-import { generateProspectEmail, detectEmailLanguage } from "@/lib/groq";
+import { generateProspectEmail, resolveEmailLanguage } from "@/lib/groq";
 
 function checkCronAuth(req: NextRequest): boolean {
   const expected = process.env.CRON_SECRET;
@@ -76,12 +76,13 @@ async function runAutoCampaigns() {
 
         const savedProspects = await prisma.$transaction(
           newPlaces.map((p, i) =>
-            prisma.prospect.create({
+            (prisma.prospect as any).create({
               data: {
                 name:        p.displayName?.text ?? "Sans nom",
                 company:     p.displayName?.text ?? null,
                 niche:       campaign.niche,
                 city,
+                country:     extractCountry(p),
                 address:     p.formattedAddress ?? null,
                 phone:       p.internationalPhoneNumber ?? p.nationalPhoneNumber ?? null,
                 website:     p.websiteUri ?? null,
@@ -108,7 +109,7 @@ async function runAutoCampaigns() {
 
         const emailResults = await Promise.allSettled(
           withEmail.map(async (prospect) => {
-            const targetLang = detectEmailLanguage(prospect.city);
+            const targetLang = resolveEmailLanguage(prospect);
             const generated = await generateProspectEmail(
               {
                 name:    prospect.name,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { analyzeEmailReply, detectEmailLanguage } from "@/lib/groq";
+import { analyzeEmailReply, resolveEmailLanguage } from "@/lib/groq";
 import { sendProspectEmail } from "@/lib/resend";
 
 export async function POST(req: NextRequest) {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     let userId: string | null = null;
     let prospectId: string | null = null;
     let originalLog: Awaited<ReturnType<typeof prisma.emailLog.findUnique>> & {
-      prospect?: { name: string; niche: string; city: string } | null;
+      prospect?: { name: string; niche: string; city: string; country?: string | null } | null;
     } | null = null;
 
     if (emailLogId) {
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
     const userProfile = userRows[0];
 
     const prospect = (originalLog as any)?.prospect;
-    const lang = detectEmailLanguage(prospect?.city ?? "");
+    const lang = resolveEmailLanguage({ city: prospect?.city ?? "", country: prospect?.country });
 
     // Run AI analysis — async but inline (Groq is fast enough for webhook timeouts)
     const analysis = await analyzeEmailReply({

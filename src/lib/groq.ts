@@ -22,6 +22,8 @@ const LANG_CITIES: Record<string, EmailLanguage> = {
   vienna: "de", wien: "de", graz: "de", linz: "de", salzburg: "de", innsbruck: "de",
   // Switzerland (german-speaking)
   zurich: "de", zürich: "de", bern: "de", basel: "de", winterthur: "de", luzern: "de",
+  // Switzerland (french-speaking) — used to disambiguate country="CH"
+  genève: "fr", geneve: "fr", lausanne: "fr", fribourg: "fr", neuchâtel: "fr", neuchatel: "fr",
   // Italy
   rome: "it", roma: "it", milan: "it", milano: "it", naples: "it", napoli: "it",
   turin: "it", torino: "it", palermo: "it", genoa: "it", genova: "it",
@@ -42,7 +44,109 @@ const LANG_CITIES: Record<string, EmailLanguage> = {
   philadelphia: "en", "san antonio": "en", "san diego": "en", dallas: "en",
   toronto: "en", vancouver: "en", sydney: "en", melbourne: "en", dubai: "en",
   singapore: "en", amsterdam: "en", brussels: "en", bruxelles: "en",
+  // Canada (Québec, French-speaking) — used to disambiguate country="CA"
+  montreal: "fr", montréal: "fr", "quebec city": "fr", "québec city": "fr", québec: "fr", quebec: "fr",
+  // Switzerland (Italian-speaking) — used to disambiguate country="CH"
+  lugano: "it", bellinzona: "it", locarno: "it",
 };
+
+// ── Country → language (primary detection) ──────────────────────────────────
+// Used when a Prospect has a `country` value on record (populated at scraping
+// time from Google Places). Falls back to detectEmailLanguage(city) — the
+// legacy city whitelist above — when country is unavailable, e.g. prospects
+// scraped before this field existed.
+
+// Switzerland and Canada are linguistically split within one country — resolve
+// via the city whitelist first, then a documented majority-language default.
+const AMBIGUOUS_COUNTRY_DEFAULT: Record<string, EmailLanguage> = {
+  CH: "de", // ~62% German-speaking overall; fr/it handled via city lookup above
+  CA: "en", // English majority country-wide; Québec handled via city lookup above
+};
+
+const COUNTRY_LANG: Record<string, EmailLanguage> = {
+  // Français
+  FR: "fr", BE: "fr", LU: "fr", MC: "fr",
+  // English
+  GB: "en", IE: "en", US: "en", AU: "en", NZ: "en", ZA: "en",
+  // Deutsch
+  DE: "de", AT: "de", LI: "de",
+  // Italiano
+  IT: "it", SM: "it",
+  // Español
+  ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es",
+  EC: "es", GT: "es", CU: "es", DO: "es", BO: "es", HN: "es", PY: "es",
+  NI: "es", CR: "es", PA: "es", UY: "es", PR: "es",
+  // Português — no PT template branch in this system yet; explicit fallback
+  // to "en" per spec, rather than silently landing on the generic fr default.
+  PT: "en", BR: "en",
+};
+
+// Accepts common English/French country names too, in case `country` was
+// ever stored as a name rather than an ISO code. ISO codes (2 letters) are
+// used as-is; anything else is looked up here, case-insensitively.
+const COUNTRY_NAME_TO_ISO: Record<string, string> = {
+  germany: "DE", allemagne: "DE", deutschland: "DE",
+  france: "FR",
+  austria: "AT", autriche: "AT", österreich: "AT",
+  switzerland: "CH", suisse: "CH", schweiz: "CH", svizzera: "CH",
+  belgium: "BE", belgique: "BE", belgië: "BE",
+  luxembourg: "LU", monaco: "MC",
+  "united kingdom": "GB", "royaume-uni": "GB", uk: "GB",
+  ireland: "IE", irlande: "IE",
+  "united states": "US", "united states of america": "US",
+  "états-unis": "US", "etats-unis": "US", usa: "US",
+  canada: "CA",
+  australia: "AU", australie: "AU",
+  "new zealand": "NZ", "nouvelle-zélande": "NZ", "nouvelle-zelande": "NZ",
+  "south africa": "ZA", "afrique du sud": "ZA",
+  italy: "IT", italie: "IT", italia: "IT",
+  "san marino": "SM", "saint-marin": "SM",
+  liechtenstein: "LI",
+  spain: "ES", espagne: "ES", españa: "ES",
+  mexico: "MX", mexique: "MX", méxico: "MX",
+  argentina: "AR", argentine: "AR",
+  colombia: "CO", colombie: "CO",
+  chile: "CL", chili: "CL",
+  peru: "PE", pérou: "PE", perou: "PE", "perú": "PE",
+  venezuela: "VE",
+  ecuador: "EC", équateur: "EC", equateur: "EC",
+  guatemala: "GT", cuba: "CU",
+  "dominican republic": "DO", "république dominicaine": "DO", "republique dominicaine": "DO",
+  bolivia: "BO", bolivie: "BO",
+  honduras: "HN", paraguay: "PY", nicaragua: "NI",
+  "costa rica": "CR", panama: "PA", "panamá": "PA",
+  uruguay: "UY", "puerto rico": "PR",
+  portugal: "PT",
+  brazil: "BR", brésil: "BR", bresil: "BR", brasil: "BR",
+};
+
+function normalizeCountry(country: string): string {
+  const trimmed = country.trim();
+  if (trimmed.length === 2) return trimmed.toUpperCase(); // already an ISO code
+  return COUNTRY_NAME_TO_ISO[trimmed.toLowerCase()] ?? trimmed.toUpperCase();
+}
+
+/**
+ * Primary language resolution for a prospect: country first (with
+ * city-level disambiguation for Switzerland/Canada), then the legacy
+ * city-only whitelist (detectEmailLanguage) when no country is on record.
+ * Any country not in COUNTRY_LANG — including Francophone Africa (Burkina
+ * Faso, Côte d'Ivoire, Sénégal, Mali...) — defaults to French, ProspectAI's
+ * primary commercial language today.
+ */
+export function resolveEmailLanguage(prospect: { city: string; country?: string | null }): EmailLanguage {
+  if (prospect.country) {
+    const iso = normalizeCountry(prospect.country);
+
+    if (iso in AMBIGUOUS_COUNTRY_DEFAULT) {
+      const cityLang = LANG_CITIES[prospect.city.toLowerCase().trim()];
+      return cityLang ?? AMBIGUOUS_COUNTRY_DEFAULT[iso];
+    }
+    return COUNTRY_LANG[iso] ?? "fr";
+  }
+
+  return detectEmailLanguage(prospect.city);
+}
 
 export function detectEmailLanguage(city: string): EmailLanguage {
   const normalized = city.toLowerCase().trim();
@@ -554,11 +658,11 @@ export async function generateProspectEmail(
 }
 
 export async function generateWhatsAppMessage(
-  prospect: { name: string; niche: string; city: string; website?: string; email?: string },
+  prospect: { name: string; niche: string; city: string; country?: string | null; website?: string; email?: string },
   sender: { companyName?: string; productDescription?: string; website?: string; whatsappNumber?: string },
   promo?: string
 ): Promise<{ message: string; fallback?: boolean }> {
-  const lang = detectEmailLanguage(prospect.city);
+  const lang = resolveEmailLanguage(prospect);
   const hasWebsite = !!(prospect.website);
   const langName = getLangName(lang);
   const name = prospect.name;

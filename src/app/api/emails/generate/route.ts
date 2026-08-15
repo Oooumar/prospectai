@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateProspectEmail, detectEmailLanguage } from "@/lib/groq";
+import { generateProspectEmail, resolveEmailLanguage } from "@/lib/groq";
 import { getPlanLimits, isUnlimited } from "@/lib/plan-limits";
 import { checkAiGenToday, logAiGen } from "@/lib/email-limits";
 
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       whatsappNumber = userRow?.whatsappNumber ?? undefined;
     }
 
-    const targetLanguage = detectEmailLanguage(prospect.city);
+    const targetLanguage = resolveEmailLanguage(prospect);
 
     const email = await generateProspectEmail(
       {

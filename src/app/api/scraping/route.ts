@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { extractEmailsBatch } from "@/lib/email-extractor";
-import { searchGooglePlaces } from "@/lib/google-places";
+import { searchGooglePlaces, extractCountry } from "@/lib/google-places";
 import { z } from "zod";
 import { getPlanLimits, isUnlimited } from "@/lib/plan-limits";
 import { todayStart } from "@/lib/email-limits";
@@ -99,12 +99,13 @@ export async function POST(req: NextRequest) {
 
     const saved = await prisma.$transaction(
       places.map((p, i) =>
-        prisma.prospect.create({
+        (prisma.prospect as any).create({
           data: {
             name:        p.displayName?.text  ?? "Sans nom",
             company:     p.displayName?.text  ?? null,
             niche,
             city,
+            country:     extractCountry(p),
             address:     p.formattedAddress   ?? null,
             phone:       p.internationalPhoneNumber ?? p.nationalPhoneNumber ?? null,
             website:     p.websiteUri         ?? null,

@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
     if (!promoTitle?.trim()) return NextResponse.json({ error: "La description de la promotion est requise" }, { status: 400 });
     if (!Array.isArray(prospectIds) || prospectIds.length === 0) return NextResponse.json({ error: "Aucun prospect sélectionné" }, { status: 400 });
 
-    type ProspectRow = { id: string; name: string; phone: string | null; niche: string; city: string };
+    type ProspectRow = { id: string; name: string; phone: string | null; niche: string; city: string; country: string | null };
     const prospects = await prisma.$queryRaw<ProspectRow[]>`
-      SELECT "id","name","phone","niche","city"
+      SELECT "id","name","phone","niche","city","country"
       FROM "Prospect"
       WHERE "id" = ANY(${prospectIds}) AND "userId" = ${session.user.id} AND "phone" IS NOT NULL
     `;
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     const results = await Promise.allSettled(
       prospects.map(async (p) => {
         const { message } = await generateWhatsAppMessage(
-          { name: p.name, niche: p.niche, city: p.city },
+          { name: p.name, niche: p.niche, city: p.city, country: p.country },
           { companyName: sender.companyName ?? undefined, website: sender.website ?? undefined, productDescription: sender.productDescription ?? undefined, whatsappNumber: sender.whatsappNumber ?? undefined },
           promoTitle.trim()
         );
