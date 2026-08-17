@@ -315,7 +315,7 @@ const TRIAL_CTA: Record<EmailLanguage, string> = {
 const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. Do NOT add any closing or sign-off ("Cordialement", "Best regards", etc.) — the closing will be added automatically.
 STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.`;
 
-function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage, hasWebsite = false): string {
+function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage, hasWebsite = false, hasProductDescription = false): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
 
   if (profileType === "creator") {
@@ -346,6 +346,24 @@ ${langInstruction}
 Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
   }
 
+  // A real product/service is on file — sell THAT, not ProspectAI. Applies
+  // regardless of hasWebsite: what the prospect has isn't relevant when the
+  // sender's own offer has nothing to do with websites.
+  if (hasProductDescription) {
+    return `You are a B2B copywriter. You write short, persuasive prospecting emails selling the sender's own product or service — described in the user message below — to local businesses.
+The email must be:
+- Personalized: naturally reference the prospect's business/sector
+- Focused on ONE concrete benefit of the sender's product/service for a business like the prospect's
+- Start with: "Bonjour [prospect name]," (or language equivalent)
+- 3-4 sentences maximum after the salutation, no bullet points in the body
+- Professional, warm, and confident tone
+${NO_HALLUCINATION_RULE}
+${langInstruction}
+Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
+  }
+
+  // No product description on file — fall back to pitching ProspectAI itself
+  // (e.g. a b2b profile where nothing has been filled in yet)
   if (hasWebsite) {
     return `You are a B2B copywriter specializing in automated client acquisition. You write short, persuasive prospecting emails selling ProspectAI — a tool that finds and contacts potential clients automatically.
 
@@ -457,10 +475,29 @@ EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
 IMPORTANT: Do not mention any city name. Do NOT add any closing line.${langSuffix}`;
   }
 
-  // b2b — branch on whether the prospect already has a website
+  // b2b — a real product/service on file always wins over the ProspectAI pitch
   const l = lang ?? "fr";
   const businessName = prospect.company ?? prospect.name;
+  const hasProductDescription = !!(sender?.productDescription && sender.productDescription.trim());
 
+  if (hasProductDescription) {
+    const whatWeDo = sender!.productDescription!.trim();
+    return `Write a short B2B prospecting email.
+
+SENDER: ${senderName}
+WHAT THE SENDER OFFERS: ${whatWeDo}
+RECIPIENT: ${prospectId} — ${prospect.niche} sector
+
+EMAIL STRUCTURE (3-4 sentences max, no bullet points):
+1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+2. Open with a one-sentence hook relevant to a ${prospect.niche} business
+3. Present ${senderName} and ONE concrete benefit drawn from "WHAT THE SENDER OFFERS" above — do not invent features not mentioned there
+4. ${ctaInstruction}
+IMPORTANT: Do not mention any city name. Do NOT add any closing line.${langSuffix}`;
+  }
+
+  // No product description on file — fall back to pitching ProspectAI itself,
+  // branching on whether the prospect already has a website
   if (hasWebsite) {
     const trialCta = `Include the free trial link with localized anchor text ("${TRIAL_CTA[l]}"): ${TRIAL_URL}`;
     const trialCtaFull = waUrl
@@ -499,8 +536,33 @@ function generateFallbackEmailInner(
   prospect: { name: string; niche: string; city: string },
   profileType: ProfileType,
   lang: EmailLanguage,
-  hasWebsite = false
+  hasWebsite = false,
+  sender?: { companyName?: string; productDescription?: string }
 ): { subject: string; body: string } {
+  // ── Real product/service on file → describe THAT, never ProspectAI ────────
+  // Applies to every profile type: a filled-in description always wins.
+  const productDescription = sender?.productDescription?.trim();
+  if (productDescription) {
+    const senderName = sender?.companyName?.trim() || "";
+    const who = senderName ? `${senderName} — ` : "";
+    const subjects: Record<EmailLanguage, string> = {
+      fr: `${senderName || "Une offre"} pour ${prospect.name}`,
+      en: `${senderName || "An offer"} for ${prospect.name}`,
+      de: `${senderName || "Ein Angebot"} für ${prospect.name}`,
+      it: `${senderName || "Un'offerta"} per ${prospect.name}`,
+      es: `${senderName || "Una oferta"} para ${prospect.name}`,
+    };
+    const bodies: Record<EmailLanguage, string> = {
+      fr: `Bonjour ${prospect.name},\n\n${who}${productDescription}\n\nCela pourrait-il vous intéresser ? Répondez simplement à cet email.`,
+      en: `Hello ${prospect.name},\n\n${who}${productDescription}\n\nWould this be of interest to you? Just reply to this email.`,
+      de: `Guten Tag ${prospect.name},\n\n${who}${productDescription}\n\nKönnte das für Sie interessant sein? Antworten Sie einfach auf diese E-Mail.`,
+      it: `Buongiorno ${prospect.name},\n\n${who}${productDescription}\n\nPotrebbe interessarle? Risponda semplicemente a questa email.`,
+      es: `Hola ${prospect.name},\n\n${who}${productDescription}\n\n¿Podría interesarle? Simplemente responda a este correo.`,
+    };
+    return { subject: subjects[lang], body: bodies[lang] };
+  }
+
+  // ── No product description on file — fall back to pitching ProspectAI ─────
   // ── Prospect already has a website → pitch ProspectAI only ────────────────
   if (hasWebsite && profileType === "b2b") {
     const subjects: Record<EmailLanguage, string> = {
@@ -563,15 +625,18 @@ function generateFallbackEmailInner(
   };
 }
 
-// Wrapper — appends the commander order link to fallback email bodies (no-website case only)
+// Wrapper — appends the commander order link to fallback email bodies (no-website,
+// no-product-description case only — commanderUrl is only ever passed by the
+// caller in that exact case, see generateProspectEmail)
 function generateFallbackEmail(
   prospect: { name: string; niche: string; city: string },
   profileType: ProfileType,
   lang: EmailLanguage,
   commanderUrl?: string,
-  hasWebsite = false
+  hasWebsite = false,
+  sender?: { companyName?: string; productDescription?: string }
 ): { subject: string; body: string } {
-  const result = generateFallbackEmailInner(prospect, profileType, lang, hasWebsite);
+  const result = generateFallbackEmailInner(prospect, profileType, lang, hasWebsite, sender);
   // "has website" fallback already includes the trial link — don't append /commander
   if (hasWebsite || !commanderUrl) return result;
   const CTA: Record<EmailLanguage, string> = {
@@ -628,16 +693,23 @@ export async function generateProspectEmail(
   sender?: { companyName?: string; website?: string; productDescription?: string; whatsappNumber?: string }
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
-  // A prospect has a website if the field is set OR if they have an email (scraped from their site)
-  const hasWebsite = profileType === "b2b" && !!(prospect.website);
-  const commanderUrl = hasWebsite ? undefined : getCommanderUrl(prospect.city);
+  const hasProductDescription = !!(sender?.productDescription && sender.productDescription.trim());
+  // hasWebsite / commanderUrl only ever drive the no-description ProspectAI /
+  // site-creation-duo fallback pitch. A real product description on the
+  // sender's profile always takes priority, for every profile type — so both
+  // are forced off whenever one is on file (this also stops commanderUrl,
+  // which is ProspectAI's own /commander funnel, from leaking into creator
+  // and agency emails, where it was previously always being injected).
+  const isB2bFallback = profileType === "b2b" && !hasProductDescription;
+  const hasWebsite = isB2bFallback && !!(prospect.website);
+  const commanderUrl = (isB2bFallback && !hasWebsite) ? getCommanderUrl(prospect.city) : undefined;
   const signatureLine = buildSignatureLine(lang, sender?.companyName);
 
   try {
     const completion = await groq.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: "system", content: getSystemPrompt(profileType, lang, hasWebsite) },
+        { role: "system", content: getSystemPrompt(profileType, lang, hasWebsite, hasProductDescription) },
         { role: "user", content: getUserPrompt(prospect, profileType, sender, lang, commanderUrl, hasWebsite) },
       ],
       temperature: 0.7,
@@ -652,14 +724,14 @@ export async function generateProspectEmail(
     }
 
     console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
-    const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite);
+    const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, sender);
     return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
     const code = err?.error?.code || err?.code || "";
     console.error("[groq] API error:", { status, code, message: err?.message });
     if (status === 429 || code === "rate_limit_exceeded" || code === "model_decommissioned") {
-      const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite);
+      const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, sender);
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
     throw err;
@@ -675,8 +747,13 @@ export async function generateWhatsAppMessage(
   const hasWebsite = !!(prospect.website);
   const langName = getLangName(lang);
   const name = prospect.name;
+  const senderName = sender.companyName?.trim();
+  // A campaign-specific promo always wins; otherwise use the sender's own
+  // product/service description; only pitch ProspectAI itself (or the
+  // site-creation duo) when NEITHER is on file.
+  const offerContext = promo?.trim() || sender.productDescription?.trim();
 
-  console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| prospect.city:", prospect.city, "| lang:", lang);
+  console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| hasOfferContext:", !!offerContext, "| prospect.city:", prospect.city, "| lang:", lang);
 
   const greeting: Record<EmailLanguage, string> = {
     fr: `Bonjour ${name} 👋`,
@@ -695,8 +772,24 @@ export async function generateWhatsAppMessage(
   };
 
   // ── System prompt — strict 4-line format, no link ─────────────────
-  const systemPrompt = hasWebsite
+  const systemPrompt = offerContext
     ? `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
+
+EXACT FORMAT:
+Line 1: "${greeting[lang]}"
+Line 2: A one-line hook relevant to the prospect's ${prospect.niche} business
+Line 3: Present ${senderName ? senderName : "the sender"} and what they offer, based strictly on the OFFER CONTEXT given in the user message — do not invent details not mentioned there
+Line 4: "${closingQ[lang]}"
+
+ABSOLUTE RULES — no exceptions:
+- NO link, NO URL anywhere in the message
+- NO slogan, NO price, NO city name
+- NO closing line ("Cordialement", "Best regards", etc.)
+- Adapt line 2 naturally to the actual sector (${prospect.niche})
+- Write entirely in ${langName}
+- Reply with ONLY the 4 lines, nothing else`
+    : hasWebsite
+      ? `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
 
 EXACT FORMAT:
 Line 1: "${greeting[lang]}"
@@ -711,7 +804,7 @@ ABSOLUTE RULES — no exceptions:
 - Adapt lines 2–3 naturally to the prospect's sector
 - Write entirely in ${langName}
 - Reply with ONLY the 4 lines, nothing else`
-    : `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
+      : `You write ultra-short WhatsApp cold messages. Exactly 4 lines. Tone: warm, human, direct — NOT an email.
 
 EXACT FORMAT:
 Line 1: "${greeting[lang]}"
@@ -727,26 +820,34 @@ ABSOLUTE RULES — no exceptions:
 - Write entirely in ${langName}
 - Reply with ONLY the 4 lines, nothing else`;
 
-  const userPrompt = promo
-    ? `PROSPECT: ${name} — ${prospect.niche}\nPROMO CONTEXT: ${promo}\nLANGUAGE: ${langName}`
+  const userPrompt = offerContext
+    ? `PROSPECT: ${name} — ${prospect.niche}\nSENDER: ${senderName ?? "N/A"}\nOFFER CONTEXT: ${offerContext}\nLANGUAGE: ${langName}`
     : `PROSPECT: ${name} — ${prospect.niche}\nLANGUAGE: ${langName}`;
 
   // ── Fallbacks — exact 4-line format, no link ──────────────────────
-  const fallbackMessages: Record<EmailLanguage, string> = hasWebsite
+  const fallbackMessages: Record<EmailLanguage, string> = offerContext
     ? {
-        fr: `Bonjour ${name} 👋\nJ'ai remarqué que ${name} a déjà un site web — très bien. Mais est-ce que suffisamment de clients vous trouvent chaque mois ?\nProspectAI automatise votre prospection : emails personnalisés par IA et WhatsApp pour trouver vos clients automatiquement.\nÇa vous intéresse ? 😊`,
-        en: `Hello ${name} 👋\nI noticed ${name} already has a website — great. But do enough new clients actually find you every month?\nProspectAI automates your outreach: AI-personalized emails and WhatsApp campaigns to find clients automatically.\nInterested? 😊`,
-        de: `Hallo ${name} 👋\nIch habe gesehen, dass ${name} bereits eine Website hat — sehr gut. Aber finden genug neue Kunden Sie jeden Monat?\nProspectAI automatisiert Ihre Kundengewinnung: KI-E-Mails und WhatsApp-Kampagnen — vollautomatisch.\nInteressiert? 😊`,
-        it: `Buongiorno ${name} 👋\nHo visto che ${name} ha già un sito web — ottimo. Ma abbastanza nuovi clienti la trovano ogni mese?\nProspectAI automatizza la sua prospezione: email IA personalizzate e campagne WhatsApp per trovare clienti automaticamente.\nLe interessa? 😊`,
-        es: `Hola ${name} 👋\nHe visto que ${name} ya tiene sitio web — muy bien. ¿Pero suficientes clientes le encuentran cada mes?\nProspectAI automatiza su prospección: emails IA personalizados y campañas WhatsApp para encontrar clientes automáticamente.\n¿Le interesa? 😊`,
+        fr: `${greeting.fr}\n${senderName ? senderName + " : " : ""}${offerContext}\n${closingQ.fr}`,
+        en: `${greeting.en}\n${senderName ? senderName + ": " : ""}${offerContext}\n${closingQ.en}`,
+        de: `${greeting.de}\n${senderName ? senderName + ": " : ""}${offerContext}\n${closingQ.de}`,
+        it: `${greeting.it}\n${senderName ? senderName + ": " : ""}${offerContext}\n${closingQ.it}`,
+        es: `${greeting.es}\n${senderName ? senderName + ": " : ""}${offerContext}\n${closingQ.es}`,
       }
-    : {
-        fr: `Bonjour ${name} 👋\nJ'ai remarqué que votre activité de ${prospect.niche} n'a pas encore de site web — vos clients potentiels trouvent vos concurrents à votre place.\nJe crée votre site avec un aperçu GRATUIT avant tout paiement, seulement 30% pour démarrer.\nÇa vous intéresse ? 😊`,
-        en: `Hello ${name} 👋\nI noticed your ${prospect.niche} business doesn't have a website yet — potential clients find your competitors instead.\nI build your website with a FREE preview before any payment, only 30% deposit to start.\nInterested? 😊`,
-        de: `Hallo ${name} 👋\nIch habe bemerkt, dass Ihr ${prospect.niche}-Unternehmen noch keine Website hat — potenzielle Kunden finden stattdessen Ihre Mitbewerber.\nIch erstelle Ihre Website mit einer KOSTENLOSEN Vorschau vor jeder Zahlung, nur 30% Anzahlung zum Starten.\nInteressiert? 😊`,
-        it: `Buongiorno ${name} 👋\nHo notato che la sua attività di ${prospect.niche} non ha ancora un sito web — i clienti potenziali trovano i suoi concorrenti.\nCreo il suo sito con un'anteprima GRATUITA prima di qualsiasi pagamento, solo il 30% per iniziare.\nLe interessa? 😊`,
-        es: `Hola ${name} 👋\nHe notado que su negocio de ${prospect.niche} no tiene todavía sitio web — sus clientes potenciales encuentran a sus competidores.\nCreo su sitio con una vista previa GRATUITA antes de cualquier pago, solo el 30% para empezar.\n¿Le interesa? 😊`,
-      };
+    : hasWebsite
+      ? {
+          fr: `Bonjour ${name} 👋\nJ'ai remarqué que ${name} a déjà un site web — très bien. Mais est-ce que suffisamment de clients vous trouvent chaque mois ?\nProspectAI automatise votre prospection : emails personnalisés par IA et WhatsApp pour trouver vos clients automatiquement.\nÇa vous intéresse ? 😊`,
+          en: `Hello ${name} 👋\nI noticed ${name} already has a website — great. But do enough new clients actually find you every month?\nProspectAI automates your outreach: AI-personalized emails and WhatsApp campaigns to find clients automatically.\nInterested? 😊`,
+          de: `Hallo ${name} 👋\nIch habe gesehen, dass ${name} bereits eine Website hat — sehr gut. Aber finden genug neue Kunden Sie jeden Monat?\nProspectAI automatisiert Ihre Kundengewinnung: KI-E-Mails und WhatsApp-Kampagnen — vollautomatisch.\nInteressiert? 😊`,
+          it: `Buongiorno ${name} 👋\nHo visto che ${name} ha già un sito web — ottimo. Ma abbastanza nuovi clienti la trovano ogni mese?\nProspectAI automatizza la sua prospezione: email IA personalizzate e campagne WhatsApp per trovare clienti automaticamente.\nLe interessa? 😊`,
+          es: `Hola ${name} 👋\nHe visto que ${name} ya tiene sitio web — muy bien. ¿Pero suficientes clientes le encuentran cada mes?\nProspectAI automatiza su prospección: emails IA personalizados y campañas WhatsApp para encontrar clientes automáticamente.\n¿Le interesa? 😊`,
+        }
+      : {
+          fr: `Bonjour ${name} 👋\nJ'ai remarqué que votre activité de ${prospect.niche} n'a pas encore de site web — vos clients potentiels trouvent vos concurrents à votre place.\nJe crée votre site avec un aperçu GRATUIT avant tout paiement, seulement 30% pour démarrer.\nÇa vous intéresse ? 😊`,
+          en: `Hello ${name} 👋\nI noticed your ${prospect.niche} business doesn't have a website yet — potential clients find your competitors instead.\nI build your website with a FREE preview before any payment, only 30% deposit to start.\nInterested? 😊`,
+          de: `Hallo ${name} 👋\nIch habe bemerkt, dass Ihr ${prospect.niche}-Unternehmen noch keine Website hat — potenzielle Kunden finden stattdessen Ihre Mitbewerber.\nIch erstelle Ihre Website mit einer KOSTENLOSEN Vorschau vor jeder Zahlung, nur 30% Anzahlung zum Starten.\nInteressiert? 😊`,
+          it: `Buongiorno ${name} 👋\nHo notato che la sua attività di ${prospect.niche} non ha ancora un sito web — i clienti potenziali trovano i suoi concorrenti.\nCreo il suo sito con un'anteprima GRATUITA prima di qualsiasi pagamento, solo il 30% per iniziare.\nLe interessa? 😊`,
+          es: `Hola ${name} 👋\nHe notado que su negocio de ${prospect.niche} no tiene todavía sitio web — sus clientes potenciales encuentran a sus competidores.\nCreo su sitio con una vista previa GRATUITA antes de cualquier pago, solo el 30% para empezar.\n¿Le interesa? 😊`,
+        };
 
   try {
     const completion = await groq.chat.completions.create({
