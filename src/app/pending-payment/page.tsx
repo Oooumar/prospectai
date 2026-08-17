@@ -6,6 +6,13 @@ import { useEffect, useState } from "react";
 import { Zap, Clock, Phone, MessageCircle, LogOut, RefreshCw, CreditCard, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+// Mobile Money / CinetPay is temporarily disabled everywhere in the
+// subscription flow (not /commander — that's a separate, still-active flow).
+// Stripe is the only option shown while FedaPay/CinetPay's Africa status is
+// being sorted out. Code kept intact below — flip this back to true to
+// restore Mobile Money as a subscription payment option.
+const MOBILE_MONEY_ENABLED = false;
+
 // ── Mobile Money payment coordinates ────────────────────────────────────────
 // Update these values if numbers change (also update commander/page.tsx)
 const PAIEMENT = {
@@ -26,7 +33,10 @@ export default function PendingPaymentPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [subStatus, setSubStatus] = useState<string>("pending");
+  const [plan, setPlan] = useState<string>("starter");
   const [portalLoading, setPortalLoading] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeError, setStripeError] = useState("");
 
   async function handleAddCard() {
     setPortalLoading(true);
@@ -43,16 +53,46 @@ export default function PendingPaymentPage() {
     setPortalLoading(false);
   }
 
+  // Universal Stripe path for the "trial expired" / "pending" states — unlike
+  // the Customer Portal above, this works even when no Stripe customer exists
+  // yet on the account (e.g. it was never started, or PayPal was chosen at
+  // signup), since it creates a fresh Checkout session rather than opening a
+  // portal for an existing one.
+  async function handleStripeCheckout() {
+    setStripeLoading(true);
+    setStripeError("");
+    try {
+      const res = await fetch("/api/checkout/stripe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setStripeError(data.error || "Erreur lors de la création du paiement.");
+    } catch {
+      setStripeError("Erreur lors de la création du paiement.");
+    }
+    setStripeLoading(false);
+  }
+
   // If the session disappears, redirect to sign-in
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/auth/signin");
   }, [status, router]);
 
-  // Fetch current subscription status to tailor the message
+  // Fetch current subscription status + plan to tailor the message and know
+  // which plan to check out if the user pays via Stripe below.
   useEffect(() => {
     fetch("/api/user/me")
       .then(r => r.json())
-      .then(d => setSubStatus(d.subscriptionStatus ?? "pending"))
+      .then(d => {
+        setSubStatus(d.subscriptionStatus ?? "pending");
+        setPlan(d.plan ?? "starter");
+      })
       .catch(() => {});
   }, []);
 
@@ -134,45 +174,65 @@ export default function PendingPaymentPage() {
           </p>
         </div>
 
-        {/* Payment block */}
+        {/* Payment block — Stripe only for now (see MOBILE_MONEY_ENABLED) */}
         <div className="rounded-2xl border border-gray-800 bg-gray-900/60 overflow-hidden">
-          <div className="h-px bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-500" />
+          <div className="h-px bg-gradient-to-r from-violet-500 via-indigo-400 to-violet-500" />
           <div className="p-5 space-y-4">
             <p className="text-sm font-semibold text-gray-200">
-              Règle ton abonnement via Mobile Money
+              Active ton abonnement par carte bancaire
             </p>
-            <p className="text-xs text-gray-500">
-              Au nom de : <span className="text-gray-300 font-medium">{PAIEMENT.nomCompte}</span>
-            </p>
-
-            <div className="grid gap-2">
-              {METHODS.map(({ label, number, colorCls, bgCls }) => (
-                <div key={label} className={`flex items-center justify-between rounded-xl border px-4 py-3 ${bgCls}`}>
-                  <div className="flex items-center gap-2">
-                    <Phone className={`w-4 h-4 ${colorCls}`} />
-                    <span className={`text-sm font-semibold ${colorCls}`}>{label}</span>
-                  </div>
-                  <span className="text-sm font-mono text-white">{number}</span>
-                </div>
-              ))}
-            </div>
-
             <p className="text-xs text-gray-500 leading-relaxed">
-              Après avoir payé, envoie ton <span className="text-gray-300">reçu de paiement</span> par WhatsApp
-              pour que ton compte soit activé rapidement.
+              Paiement sécurisé via Stripe. Ton compte est activé automatiquement dès la confirmation du paiement.
             </p>
-
-            <a
-              href={`${PAIEMENT.whatsapp}?text=${encodeURIComponent("Bonjour, j'ai payé mon abonnement ProspectAI. Voici mon reçu : [joindre screenshot]")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white text-sm font-semibold"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Envoyer mon reçu WhatsApp
-            </a>
+            <Button variant="gradient" className="w-full" onClick={handleStripeCheckout} disabled={stripeLoading}>
+              {stripeLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+              S'abonner avec Stripe
+            </Button>
+            {stripeError && <p className="text-xs text-red-400 text-center">{stripeError}</p>}
           </div>
         </div>
+
+        {/* Mobile Money — temporarily disabled, see MOBILE_MONEY_ENABLED above */}
+        {MOBILE_MONEY_ENABLED && (
+          <div className="rounded-2xl border border-gray-800 bg-gray-900/60 overflow-hidden">
+            <div className="h-px bg-gradient-to-r from-orange-500 via-amber-400 to-yellow-500" />
+            <div className="p-5 space-y-4">
+              <p className="text-sm font-semibold text-gray-200">
+                Règle ton abonnement via Mobile Money
+              </p>
+              <p className="text-xs text-gray-500">
+                Au nom de : <span className="text-gray-300 font-medium">{PAIEMENT.nomCompte}</span>
+              </p>
+
+              <div className="grid gap-2">
+                {METHODS.map(({ label, number, colorCls, bgCls }) => (
+                  <div key={label} className={`flex items-center justify-between rounded-xl border px-4 py-3 ${bgCls}`}>
+                    <div className="flex items-center gap-2">
+                      <Phone className={`w-4 h-4 ${colorCls}`} />
+                      <span className={`text-sm font-semibold ${colorCls}`}>{label}</span>
+                    </div>
+                    <span className="text-sm font-mono text-white">{number}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Après avoir payé, envoie ton <span className="text-gray-300">reçu de paiement</span> par WhatsApp
+                pour que ton compte soit activé rapidement.
+              </p>
+
+              <a
+                href={`${PAIEMENT.whatsapp}?text=${encodeURIComponent("Bonjour, j'ai payé mon abonnement ProspectAI. Voici mon reçu : [joindre screenshot]")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 transition-colors text-white text-sm font-semibold"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Envoyer mon reçu WhatsApp
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* What you get */}
         <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5 space-y-3">
