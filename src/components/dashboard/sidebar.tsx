@@ -51,12 +51,17 @@ export function Sidebar() {
     { href: "/dashboard/emails", label: t("sb_emails"), icon: Mail },
     { href: "/dashboard/drafts", label: t("sb_drafts"), icon: FileText, badge: pendingDrafts },
     { href: "/dashboard/replies", label: t("sb_replies"), icon: MessageSquareReply, badge: pendingReplies },
-    { href: "/dashboard/commandes", label: t("sb_commandes"), icon: ClipboardList },
     { href: "/dashboard/settings", label: t("sb_settings"), icon: Settings },
   ];
 
+  // Commandes = leads from the public /commander funnel (ZalakoDigital's own
+  // website-order business, no per-account ownership) — admin-only, same as
+  // the API route (see api/commandes/route.ts).
   const adminNav = role === "admin"
-    ? [{ href: "/dashboard/admin/users", label: "Admin — Comptes", icon: ShieldCheck }]
+    ? [
+        { href: "/dashboard/commandes", label: t("sb_commandes"), icon: ClipboardList },
+        { href: "/dashboard/admin/users", label: "Admin — Comptes", icon: ShieldCheck },
+      ]
     : [];
 
   return (
@@ -99,7 +104,7 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {[...nav, ...adminNav].map((item) => {
           const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          const isAdmin = item.href.startsWith("/dashboard/admin");
+          const isAdmin = adminNav.some(a => a.href === item.href);
           return (
             <Link
               key={item.href}

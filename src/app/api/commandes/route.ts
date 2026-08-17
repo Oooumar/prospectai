@@ -1,18 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { prismaAdmin } from "@/lib/prisma-admin";
 
 // Auth guard: même pattern que toutes les routes API protégées du projet.
 // prismaAdmin (rôle neondb_owner) est requis car authenticator n'a que INSERT
 // sur ServiceOrder (pas SELECT ni UPDATE).
+//
+// ServiceOrder n'a PAS de userId : ce sont les leads/commandes du funnel
+// public /commander (site web ProspectAI/ZalakoDigital), pas une ressource
+// par compte SaaS. Cette route est donc réservée aux admins — voir
+// api/admin/users/route.ts pour le même pattern de vérification de rôle.
+// (CVE interne : cette vérification manquait, exposant les commandes de
+// TOUS les clients à N'IMPORTE QUEL compte connecté — corrigé le 2026-08-17.)
 
 const VALID_STATUTS = ["nouvelle", "en cours", "terminée", "annulée"] as const;
+
+async function requireAdmin(session: { user?: { id?: string | null } } | null) {
+  if (!session?.user?.id) return { ok: false as const, status: 401, error: "Non autorisé" };
+  const caller = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+  if (caller?.role !== "admin") return { ok: false as const, status: 403, error: "Accès refusé" };
+  return { ok: true as const };
+}
 
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user?.id)
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const check = await requireAdmin(session);
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
     if (!process.env.DATABASE_URL_ADMIN)
       return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
@@ -35,8 +53,8 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id)
-      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const check = await requireAdmin(session);
+    if (!check.ok) return NextResponse.json({ error: check.error }, { status: check.status });
 
     if (!process.env.DATABASE_URL_ADMIN)
       return NextResponse.json({ error: "Configuration serveur manquante" }, { status: 500 });
