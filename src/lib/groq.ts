@@ -4,7 +4,7 @@ export const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "openai/gpt-oss-120b";
 
 type ProfileType = "b2b" | "creator" | "agency";
 type EmailLanguage = "fr" | "en" | "de" | "it" | "es";
@@ -713,7 +713,14 @@ export async function generateProspectEmail(
         { role: "user", content: getUserPrompt(prospect, profileType, sender, lang, commanderUrl, hasWebsite) },
       ],
       temperature: 0.7,
-      max_tokens: 600,
+      max_tokens: 800,
+      // MODEL is a reasoning model — its hidden reasoning tokens share the
+      // same max_tokens budget as the visible answer, so on "medium"/default
+      // effort a long reasoning trace can occasionally crowd out the actual
+      // JSON content entirely (observed: 98–343 reasoning tokens on a task
+      // this simple). "low" keeps that to a handful of tokens, leaving the
+      // budget reliably available for content.
+      reasoning_effort: "low",
     });
 
     const content = completion.choices[0].message.content || "";
@@ -728,9 +735,18 @@ export async function generateProspectEmail(
     return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
-    const code = err?.error?.code || err?.code || "";
+    // Groq SDK errors nest the parsed response body twice: err.error is the
+    // raw JSON body ({"error":{message,type,code}}), so the actual code is
+    // at err.error.error.code, not err.error.code. Keep the shallower path
+    // too as a fallback in case a different error shape is ever returned.
+    const code = err?.error?.error?.code || err?.error?.code || err?.code || "";
     console.error("[groq] API error:", { status, code, message: err?.message });
-    if (status === 429 || code === "rate_limit_exceeded" || code === "model_decommissioned") {
+    if (
+      status === 429 ||
+      code === "rate_limit_exceeded" ||
+      code === "model_decommissioned" ||
+      code === "model_not_found"
+    ) {
       const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, sender);
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
@@ -857,7 +873,11 @@ ABSOLUTE RULES — no exceptions:
         { role: "user", content: userPrompt },
       ],
       temperature: 0.5,
-      max_tokens: 150,
+      max_tokens: 300,
+      // See the comment on the email completion call above — MODEL's hidden
+      // reasoning tokens share this budget, and 150 tokens leaves almost no
+      // room for a real 4-line message once any reasoning happens.
+      reasoning_effort: "low",
     });
 
     const message = (completion.choices[0].message.content || "").trim();
@@ -927,6 +947,7 @@ ANALYSIS: 1-2 sentences explaining the classification and what the draft does.`;
       ],
       temperature: 0.4,
       max_tokens: 800,
+      reasoning_effort: "low",
     });
 
     const content = completion.choices[0].message.content || "";
