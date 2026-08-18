@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Search, X, Loader2, Target, Check, Mail, Phone, Ban, Smartphone, Globe, PhoneCall } from "lucide-react";
 import { detectPhoneType } from "@/lib/phone";
 import { useI18n } from "@/components/language-provider";
+import { NicheAutocomplete } from "@/components/niche-autocomplete";
+import { NICHE_KEYS } from "@/lib/niches";
 
 type FormData = { niche: string; city: string; limit: number };
 
@@ -105,14 +107,11 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
     resolver: zodResolver(schema) as any,
     defaultValues: { limit: 20 },
   });
+  register("niche"); // driven imperatively via NicheAutocomplete below, not a native input
 
   const watchedCity = watch("city");
-
-  const NICHE_GROUPS = {
-    [t("sc_g_b2b")]: ["Plombier", "Électricien", "Restaurant", "Boulangerie", "Coiffeur", "Dentiste", "Avocat", "Comptable", "Auto école", "Carreleur"],
-    [t("sc_g_creator")]: ["Marque beauté", "Marque mode", "Marque tech", "Agence influence", "Marque alimentaire", "Startup"],
-    [t("sc_g_agency")]: ["Agence marketing", "Agence web", "Agence SEO", "Agence vidéo"],
-  };
+  const watchedNiche = watch("niche") || "";
+  const nicheSuggestions = NICHE_KEYS.map((k) => t(k));
 
   async function onSubmit(data: FormData) {
     setApiError("");
@@ -155,27 +154,13 @@ export function ScrapingModule({ onClose, onSuccess }: ScrapingModuleProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1.5 md:col-span-1">
                 <Label>{t("sc_niche")}</Label>
-                <Input placeholder={t("sc_niche_ph")} {...register("niche")} />
+                <NicheAutocomplete
+                  value={watchedNiche}
+                  onChange={(v) => setValue("niche", v, { shouldValidate: true })}
+                  suggestions={nicheSuggestions}
+                  placeholder={t("sc_niche_ph")}
+                />
                 {errors.niche && <p className="text-xs text-red-400">{errors.niche.message}</p>}
-                <div className="space-y-2 mt-2">
-                  {Object.entries(NICHE_GROUPS).map(([group, niches]) => (
-                    <div key={group}>
-                      <p className="text-xs text-gray-500 mb-1">{group}</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {niches.map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            className="text-xs px-2 py-0.5 rounded-full border border-gray-700 bg-gray-800/60 text-gray-300 hover:border-violet-500/50 hover:text-violet-300 transition-colors"
-                            onClick={() => setValue("niche", n)}
-                          >
-                            {n}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div className="space-y-1.5">

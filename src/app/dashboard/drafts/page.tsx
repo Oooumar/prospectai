@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
 import { useI18n } from "@/components/language-provider";
+import { NicheAutocomplete } from "@/components/niche-autocomplete";
+import { NICHE_KEYS } from "@/lib/niches";
 
 interface Draft {
   id: string;
@@ -47,6 +49,7 @@ export default function DraftsPage() {
   const [formData, setFormData] = useState({ niche: "", cities: "", frequency: "daily", prospectsPerCycle: "5" });
   const [creating, setCreating] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const nicheSuggestions = NICHE_KEYS.map((k) => t(k));
 
   const showToast = useCallback((type: Toast["type"], text: string) => {
     setToast({ type, text });
@@ -218,11 +221,12 @@ export default function DraftsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">{t("ac_niche")}</label>
-                    <input
+                    <NicheAutocomplete
                       value={formData.niche}
-                      onChange={e => setFormData(p => ({ ...p, niche: e.target.value }))}
+                      onChange={(v) => setFormData(p => ({ ...p, niche: v }))}
+                      suggestions={nicheSuggestions}
                       placeholder={t("ac_niche_ph")}
-                      className="w-full bg-gray-900 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500"
+                      inputClassName="h-auto bg-gray-900 border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:ring-1"
                     />
                   </div>
                   <div>

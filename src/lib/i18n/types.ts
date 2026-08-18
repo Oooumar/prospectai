@@ -136,6 +136,19 @@ export interface T {
   sc_g_b2b: string; sc_g_creator: string; sc_g_agency: string; sc_error_server: string;
   sc_no_website: string;
   sc_step1: string; sc_step2: string; sc_step3: string; sc_step4: string; sc_step5: string;
+  // Niche suggestions (autocomplete list — scraping form + auto-campaign form)
+  nch_plombier: string; nch_electricien: string; nch_restaurant: string; nch_boulangerie: string;
+  nch_coiffeur: string; nch_dentiste: string; nch_avocat: string; nch_comptable: string;
+  nch_auto_ecole: string; nch_carreleur: string;
+  nch_marque_beaute: string; nch_marque_mode: string; nch_marque_tech: string;
+  nch_agence_influence: string; nch_marque_alimentaire: string; nch_startup: string;
+  nch_agence_marketing: string; nch_agence_web: string; nch_agence_seo: string; nch_agence_video: string;
+  nch_agences_marketing_seo: string;
+  nch_esn: string; nch_conseil_strategie: string; nch_recrutement: string; nch_saas_b2b: string;
+  nch_editeurs_logiciels: string; nch_cybersecurite: string;
+  nch_promoteurs_immo: string; nch_investisseurs_immo: string; nch_gestion_patrimoine: string;
+  nch_fabricants_industriels: string; nch_logistique_transport: string; nch_grossistes_distributeurs: string;
+  nch_formation_pro: string; nch_coaching_management: string; nch_conseil_rh: string;
   // Prospect score
   pp_col_score: string; ps_score_excellent: string; ps_score_good: string; ps_score_low: string;
   // WhatsApp composer
