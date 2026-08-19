@@ -313,7 +313,8 @@ const TRIAL_CTA: Record<EmailLanguage, string> = {
 };
 
 const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. Do NOT add any closing or sign-off ("Cordialement", "Best regards", etc.) — the closing will be added automatically.
-STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.`;
+STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.
+STRICT RULE — this is a plain-text email, not HTML or markdown: any link MUST be written as bare, visible text (e.g. "Try it now: https://example.com"). NEVER wrap a link in HTML (<a href="...">) or markdown ([text](url)) syntax — it will not render and will show up as broken text to the recipient.`;
 
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage, hasWebsite = false, hasProductDescription = false): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
@@ -411,6 +412,43 @@ function formatWhatsAppUrl(number: string): string {
   return `https://wa.me/${number.replace(/[^0-9]/g, "")}`;
 }
 
+// Sender-provided website/demo links aren't always saved with a protocol —
+// the ProductProfile API doesn't enforce it the way Settings does.
+function normalizeUrl(url?: string | null): string | null {
+  const trimmed = url?.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
+// Generic labels for a sender's own website/demo link, used when the model
+// drops the link entirely despite instructions — see ensureLinkInBody below.
+// Deliberately generic (not "14-day trial") since this applies to any
+// profile's own site, not just ProspectAI's.
+const LEARN_MORE_LABEL: Record<EmailLanguage, string> = {
+  fr: "Essayez gratuitement", en: "Try it for free", de: "Jetzt kostenlos testen",
+  it: "Provalo gratuitamente", es: "Pruébalo gratis",
+};
+const ORDER_LABEL: Record<EmailLanguage, string> = {
+  fr: "Commander maintenant", en: "Order now", de: "Jetzt bestellen",
+  it: "Ordina ora", es: "Pedir ahora",
+};
+
+// Prompt instructions can't *guarantee* the model includes a link — it's
+// been observed to drop it entirely, or wrap it in raw <a href> / markdown
+// syntax that renders as literal garbled text in a plain-text-escaped email
+// body (see bodyToHtml in resend.ts). This is the actual guarantee: strip
+// any accidental HTML/markdown wrapping of OUR url down to plain text, then
+// append the link if it isn't present in the body at all.
+function ensureLinkInBody(body: string, url: string | null, label: string): string {
+  if (!url) return body;
+  const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let out = body
+    .replace(new RegExp(`<a[^>]*href=["']${escaped}["'][^>]*>(.*?)</a>`, "gi"), (_m, inner) => `${inner} (${url})`)
+    .replace(new RegExp(`\\[([^\\]]*)\\]\\(${escaped}\\)`, "gi"), (_m, inner) => `${inner} (${url})`);
+  if (!out.includes(url)) out = `${out.trim()}\n\n${label} : ${url}`;
+  return out;
+}
+
 function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType,
@@ -424,15 +462,24 @@ function getUserPrompt(
   const langName = lang ? getLangName(lang) : null;
   const langSuffix = langName ? `\n\nOUTPUT LANGUAGE: ${langName}. Write the subject AND body ONLY in ${langName}, regardless of the language used above.` : "";
   const waUrl = sender?.whatsappNumber ? formatWhatsAppUrl(sender.whatsappNumber) : null;
+  const siteUrl = normalizeUrl(sender?.website);
 
-  // commander URL is the primary CTA (order page); WA/email are secondary contact methods
-  const orderCta = commanderUrl
-    ? `Include this order link in the email body with localized anchor text (e.g. "Commander maintenant" / "Order now" / "Jetzt bestellen" / "Ordina ora" / "Pedir ahora"): ${commanderUrl}`
+  // Link priority: commanderUrl (ProspectAI's own /commander order page) is
+  // only ever set by the caller for the no-description b2b fallback pitch
+  // (see generateProspectEmail) — when it's absent, fall back to the
+  // sender's own website/demo link from their profile, for ANY profile type.
+  // WhatsApp is always offered too, on top of whichever link is used.
+  const primaryLink = commanderUrl ?? siteUrl;
+  const linkIsOrderPage = !!commanderUrl;
+  const orderCta = primaryLink
+    ? (linkIsOrderPage
+        ? `You MUST include this order link in the email body — it is mandatory, not optional — with localized anchor text (e.g. "Commander maintenant" / "Order now" / "Jetzt bestellen" / "Ordina ora" / "Pedir ahora"): ${primaryLink}`
+        : `You MUST include this link in the email body — it is mandatory, not optional, do not omit it — with localized anchor text (e.g. "Essayez gratuitement" / "Try it now" / "Jetzt testen" / "Provalo ora" / "Pruébalo ahora"): ${primaryLink}`)
     : null;
   const ctaInstruction = orderCta
     ? (waUrl
-        ? `${orderCta}. Also offer WhatsApp as secondary contact (never a phone call): ${waUrl}.`
-        : `${orderCta}. Also invite the prospect to reply by email.`)
+        ? `${orderCta} Also offer WhatsApp as a secondary contact option (never a phone call): ${waUrl}.`
+        : `${orderCta} Also invite the prospect to reply by email.`)
     : (waUrl
         ? `Propose to WRITE a WhatsApp message (never a phone call) with this exact link: ${waUrl} — and also offer email reply as an alternative.`
         : `Propose to reply by email only. NEVER suggest a phone call, video call, or meeting.`);
@@ -537,7 +584,7 @@ function generateFallbackEmailInner(
   profileType: ProfileType,
   lang: EmailLanguage,
   hasWebsite = false,
-  sender?: { companyName?: string; productDescription?: string }
+  sender?: { companyName?: string; productDescription?: string; website?: string }
 ): { subject: string; body: string } {
   // ── Real product/service on file → describe THAT, never ProspectAI ────────
   // Applies to every profile type: a filled-in description always wins.
@@ -545,6 +592,7 @@ function generateFallbackEmailInner(
   if (productDescription) {
     const senderName = sender?.companyName?.trim() || "";
     const who = senderName ? `${senderName} — ` : "";
+    const siteUrl = normalizeUrl(sender?.website);
     const subjects: Record<EmailLanguage, string> = {
       fr: `${senderName || "Une offre"} pour ${prospect.name}`,
       en: `${senderName || "An offer"} for ${prospect.name}`,
@@ -552,12 +600,19 @@ function generateFallbackEmailInner(
       it: `${senderName || "Un'offerta"} per ${prospect.name}`,
       es: `${senderName || "Una oferta"} para ${prospect.name}`,
     };
+    const linkLines: Record<EmailLanguage, string> = {
+      fr: siteUrl ? `\n\nEssayez gratuitement : ${siteUrl}` : "",
+      en: siteUrl ? `\n\nTry it for free: ${siteUrl}` : "",
+      de: siteUrl ? `\n\nJetzt kostenlos testen: ${siteUrl}` : "",
+      it: siteUrl ? `\n\nProvalo gratuitamente: ${siteUrl}` : "",
+      es: siteUrl ? `\n\nPruébalo gratis: ${siteUrl}` : "",
+    };
     const bodies: Record<EmailLanguage, string> = {
-      fr: `Bonjour ${prospect.name},\n\n${who}${productDescription}\n\nCela pourrait-il vous intéresser ? Répondez simplement à cet email.`,
-      en: `Hello ${prospect.name},\n\n${who}${productDescription}\n\nWould this be of interest to you? Just reply to this email.`,
-      de: `Guten Tag ${prospect.name},\n\n${who}${productDescription}\n\nKönnte das für Sie interessant sein? Antworten Sie einfach auf diese E-Mail.`,
-      it: `Buongiorno ${prospect.name},\n\n${who}${productDescription}\n\nPotrebbe interessarle? Risponda semplicemente a questa email.`,
-      es: `Hola ${prospect.name},\n\n${who}${productDescription}\n\n¿Podría interesarle? Simplemente responda a este correo.`,
+      fr: `Bonjour ${prospect.name},\n\n${who}${productDescription}\n\nCela pourrait-il vous intéresser ?${linkLines.fr} Répondez simplement à cet email.`,
+      en: `Hello ${prospect.name},\n\n${who}${productDescription}\n\nWould this be of interest to you?${linkLines.en} Just reply to this email.`,
+      de: `Guten Tag ${prospect.name},\n\n${who}${productDescription}\n\nKönnte das für Sie interessant sein?${linkLines.de} Antworten Sie einfach auf diese E-Mail.`,
+      it: `Buongiorno ${prospect.name},\n\n${who}${productDescription}\n\nPotrebbe interessarle?${linkLines.it} Risponda semplicemente a questa email.`,
+      es: `Hola ${prospect.name},\n\n${who}${productDescription}\n\n¿Podría interesarle?${linkLines.es} Simplemente responda a este correo.`,
     };
     return { subject: subjects[lang], body: bodies[lang] };
   }
@@ -634,7 +689,7 @@ function generateFallbackEmail(
   lang: EmailLanguage,
   commanderUrl?: string,
   hasWebsite = false,
-  sender?: { companyName?: string; productDescription?: string }
+  sender?: { companyName?: string; productDescription?: string; website?: string }
 ): { subject: string; body: string } {
   const result = generateFallbackEmailInner(prospect, profileType, lang, hasWebsite, sender);
   // "has website" fallback already includes the trial link — don't append /commander
@@ -705,6 +760,19 @@ export async function generateProspectEmail(
   const commanderUrl = (isB2bFallback && !hasWebsite) ? getCommanderUrl(prospect.city) : undefined;
   const signatureLine = buildSignatureLine(lang, sender?.companyName);
 
+  // The link the model was instructed to include (see getUserPrompt's
+  // ctaInstruction) — used below to *guarantee* it ends up in the body,
+  // since prompt instructions alone don't reliably survive generation. Must
+  // mirror getSystemPrompt/getUserPrompt's own branching exactly: the
+  // "prospect already has a website" fallback hardcodes TRIAL_URL directly
+  // (not ctaInstruction), so it needs its own case here too.
+  const requiredLink = (isB2bFallback && hasWebsite)
+    ? TRIAL_URL
+    : (commanderUrl ?? normalizeUrl(sender?.website));
+  const requiredLinkLabel = (isB2bFallback && hasWebsite)
+    ? TRIAL_CTA[lang]
+    : (commanderUrl ? ORDER_LABEL[lang] : LEARN_MORE_LABEL[lang]);
+
   try {
     const completion = await groq.chat.completions.create({
       model: MODEL,
@@ -727,7 +795,8 @@ export async function generateProspectEmail(
     const parsed = extractJsonFromContent(content);
 
     if (parsed) {
-      return { ...parsed, body: parsed.body + signatureLine };
+      const body = ensureLinkInBody(parsed.body, requiredLink, requiredLinkLabel) + signatureLine;
+      return { ...parsed, body };
     }
 
     console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
