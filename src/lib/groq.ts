@@ -325,7 +325,7 @@ The email must be:
 - Personalized with the brand/company name
 - Focused on partnership, collaboration or sponsorship
 - Highlighting the creator's value (audience, engagement, niche)
-- Start with: "Bonjour [brand/company name]," (or language equivalent)
+- Start with a salutation using the brand/company's ACTUAL name, exactly as given in the user message (e.g. "Bonjour {real name}," in the target language) — NEVER output literal placeholder or bracket text such as "[brand/company name]" or "[prospect name]"
 - 3-4 sentences maximum after the salutation, direct and concise
 - Dynamic and professional tone
 ${NO_HALLUCINATION_RULE}
@@ -339,7 +339,7 @@ The email must be:
 - Focused on ROI and measurable results
 - Highlight expertise and client cases
 - Offer a free audit or consultation (via email or WhatsApp, never a phone call)
-- Start with: "Bonjour [prospect name]," (or language equivalent)
+- Start with a salutation using the prospect's ACTUAL name, exactly as given in the user message (e.g. "Bonjour {real name}," in the target language) — NEVER output literal placeholder or bracket text such as "[prospect name]"
 - 3-4 sentences maximum after the salutation, direct and concise
 - Professional and results-oriented tone
 ${NO_HALLUCINATION_RULE}
@@ -355,7 +355,7 @@ Reply ONLY with valid JSON: {"subject": "...", "body": "..."}`;
 The email must be:
 - Personalized: naturally reference the prospect's business/sector
 - Focused on ONE concrete benefit of the sender's product/service for a business like the prospect's
-- Start with: "Bonjour [prospect name]," (or language equivalent)
+- Start with a salutation using the prospect's ACTUAL name, exactly as given in the user message (e.g. "Bonjour {real name}," in the target language) — NEVER output literal placeholder or bracket text such as "[prospect name]"
 - 3-4 sentences maximum after the salutation, no bullet points in the body
 - Professional, warm, and confident tone
 ${NO_HALLUCINATION_RULE}
@@ -374,7 +374,7 @@ ProspectAI — automate client acquisition: AI-personalized cold emails + WhatsA
 USE this exact slogan once in the email: "${PROSPECTAI_SLOGANS[targetLanguage]}"
 
 EMAIL RULES:
-- Start with: "Bonjour [prospect name]," (or language equivalent)
+- Start with a salutation using the prospect's ACTUAL name, exactly as given in the user message (e.g. "Bonjour {real name}," in the target language) — NEVER output literal placeholder or bracket text such as "[prospect name]"
 - Open by acknowledging the prospect already has a website — that's a positive signal
 - Transition to the real question: do enough new clients actually find them every month?
 - Present ProspectAI as the answer: automatic outreach to targeted prospects
@@ -396,7 +396,7 @@ THE DUO OFFER:
 USE this exact slogan once in the email: "${DUO_SLOGANS[targetLanguage]}"
 
 EMAIL RULES:
-- Start with: "Bonjour [prospect name]," (or language equivalent)
+- Start with a salutation using the prospect's ACTUAL name, exactly as given in the user message (e.g. "Bonjour {real name}," in the target language) — NEVER output literal placeholder or bracket text such as "[prospect name]"
 - Open with a hook: the prospect's business has no website — potential clients find competitors instead
 - Present BOTH services as one natural package ("Site + ProspectAI")
 - Include the two trust arguments (free preview + 30% to start)
@@ -449,6 +449,22 @@ function ensureLinkInBody(body: string, url: string | null, label: string): stri
   return out;
 }
 
+// The model has been observed copying literal bracket-placeholder text
+// ("[prospect name]", "[brand/company name]") into the generated email
+// instead of substituting the real name — even after removing the
+// placeholder from the prompt in favor of direct interpolation (models
+// occasionally reproduce the *pattern* from training data regardless).
+// This is the guarantee: any bracketed "name"-like placeholder still
+// present in the final subject/body is swapped for the real prospect name.
+// Matches name/nom/nombre/nome (fr/en/de-shares "name"/es/it) as a whole
+// word inside brackets, case-insensitively, so it covers translated
+// variants too (e.g. "[Nom du prospect]", "[nome del cliente]").
+const NAME_PLACEHOLDER_RE = /\[[^[\]]{0,50}\b(?:name|nom|nombre|nome)\b[^[\]]{0,15}\]/gi;
+
+function ensureRealNameInText(text: string, realName: string): string {
+  return text.replace(NAME_PLACEHOLDER_RE, realName);
+}
+
 function getUserPrompt(
   prospect: { name: string; company?: string; niche: string; city: string },
   profileType: ProfileType,
@@ -459,6 +475,10 @@ function getUserPrompt(
 ): string {
   const senderName = sender?.companyName ?? "our solution";
   const prospectId = `${prospect.name}${prospect.company ? ` (${prospect.company})` : ""}`;
+  // Give the model the real name directly rather than a "[prospect name]"
+  // bracket placeholder — that pattern has been observed copied verbatim
+  // into generated emails instead of being replaced.
+  const salutationInstruction = `Salutation: "Bonjour ${prospect.name}," (or language equivalent) — use this exact name, copied verbatim; NEVER output the literal text "[prospect name]" or any bracketed placeholder instead of the real name`;
   const langName = lang ? getLangName(lang) : null;
   const langSuffix = langName ? `\n\nOUTPUT LANGUAGE: ${langName}. Write the subject AND body ONLY in ${langName}, regardless of the language used above.` : "";
   const waUrl = sender?.whatsappNumber ? formatWhatsAppUrl(sender.whatsappNumber) : null;
@@ -496,7 +516,7 @@ SENDER: ${identity}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (4 sentences max, no bullet points in the email):
-1. Salutation: "Bonjour [brand/company name]," (or language equivalent)
+1. ${salutationInstruction}
 2. One-sentence intro connecting my work to the ${prospect.niche} space
 3. One sentence proposing a specific collaboration (sponsored content, ambassador, or affiliate)
 4. ${ctaInstruction}
@@ -514,7 +534,7 @@ WHAT WE DO: ${whatWeDo}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (4-5 sentences max, no bullet points in the email):
-1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+1. ${salutationInstruction}
 2. Open with a specific growth challenge facing ${prospect.niche} businesses
 3. Introduce ${senderName} and state ONE concrete result it delivers for ${prospect.niche}
 4. Offer a free audit or consultation
@@ -536,7 +556,7 @@ WHAT THE SENDER OFFERS: ${whatWeDo}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (3-4 sentences max, no bullet points):
-1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+1. ${salutationInstruction}
 2. Open with a one-sentence hook relevant to a ${prospect.niche} business
 3. Present ${senderName} and ONE concrete benefit drawn from "WHAT THE SENDER OFFERS" above — do not invent features not mentioned there
 4. ${ctaInstruction}
@@ -556,7 +576,7 @@ SENDER: ${senderName}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector (they already have a website)
 
 EMAIL STRUCTURE (3-4 sentences, no bullet points, NO city, NO price):
-1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+1. ${salutationInstruction}
 2. Hook: acknowledge that ${businessName} already has a website — that's a positive sign
 3. Transition: but do enough new clients find them every month? Most businesses lose clients to competitors not because of their product, but because of lack of visibility
 4. Present ProspectAI: find and contact targeted prospects automatically — AI-personalized emails + WhatsApp campaigns
@@ -571,7 +591,7 @@ SENDER: ${senderName}
 RECIPIENT: ${prospectId} — ${prospect.niche} sector
 
 EMAIL STRUCTURE (3-4 sentences, no bullet points, NO city, NO price):
-1. Salutation: "Bonjour [prospect name]," (or language equivalent)
+1. ${salutationInstruction}
 2. Hook: ${businessName} (${prospect.niche}) does not appear to have a website — potential clients find competitors instead
 3. Present the duo: we create their website (${DUO_TRUST[l]}) AND automate their client acquisition with ProspectAI (AI emails + WhatsApp campaigns)
 4. Include this exact slogan once: "${DUO_SLOGANS[l]}"
@@ -795,8 +815,10 @@ export async function generateProspectEmail(
     const parsed = extractJsonFromContent(content);
 
     if (parsed) {
-      const body = ensureLinkInBody(parsed.body, requiredLink, requiredLinkLabel) + signatureLine;
-      return { ...parsed, body };
+      const subject = ensureRealNameInText(parsed.subject, prospect.name);
+      let body = ensureRealNameInText(parsed.body, prospect.name);
+      body = ensureLinkInBody(body, requiredLink, requiredLinkLabel) + signatureLine;
+      return { ...parsed, subject, body };
     }
 
     console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
