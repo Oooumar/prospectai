@@ -314,7 +314,8 @@ const TRIAL_CTA: Record<EmailLanguage, string> = {
 
 const NO_HALLUCINATION_RULE = `STRICT RULE — never invent contact details: do NOT include any phone number, physical address, postal code, social media handle, or URL that was not explicitly given to you. Do NOT sign with a personal name. Do NOT add any closing or sign-off ("Cordialement", "Best regards", etc.) — the closing will be added automatically.
 STRICT RULE — NEVER propose a phone call, video call, or any kind of voice/video meeting. No "15-minute call", no "quick chat on the phone", no "discovery call". The only allowed contact methods are: email reply, or WhatsApp message if a WhatsApp link is provided.
-STRICT RULE — this is a plain-text email, not HTML or markdown: any link MUST be written as bare, visible text (e.g. "Try it now: https://example.com"). NEVER wrap a link in HTML (<a href="...">) or markdown ([text](url)) syntax — it will not render and will show up as broken text to the recipient.`;
+STRICT RULE — this is a plain-text email, not HTML or markdown: any link MUST be written as bare, visible text (e.g. "Try it now: https://example.com"). NEVER wrap a link in HTML (<a href="...">) or markdown ([text](url)) syntax — it will not render and will show up as broken text to the recipient.
+STRICT RULE — NEVER state a specific price, amount, or currency (no "€", "$", "FCFA", numbers followed by "/month", etc.), even if one appears in the sender's own description below. Pricing depends on the prospect's own region/currency and cannot be known here — always direct pricing questions to the link instead.`;
 
 function getSystemPrompt(profileType: ProfileType, targetLanguage: EmailLanguage, hasWebsite = false, hasProductDescription = false): string {
   const langInstruction = `IMPORTANT: Write the email in ${getLangName(targetLanguage)}. The entire email body and subject must be in ${getLangName(targetLanguage)}.`;
@@ -463,6 +464,32 @@ const NAME_PLACEHOLDER_RE = /\[[^[\]]{0,50}\b(?:name|nom|nombre|nome)\b[^[\]]{0,
 
 function ensureRealNameInText(text: string, realName: string): string {
   return text.replace(NAME_PLACEHOLDER_RE, realName);
+}
+
+// A price written into a sender's own productDescription is tied to ONE
+// currency/zone (e.g. a profile written in FCFA) and is very likely wrong
+// for a prospect in a different zone (e.g. a Paris prospect expects EUR).
+// Rather than trying to detect the prospect's zone and convert currencies
+// inside email generation, pricing is stripped from the description before
+// it ever reaches a prompt or fallback template — the guaranteed link
+// (requiredLink) is the single source of truth for real, current, correctly
+// -zoned pricing. General rule, not specific to any one profile.
+const PRICE_CORE = String.raw`(?:[€$£¥]\s?\d[\d\s.,]*|\d[\d\s.,]*\s?(?:€|\$|£|¥|FCFA|XOF|XAF|EUR|USD|GBP|CHF|CAD))(?:\s*\/\s*(?:mois|month|mo\.?|an|year|yr\.?|semaine|week))?`;
+const PRICE_WITH_LEAD_IN_RE = new RegExp(
+  String.raw`(?:plans?\s+)?(?:à partir de|a partire da|desde|starting at|from|ab)\s+${PRICE_CORE}\.?`, "gi"
+);
+const BARE_PRICE_RE = new RegExp(PRICE_CORE, "gi");
+
+function stripPriceMentions(text?: string | null): string | undefined {
+  if (!text) return text ?? undefined;
+  return text
+    .replace(PRICE_WITH_LEAD_IN_RE, "")
+    .replace(BARE_PRICE_RE, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+([.,!?])/g, "$1")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/(^|\n)[ \t]*[,;:][ \t]*/g, "$1") // dangling leading punctuation left by a removed lead-in phrase
+    .trim();
 }
 
 function getUserPrompt(
@@ -769,6 +796,9 @@ export async function generateProspectEmail(
 ): Promise<{ subject: string; body: string; fallback?: boolean }> {
   const lang = targetLanguage ?? detectEmailLanguage(prospect.city);
   const hasProductDescription = !!(sender?.productDescription && sender.productDescription.trim());
+  // Strip any price/currency mention from the description before it can
+  // reach a prompt or the fallback template — see stripPriceMentions.
+  const safeSender = sender ? { ...sender, productDescription: stripPriceMentions(sender.productDescription) } : sender;
   // hasWebsite / commanderUrl only ever drive the no-description ProspectAI /
   // site-creation-duo fallback pitch. A real product description on the
   // sender's profile always takes priority, for every profile type — so both
@@ -798,7 +828,7 @@ export async function generateProspectEmail(
       model: MODEL,
       messages: [
         { role: "system", content: getSystemPrompt(profileType, lang, hasWebsite, hasProductDescription) },
-        { role: "user", content: getUserPrompt(prospect, profileType, sender, lang, commanderUrl, hasWebsite) },
+        { role: "user", content: getUserPrompt(prospect, profileType, safeSender, lang, commanderUrl, hasWebsite) },
       ],
       temperature: 0.7,
       max_tokens: 800,
@@ -822,7 +852,7 @@ export async function generateProspectEmail(
     }
 
     console.error("[groq] JSON parse failed. sender:", JSON.stringify(sender), "raw:", content.substring(0, 400));
-    const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, sender);
+    const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, safeSender);
     return { ...fallback, body: fallback.body + signatureLine, fallback: true };
   } catch (err: any) {
     const status = err?.status || err?.statusCode;
@@ -838,7 +868,7 @@ export async function generateProspectEmail(
       code === "model_decommissioned" ||
       code === "model_not_found"
     ) {
-      const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, sender);
+      const fallback = generateFallbackEmail(prospect, profileType, lang, commanderUrl, hasWebsite, safeSender);
       return { ...fallback, body: fallback.body + signatureLine, fallback: true };
     }
     throw err;
@@ -858,7 +888,7 @@ export async function generateWhatsAppMessage(
   // A campaign-specific promo always wins; otherwise use the sender's own
   // product/service description; only pitch ProspectAI itself (or the
   // site-creation duo) when NEITHER is on file.
-  const offerContext = promo?.trim() || sender.productDescription?.trim();
+  const offerContext = promo?.trim() || stripPriceMentions(sender.productDescription)?.trim();
 
   console.log("[generateWhatsAppMessage] sender:", JSON.stringify({ companyName: sender.companyName, website: sender.website, whatsappNumber: sender.whatsappNumber }), "| hasOfferContext:", !!offerContext, "| prospect.city:", prospect.city, "| lang:", lang);
 
